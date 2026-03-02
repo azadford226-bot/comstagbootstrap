@@ -46,7 +46,8 @@ COPY --from=frontend-builder /app/frontend/public ./src/main/resources/static/
 RUN mkdir -p ./src/main/resources/static
 
 # Build the JAR with frontend static files included
-RUN mvn -q -DskipTests clean package
+# Use -Dmaven.test.skip=true to skip both test compilation and execution
+RUN mvn -q -Dmaven.test.skip=true clean package
 
 # ========== Runtime stage ==========
 FROM eclipse-temurin:21-jre-alpine

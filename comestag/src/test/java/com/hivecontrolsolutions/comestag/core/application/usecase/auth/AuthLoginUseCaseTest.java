@@ -11,6 +11,7 @@ import com.hivecontrolsolutions.comestag.core.domain.port.AccountPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.VerificationCodePort;
 import com.hivecontrolsolutions.comestag.core.domain.service.EmailNotification;
 import com.hivecontrolsolutions.comestag.core.domain.service.OrgEmailGuard;
+import com.hivecontrolsolutions.comestag.entrypoint.entity.auth.AuthLoginResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,7 +77,7 @@ class AuthLoginUseCaseTest {
     }
 
     @Test
-    void execute_ValidCredentials_ReturnsUserId() {
+    void execute_ValidCredentials_ReturnsAuthLoginResponse() {
         // Arrange
         when(accountPort.getByEmail("test@company.com")).thenReturn(Optional.of(accountDm));
         when(passwordEncoder.matches("password123", accountDm.getPasswordHash())).thenReturn(true);
@@ -89,11 +90,12 @@ class AuthLoginUseCaseTest {
         when(verificationCodePort.getByUserId(accountId)).thenReturn(verificationCodeDm);
 
         // Act
-        UUID result = authLoginUseCase.execute(loginInput);
+        AuthLoginResponse result = authLoginUseCase.execute(loginInput);
 
         // Assert
         assertNotNull(result);
-        assertEquals(accountId, result);
+        assertNotNull(result.userId());
+        assertEquals(accountId, result.userId());
         verify(accountPort).getByEmail("test@company.com");
         verify(passwordEncoder).matches("password123", accountDm.getPasswordHash());
         verify(emailNotification).sendVerificationCode(anyString(), anyString(), anyString());
