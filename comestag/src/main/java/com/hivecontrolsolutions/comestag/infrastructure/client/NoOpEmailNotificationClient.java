@@ -1,19 +1,13 @@
 package com.hivecontrolsolutions.comestag.infrastructure.client;
 
-import com.hivecontrolsolutions.comestag.base.stereotype.Client;
 import com.hivecontrolsolutions.comestag.core.domain.port.EmailSenderPort;
 import com.hivecontrolsolutions.comestag.core.domain.model.EmailNotificationData;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Profile;
 
 /**
  * No-op email sender implementation used as a fallback when SendGrid is not configured.
  * This allows the application to start even without email configuration, though emails won't actually be sent.
  */
-@Profile({"stag", "prod"})
-@ConditionalOnMissingBean(name = "sendGridEmailNotificationClient")
-@Client
 @Slf4j
 public class NoOpEmailNotificationClient implements EmailSenderPort {
 

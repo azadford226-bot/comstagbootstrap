@@ -1,7 +1,5 @@
 package com.hivecontrolsolutions.comestag.infrastructure.client;
 
-
-import com.hivecontrolsolutions.comestag.base.stereotype.Client;
 import com.hivecontrolsolutions.comestag.core.domain.port.EmailSenderPort;
 import com.hivecontrolsolutions.comestag.core.domain.model.EmailNotificationData;
 import com.sendgrid.Request;
@@ -11,31 +9,16 @@ import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
 
 import static com.sendgrid.Method.POST;
 
-@Profile({"stag", "prod"})
-@ConditionalOnProperty(name = "sendgrid.apiKey", matchIfMissing = false)
-@Client
 @Slf4j
 public class SendGridEmailNotificationClient implements EmailSenderPort {
     private final SendGrid sg;
     private final String from;
     private final String fromName;
 
-    public SendGridEmailNotificationClient(
-            @Value("${sendgrid.apiKey:}") String apiKey,
-            @Value("${mail.from:}") String from,
-            @Value("${mail.fromName:no-reply}") String fromName) {
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new IllegalStateException("sendgrid.apiKey must be set when SendGridEmailNotificationClient is enabled");
-        }
-        if (from == null || from.isEmpty()) {
-            throw new IllegalStateException("mail.from must be set when SendGridEmailNotificationClient is enabled");
-        }
+    public SendGridEmailNotificationClient(String apiKey, String from, String fromName) {
         this.sg = new SendGrid(apiKey);
         this.from = from;
         this.fromName = fromName;
