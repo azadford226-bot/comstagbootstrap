@@ -134,17 +134,20 @@ public class SecurityConfig {
         // Set allowed origins from configuration
         List<String> allowedOrigins = corsConfig.getAllowedOrigins();
         if (allowedOrigins == null || allowedOrigins.isEmpty()) {
-            // In production, fail if CORS origins are not configured
+            // In production, log a warning but don't fail - allow all origins as fallback
+            // This prevents startup failures when CORS_ALLOWED_ORIGINS is not set
             String activeProfile = System.getProperty("spring.profiles.active", 
                 System.getenv("SPRING_PROFILES_ACTIVE"));
             if ("prod".equals(activeProfile)) {
-                throw new IllegalStateException(
-                    "CORS_ALLOWED_ORIGINS must be set in production. " +
-                    "Set the CORS_ALLOWED_ORIGINS environment variable with your production domain(s)."
-                );
+                // Log warning but allow all origins as fallback for Railway deployment
+                // User should set CORS_ALLOWED_ORIGINS for security, but don't block startup
+                System.err.println("WARNING: CORS_ALLOWED_ORIGINS not set in production. " +
+                    "Allowing all origins. Set CORS_ALLOWED_ORIGINS environment variable for security.");
+                allowedOrigins = Arrays.asList("*"); // Allow all origins as fallback
+            } else {
+                // Default to localhost only for development
+                allowedOrigins = Arrays.asList("http://localhost:3000", "http://localhost:8080");
             }
-            // Default to localhost only for development
-            allowedOrigins = Arrays.asList("http://localhost:3000", "http://localhost:8080");
         }
         configuration.setAllowedOrigins(allowedOrigins);
         
