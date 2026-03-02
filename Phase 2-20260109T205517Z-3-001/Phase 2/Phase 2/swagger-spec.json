@@ -1,0 +1,2398 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ComStag API",
+    "description": "Organizations & Consumers platform",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "https://comstag-back.onrender.com",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/v1/testimonial": {
+      "put": {
+        "tags": ["update-testimonial-processor"],
+        "summary": "Update testimonial",
+        "description": "1. Update specific testimonial by id.\n2. Only consumer have access to this endpoint.\n3. Request code first.\n",
+        "operationId": "updateTestimonial",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTestimonialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["create-testimonial-processor"],
+        "summary": "Create testimonial",
+        "description": "1. Create a testimonial for specific organization.\n2. Request code first.\n3. Only consumer have access to this endpoint.\n",
+        "operationId": "createTestimonial",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTestimonialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/success-story/{successStoryId}": {
+      "put": {
+        "tags": ["update-success-story-processor"],
+        "summary": "Edit success story",
+        "description": "1. Edit the success story of the current organization.\n2. If there are media to delete or to add upload them first.\n",
+        "operationId": "editSuccessStory",
+        "parameters": [
+          {
+            "name": "successStoryId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSuccessStoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["delete-success-story-processor"],
+        "summary": "Delete success story",
+        "operationId": "deleteSuccessStory",
+        "parameters": [
+          {
+            "name": "successStoryId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/profile/reset-pass": {
+      "put": {
+        "tags": ["profile-reset-password-processor"],
+        "summary": "Reset profile password",
+        "description": "Reset password for the current user\n",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/profile/org": {
+      "put": {
+        "tags": ["update-org-profile-processor"],
+        "summary": "Update organization profile",
+        "operationId": "process",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrgProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/profile/image": {
+      "put": {
+        "tags": ["update-profile-media-processor"],
+        "summary": "Update profile image",
+        "description": "1. Update the image of the current user.\n2. Upload the image to the media first.\n",
+        "operationId": "uploadProfileImage",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/profile/email": {
+      "put": {
+        "tags": ["update-profile-email-processor"],
+        "summary": "Update profile email",
+        "description": "1. Update the email of the current user.\n2. Send a verification code to the new email first.\n",
+        "operationId": "updateEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateEmailRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/profile/cover": {
+      "put": {
+        "tags": ["update-profile-media-processor"],
+        "summary": "Update profile cover",
+        "description": "1. Update the cover of the current user.\n2. Upload the image to the media first.\n",
+        "operationId": "uploadProfileCover",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/profile/cons": {
+      "put": {
+        "tags": ["update-cons-profile-processor"],
+        "summary": "Update consumer profile",
+        "operationId": "process_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConsProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/post/{postId}": {
+      "get": {
+        "tags": ["get-post-processor"],
+        "summary": "get post details",
+        "operationId": "getPost",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "put": {
+        "tags": ["update-post-processor"],
+        "summary": "Update post",
+        "description": "1. update post wth specific post id.\n2. Only active organization have access to this endpoint.\n3. upload media first if needed.\n",
+        "operationId": "editPost",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePostRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["delete-post-processor"],
+        "summary": "delete post",
+        "operationId": "deletePost",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/event/{eventId}": {
+      "get": {
+        "tags": ["get-event-processor"],
+        "summary": "Get event by id",
+        "operationId": "getEvent",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/EventDm" } }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["update-event-processor"],
+        "summary": "Update event",
+        "description": "1. Update specific event by id.\n2. Only organization have access to this endpoint.\n3. Upload media first if needed\n",
+        "operationId": "editEvent",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateEventRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["delete-event-processor"],
+        "summary": "Delete event",
+        "description": "1. This endpoint allow active organizations to delete event.\n",
+        "operationId": "deleteEvent",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/certificate/{certificateId}": {
+      "put": {
+        "tags": ["update-certificate-processor"],
+        "summary": "Update certificate",
+        "description": "Use this endpoint to allow organizations to create there certificates.\nIf the certificate have image id, the image will be uploaded to the storage first by upload certificate endpoint.\n",
+        "operationId": "editCertificate",
+        "parameters": [
+          {
+            "name": "certificateId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCertificateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["delete-certificate-processor"],
+        "summary": "Delete certificate",
+        "description": "Use this endpoint to allow organizations to delete there certificates",
+        "operationId": "deleteCertificate",
+        "parameters": [
+          {
+            "name": "certificateId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/capability/{capabilityId}": {
+      "put": {
+        "tags": ["update-capability-processor"],
+        "summary": "Create capability",
+        "description": "Use this endpoint to allow organizations to update there capabilities",
+        "operationId": "editCapability",
+        "parameters": [
+          {
+            "name": "capabilityId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCapabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["delete-capability-processor"],
+        "summary": "Delete capability",
+        "description": "Use this endpoint to delete capability",
+        "operationId": "deleteCapability",
+        "parameters": [
+          {
+            "name": "capabilityId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/success-story": {
+      "post": {
+        "tags": ["create-success-story-processor"],
+        "summary": "Create success story",
+        "description": "1. Create a success story for the current organization.\n2. Upload the media first.\n",
+        "operationId": "createSuccessStory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SuccessStoryRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/post": {
+      "post": {
+        "tags": ["create-post-processor"],
+        "summary": "Create post",
+        "description": "1. Create a post for the current organization.\n2. Upload the media first.\n",
+        "operationId": "createPost",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PostRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/media/success-story": {
+      "post": {
+        "tags": ["upload-success-story-media-processor"],
+        "summary": "Upload success story media",
+        "description": "Use this endpoint to upload success story media.\nOnly for organizations.\n",
+        "operationId": "uploadMultiple",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                },
+                "required": ["files"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/media/profile/image": {
+      "post": {
+        "tags": ["upload-profile-media-processor"],
+        "summary": "Upload profile image",
+        "description": "Use this endpoint to upload profile image.\n",
+        "operationId": "uploadProfileImage_1",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/media/profile/cover": {
+      "post": {
+        "tags": ["upload-profile-media-processor"],
+        "summary": "Upload profile cover",
+        "description": "Use this endpoint to upload profile cover.\n",
+        "operationId": "uploadProfileCover_1",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/media/post": {
+      "post": {
+        "tags": ["upload-post-media-processor"],
+        "operationId": "uploadPostMedias",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                },
+                "required": ["files"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/media/certificate": {
+      "post": {
+        "tags": ["upload-certificate-media-processor"],
+        "summary": "Upload certificate media",
+        "description": "Use this endpoint to upload certificate media.\nOnly for organizations\n",
+        "operationId": "uploadMultiple_1",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "type": "string", "format": "uuid" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/event": {
+      "post": {
+        "tags": ["create-event-processor"],
+        "summary": "Create event",
+        "description": "1. This endpoint allow active organizations to create event.\n",
+        "operationId": "createEvent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EventRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/event/{eventId}/register": {
+      "post": {
+        "tags": ["event-registration-processor"],
+        "summary": "Register to event",
+        "operationId": "register",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["event-registration-processor"],
+        "summary": "Unregister from event",
+        "operationId": "unregister",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/certificate": {
+      "post": {
+        "tags": ["create-certificate-processor"],
+        "summary": "Create certificate",
+        "description": "Use this endpoint to allow organizations to create there certificates.\nIf the certificate have image id, the image will be uploaded to the storage first by upload certificate endpoint.\n",
+        "operationId": "createCertificate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CertificateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/capability": {
+      "post": {
+        "tags": ["create-capability-processor"],
+        "summary": "Create capability",
+        "description": "Use this endpoint to allow organizations to create there capabilities",
+        "operationId": "createCapability",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CapabilityRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/token": {
+      "post": {
+        "tags": ["auth-token-processor"],
+        "summary": "Verify the 6-digit code and complete login",
+        "description": "There is no need to authenticate this endpoint.\n\nRequest parameter:\n- identifier: {userId}_{6-digit-code}\n\nExample:\n76f1804f-e2d3-4695-909b-cd6bf8b112ba_185984\n\nWhere:\n- userId is the value returned from the Login endpoint.\n- 6-digit-code is the verification code sent by email.\n\nThe endpoint splits identifier into userId and code, validates them,\nand completes the verification / login flow if they are valid.\n",
+        "operationId": "verify",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?i)[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}_\\d{6}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful â€“ token pair returned",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Success": {
+                    "description": "Success",
+                    "value": {
+                      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh..."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/restore-email": {
+      "post": {
+        "tags": ["auth-restore-email-processor"],
+        "summary": "Restore email",
+        "description": "1 .Use this endpoint to restore email via magic link.\n2. It suppose that the email has been sent to the user after some one (owner or others) change user email.\n3. The email should have url rout to webpage with param value\n   identifier.\n4. This code should give to this endpoint as identifier param.\n5. There is no need to authenticate this endpoint.\n",
+        "operationId": "restoreEmail",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/auth/reset-pass": {
+      "post": {
+        "tags": ["auth-reset-password-processor"],
+        "operationId": "resetPassword_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/auth/request-code": {
+      "post": {
+        "tags": ["auth-request-verification-code-processor"],
+        "summary": "Resend verification code or verification email",
+        "description": "Use this endpoint to resend verification.\nThere is no need to authenticate this endpoint.\n\nRequest parameters:\n- email: user email.\n- verificationCode:\n    * \"CODE\"  -> resend verification code for login page.\n    * \"EMAIL\" -> resend verification email (email confirmation).\n\nBehavior:\n- For CODE: sends a new 6-digit code for login.\n- For EMAIL: resends the email verification message.\n",
+        "operationId": "retry",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "verificationType",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "enum": ["EMAIL", "CODE"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/register/org": {
+      "post": {
+        "tags": ["auth-register-processor"],
+        "summary": "Register organization",
+        "description": "Use this endpoint to register organization.\nThere is no need to authenticate this endpoint.\n",
+        "operationId": "registerOrg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRegisterOrgRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/register/cons": {
+      "post": {
+        "tags": ["auth-register-processor"],
+        "summary": "Register consumer",
+        "description": "Use this endpoint to register consumer\nInterests values in request object will be hashtags ids\n",
+        "operationId": "registerCons",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRegisterConsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/auth/refresh-token": {
+      "post": {
+        "tags": ["auth-refresh-token-processor"],
+        "summary": "Refresh token",
+        "description": "Use this endpoint to refresh token by sending refresh token",
+        "operationId": "refreshToken",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "tags": ["auth-logout-processor"],
+        "summary": "Logout user",
+        "description": "Use this endpoint to logout user by sending refresh token",
+        "operationId": "logout",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "tags": ["auth-login-processor"],
+        "summary": "Login with username/password and start verification flow",
+        "description": "1. Send username and password.\n2. If credentials are valid:\n   - The API returns the userId in the response.\n   - A 6-digit verification code is sent to the user's email.\n3. The returned userId must be used later in the Verify Code endpoint\n   together with the 6-digit code received via email.\n4. There is no need to authenticate this endpoint.\n",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuthLoginRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "type": "string", "format": "uuid" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/email-verify": {
+      "post": {
+        "tags": ["auth-verify-email-processor"],
+        "summary": "Verify email via magic link",
+        "description": "1 .Use this endpoint to verify email via magic link.\n2. It suppose that the email has been sent to the user.\n3. The email should have url rout to webpage with param value\n   userid_code.\n4. This code should give to this endpoint as identifier param.\n5. There is no need to authenticate this endpoint.\n",
+        "operationId": "verify_1",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?i)[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}_\\d{6}$"
+            }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/testimonial/my-list": {
+      "get": {
+        "tags": ["list-testimonial-processor"],
+        "summary": "List testimonials of organization",
+        "description": "1. List testimonials of current authenticated organization.\n2. Only organization have access to this endpoint.\n",
+        "operationId": "listMyTestimonials",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "createdFrom",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "createdTo",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "maxRating",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "sortType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["NEWEST", "OLDEST", "MAX", "MINE"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/testimonial/list": {
+      "get": {
+        "tags": ["list-testimonial-processor"],
+        "summary": "List testimonials of organization",
+        "description": "1. List testimonials of specific organization.\n2. Only active consumer and organization have access to this endpoint.\n",
+        "operationId": "listTestimonials",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "createdFrom",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "createdTo",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "maxRating",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "sortType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["NEWEST", "OLDEST", "MAX", "MINE"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/success-story/my-list": {
+      "get": {
+        "tags": ["list-success-stories-processor"],
+        "summary": "List my success stories",
+        "description": "1. List success stories of the current organization.\n2. Return a page of success stories.\n",
+        "operationId": "listMySuccessStories",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultSuccessStoryDm"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/success-story/list": {
+      "get": {
+        "tags": ["list-success-stories-processor"],
+        "summary": "List success stories",
+        "description": "1. List success stories of specific organization.\n2. Return a page of success stories.\n",
+        "operationId": "listSuccessStories",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultSuccessStoryDm"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/profile": {
+      "get": {
+        "tags": ["get-private-profile-processor"],
+        "summary": "Get current user private profile",
+        "description": "Returns either an ORG profile or a CONSUMER profile depending on the authenticated account type.",
+        "operationId": "getProfile",
+        "responses": {
+          "200": {
+            "description": "Profile found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/PrivateOrgProfileDro" },
+                    { "$ref": "#/components/schemas/PrivateConsProfileDto" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/profile/{userId}": {
+      "get": {
+        "tags": ["get-public-profile-processor"],
+        "summary": "Get current specific user public profile",
+        "description": "Returns either an ORG profile or a CONSUMER profile depending on the user id",
+        "operationId": "getProfile_1",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/PublicOrgProfileDro" },
+                    { "$ref": "#/components/schemas/PublicConsProfileDro" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/post/my-list": {
+      "get": {
+        "tags": ["list-posts-processor"],
+        "summary": "list my posts",
+        "description": "1. List my posts using access token only\n2. Only active organization have access to this endpoint\n",
+        "operationId": "listMyPosts",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/post/list": {
+      "get": {
+        "tags": ["list-posts-processor"],
+        "summary": "list posts",
+        "description": "List posts of specific org and used when you view organization profile.\n",
+        "operationId": "listOrgPosts",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/post/latest": {
+      "get": {
+        "tags": ["list-posts-processor"],
+        "summary": "list latest posts",
+        "description": "List latest posts and used in home page\n",
+        "operationId": "listLatest",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/media/{imageId}": {
+      "get": {
+        "tags": ["get-media-processor"],
+        "summary": "Get profile media",
+        "description": "Use this endpoint to get single media.\n",
+        "operationId": "getProfileMedia",
+        "parameters": [
+          {
+            "name": "imageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "type": "string", "format": "binary" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/event/recommended": {
+      "get": {
+        "tags": ["list-events-processor"],
+        "summary": "List recommended events",
+        "description": "1. List recommended events for current authenticated user.\n2. Used in events page from home.\n",
+        "operationId": "listRecommended",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PageResultEventDm" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/event/my-registrations": {
+      "get": {
+        "tags": ["list-events-processor"],
+        "summary": "List registered events",
+        "description": "1. List events that the current authenticated user registered in.\n2. Used in events page from home.\n",
+        "operationId": "listMyRegistrations",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PageResultEventDm" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/event/my-list": {
+      "get": {
+        "tags": ["list-events-processor"],
+        "summary": "list created events by current authenticated org",
+        "description": "1. list created events by current authenticated organization\n2. Used in profile organization private profile page.\n",
+        "operationId": "listMyEvents",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PageResultEventDm" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/certificate/my-list": {
+      "get": {
+        "tags": ["list-certificates-processor"],
+        "summary": "List my capabilities",
+        "description": "Use this endpoint allow the organizations to list it's capabilities even if the organization is pending",
+        "operationId": "listMyCertificates",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/certificate/list": {
+      "get": {
+        "tags": ["list-certificates-processor"],
+        "summary": "List certificates of other organizations",
+        "description": "Use this endpoint allow consumer or organization to list other organizations (active) certificates.\nIt's a paginated endpoint.\n",
+        "operationId": "listCertificates",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/v1/capability/my-list": {
+      "get": {
+        "tags": ["list-capabilities-processor"],
+        "summary": "List my capabilities",
+        "description": "Use this endpoint allow the organizations to list it's capabilities even if the organization is pending",
+        "operationId": "listMyCapabilities",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultCapabilityDm"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/capability/list": {
+      "get": {
+        "tags": ["list-capabilities-processor"],
+        "summary": "List capabilities of other organizations",
+        "description": "Use this endpoint allow consumer or organization to list other organizations (active) capabilities.\nIt's a paginated endpoint.\n",
+        "operationId": "listCapabilities",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "maximum": 100,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultCapabilityDm"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/home/dynamic": {
+      "get": {
+        "tags": ["home-dynamic-processor"],
+        "summary": "Get repeated data",
+        "description": "Use this endpoint to allow site to use general data will be used in different pages.\nThere is no need to authenticate this endpoint.\n",
+        "operationId": "dynamic",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/HomeDynamicResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/testimonial/{testimonialId}": {
+      "delete": {
+        "tags": ["delete-testimonial-processor"],
+        "summary": "Delete testimonial",
+        "description": "1. Delete specific testimonial by id.\n2. Only consumer have access to this endpoint.\n",
+        "operationId": "deleteTestimonial",
+        "parameters": [
+          {
+            "name": "testimonialId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateTestimonialRequest": {
+        "type": "object",
+        "properties": {
+          "testimonialId": { "type": "string", "format": "uuid" },
+          "rating": { "type": "integer", "format": "int32" },
+          "comment": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
+      "UpdateSuccessStoryRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "deletedMediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          },
+          "newMediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          },
+          "deletedHashtagIds": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "uniqueItems": true
+          },
+          "newHashtagIds": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "uniqueItems": true
+          }
+        }
+      },
+      "ProfileResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "newPassword": { "type": "string", "minLength": 1 },
+          "oldPassword": { "type": "string", "minLength": 1 }
+        },
+        "required": ["newPassword", "oldPassword"]
+      },
+      "UpdateOrgProfileRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string" },
+          "website": { "type": "string" },
+          "industryId": { "type": "integer", "format": "int64" },
+          "established": { "type": "string", "format": "date" },
+          "size": { "type": "string" },
+          "whoWeAre": { "type": "string" },
+          "whatWeDo": { "type": "string" },
+          "phone": { "type": "string" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" }
+        }
+      },
+      "UpdateEmailRequest": {
+        "type": "object",
+        "properties": {
+          "newEmail": { "type": "string" },
+          "verificationCode": { "type": "string" }
+        }
+      },
+      "UpdateConsProfileRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string" },
+          "website": { "type": "string" },
+          "industryId": { "type": "integer", "format": "int64" },
+          "established": { "type": "string", "format": "date" },
+          "interests": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "size": { "type": "string" },
+          "phone": { "type": "string" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" }
+        }
+      },
+      "UpdatePostRequest": {
+        "type": "object",
+        "properties": {
+          "body": { "type": "string" },
+          "deletedMediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          },
+          "newMediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          }
+        }
+      },
+      "UpdateEventRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "industryId": { "type": "integer", "format": "int64" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "address": { "type": "string" },
+          "startAt": { "type": "string", "format": "date-time" },
+          "endAt": { "type": "string", "format": "date-time" },
+          "online": { "type": "boolean" },
+          "onlineLink": { "type": "string" },
+          "deletedMediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          },
+          "newMediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          }
+        }
+      },
+      "UpdateCertificateRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "link": { "type": "string" },
+          "certificateDate": { "type": "string", "format": "date" },
+          "newImageId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "UpdateCapabilityRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "body": { "type": "string" },
+          "deletedHashtagIds": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "uniqueItems": true
+          },
+          "newHashtagIds": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "uniqueItems": true
+          }
+        }
+      },
+      "CreateTestimonialRequest": {
+        "type": "object",
+        "properties": {
+          "orgId": { "type": "string", "format": "uuid" },
+          "rating": { "type": "integer", "format": "int32" },
+          "comment": { "type": "string" },
+          "verificationCode": { "type": "string" }
+        }
+      },
+      "SuccessStoryRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "maxLength": 255, "minLength": 0 },
+          "body": { "type": "string", "minLength": 1 },
+          "mediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "maxItems": 20,
+            "minItems": 0,
+            "uniqueItems": true
+          },
+          "hashtags": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "maxItems": 10,
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "required": ["body", "title"]
+      },
+      "PostRequest": {
+        "type": "object",
+        "properties": {
+          "body": { "type": "string", "minLength": 1 },
+          "mediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          }
+        },
+        "required": ["body"]
+      },
+      "EventRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "body": { "type": "string" },
+          "industry": { "type": "integer", "format": "int64" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "address": { "type": "string" },
+          "startAt": { "type": "string", "format": "date-time" },
+          "endAt": { "type": "string", "format": "date-time" },
+          "online": { "type": "boolean" },
+          "onlineLink": { "type": "string" },
+          "mediaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "uniqueItems": true
+          }
+        },
+        "required": ["startAt", "title"]
+      },
+      "CertificateRequest": {
+        "type": "object",
+        "properties": {
+          "imageId": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "minLength": 1 },
+          "body": { "type": "string" },
+          "link": { "type": "string" },
+          "certificateDate": { "type": "string", "format": "date" }
+        },
+        "required": ["certificateDate", "imageId", "title"]
+      },
+      "CapabilityRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "body": { "type": "string", "minLength": 1 },
+          "hashtags": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "uniqueItems": true
+          }
+        },
+        "required": ["body", "hashtags", "title"]
+      },
+      "AuthResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "newPassword": { "type": "string", "minLength": 1 },
+          "verificationCode": { "type": "string", "minLength": 1 }
+        },
+        "required": ["newPassword", "verificationCode"]
+      },
+      "AuthRegisterOrgRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "minLength": 1 },
+          "industryId": { "type": "integer", "format": "int64" },
+          "whoWeAre": { "type": "string", "maxLength": 500, "minLength": 0 },
+          "whatWeDo": { "type": "string", "maxLength": 500, "minLength": 0 },
+          "size": { "type": "string", "minLength": 1 },
+          "established": { "type": "string", "format": "date" },
+          "website": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0,
+            "pattern": "(?i)^https://.+"
+          },
+          "country": { "type": "string", "minLength": 1 },
+          "state": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "pattern": "^[\\p{L} .'-]+$"
+          },
+          "city": { "type": "string", "minLength": 1 },
+          "email": { "type": "string", "format": "email", "minLength": 1 },
+          "password": { "type": "string", "maxLength": 128, "minLength": 8 }
+        },
+        "required": [
+          "city",
+          "country",
+          "displayName",
+          "email",
+          "established",
+          "industryId",
+          "password",
+          "size",
+          "website"
+        ]
+      },
+      "AuthRegisterConsRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "minLength": 1 },
+          "industryId": { "type": "integer", "format": "int64" },
+          "interests": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "maxItems": 20,
+            "minItems": 0,
+            "uniqueItems": true
+          },
+          "size": { "type": "string", "minLength": 1 },
+          "established": { "type": "string", "format": "date" },
+          "website": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0,
+            "pattern": "(?i)^https://.+"
+          },
+          "country": { "type": "string", "minLength": 1 },
+          "state": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "pattern": "^[\\p{L} .'-]+$"
+          },
+          "city": { "type": "string", "minLength": 1 },
+          "email": { "type": "string", "format": "email", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 }
+        },
+        "required": [
+          "city",
+          "country",
+          "displayName",
+          "email",
+          "established",
+          "industryId",
+          "interests",
+          "password",
+          "size",
+          "website"
+        ]
+      },
+      "AuthLoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 1 }
+        },
+        "required": ["password"]
+      },
+      "HashtagDm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" }
+        }
+      },
+      "MediaDm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "mediaType": { "type": "string", "enum": ["IMAGE", "VIDEO", "FILE"] }
+        }
+      },
+      "PageResultSuccessStoryDm": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SuccessStoryDm" }
+          },
+          "page": { "type": "integer", "format": "int32" },
+          "size": { "type": "integer", "format": "int32" },
+          "totalItems": { "type": "integer", "format": "int64" },
+          "totalPages": { "type": "integer", "format": "int32" },
+          "first": { "type": "boolean" },
+          "last": { "type": "boolean" }
+        }
+      },
+      "SuccessStoryDm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "medias": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MediaDm" }
+          },
+          "hashtags": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HashtagDm" }
+          }
+        }
+      },
+      "PrivateOrgProfileDro": {
+        "type": "object",
+        "properties": { "userDetails": {} }
+      },
+      "IndustryDm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" }
+        }
+      },
+      "PrivateConsProfileDto": {
+        "type": "object",
+        "properties": {
+          "industry": { "$ref": "#/components/schemas/IndustryDm" },
+          "interests": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "established": { "type": "string", "format": "date" },
+          "size": { "type": "string" },
+          "website": { "type": "string" },
+          "phone": { "type": "string" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "views": { "type": "integer", "format": "int32" },
+          "profileImageId": { "type": "string", "format": "uuid" },
+          "profileCoverId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PublicOrgProfileDro": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "industry": { "$ref": "#/components/schemas/IndustryDm" },
+          "established": { "type": "string", "format": "date" },
+          "website": { "type": "string" },
+          "size": { "type": "string" },
+          "whoWeAre": { "type": "string" },
+          "whatWeDo": { "type": "string" },
+          "reviewsCount": { "type": "integer", "format": "int64" },
+          "ratingSum": { "type": "integer", "format": "int64" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "profileImageId": { "type": "string", "format": "uuid" },
+          "profileCoverId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PublicConsProfileDro": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "industry": { "$ref": "#/components/schemas/IndustryDm" },
+          "established": { "type": "string", "format": "date" },
+          "size": { "type": "string" },
+          "website": { "type": "string" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "profileImageId": { "type": "string", "format": "uuid" },
+          "profileCoverId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EventDm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "orgId": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "mode": { "type": "string", "enum": ["ONLINE", "OFFLINE"] },
+          "industry": { "$ref": "#/components/schemas/IndustryDm" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "address": { "type": "string" },
+          "startAt": { "type": "string", "format": "date-time" },
+          "endAt": { "type": "string", "format": "date-time" },
+          "onlineLink": { "type": "string" },
+          "viewers": { "type": "integer", "format": "int64" },
+          "registeredCount": { "type": "integer", "format": "int64" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "media": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MediaDm" }
+          }
+        }
+      },
+      "PageResultEventDm": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EventDm" }
+          },
+          "page": { "type": "integer", "format": "int32" },
+          "size": { "type": "integer", "format": "int32" },
+          "totalItems": { "type": "integer", "format": "int64" },
+          "totalPages": { "type": "integer", "format": "int32" },
+          "first": { "type": "boolean" },
+          "last": { "type": "boolean" }
+        }
+      },
+      "CapabilityDm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "hashtags": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HashtagDm" }
+          }
+        }
+      },
+      "PageResultCapabilityDm": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CapabilityDm" }
+          },
+          "page": { "type": "integer", "format": "int32" },
+          "size": { "type": "integer", "format": "int32" },
+          "totalItems": { "type": "integer", "format": "int64" },
+          "totalPages": { "type": "integer", "format": "int32" },
+          "first": { "type": "boolean" },
+          "last": { "type": "boolean" }
+        }
+      },
+      "HomeDynamicResponse": {
+        "type": "object",
+        "properties": {
+          "industries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/IndustryDm" },
+            "uniqueItems": true
+          },
+          "hashtags": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HashtagDm" },
+            "uniqueItems": true
+          },
+          "sizes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "Paste your IdToken here",
+        "name": "bearerAuth",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

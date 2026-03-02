@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* ComStag Brand Colors */
+  --color-primary-dark: #1e305e;
+  --color-primary: #203465;
+  --color-primary-darker: #223669;
+  
+  --color-secondary-light: #73d5ff;
+  --color-secondary: #4ea0ee;
+  --color-secondary-dark: #3d8fd5;
+  
+  --color-accent: #FFD700;
+  --color-accent-light: #ffe492;
+  --color-accent-dark: #ffd875;
+  
+  --color-text-dark: #050000;
+  --color-text-body: #212529;
+  
+  /* Neutral colors */
+  --color-light-gray: #f8f8f8;
+  --color-pale-blue: #c4d3f3;
+  --color-off-white: #f9fbff;
+  
+  /* Search bar background */
+  --color-search-bg: rgba(197, 220, 234, 0.35);
+  --color-search-bg-hover: rgba(197, 220, 234, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

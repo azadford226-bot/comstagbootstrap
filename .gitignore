@@ -1,0 +1,78 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Spring Boot
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Environment variables - NEVER commit these!
+.env
+.env.*
+!.env.example
+*.env
+application-local.properties
+application-prod.properties
+*secret*
+*credential*
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+**/node_modules/
+**/.next/
+**/out/
+**/.pnpm-store/
+**/.turbo/
+**/dist/
+**/build/
+
+# Frontend build output in Spring Boot resources
+comestag/src/main/resources/static/
+!comestag/src/main/resources/static/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Media files
+media/
+
+# Test coverage
+coverage/
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Vercel
+.vercel
+
+# Archive files
+*.zip
+
+# Phase folders (if you want to exclude them)
+# Phase 1-*/
+# Phase 2-*/

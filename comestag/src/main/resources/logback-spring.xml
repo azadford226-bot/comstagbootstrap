@@ -1,0 +1,47 @@
+<configuration>
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- include MDC fields like requestId, method, path, status, durMs, evt, traceId, spanId -->
+            <includeMdc>true</includeMdc>
+            <!-- message and stacktrace are auto JSON-escaped -->
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC_JSON"/>
+    </root>
+</configuration>
+
+
+
+        <!--<configuration>-->
+<!--    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
+<!--        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+<!--            &lt;!&ndash;            <pattern>&ndash;&gt;-->
+<!--            &lt;!&ndash;                %d{yyyy-MM-dd'T'HH:mm:ss.SSSX} %-5level [%thread] %logger path=%X{path:-} method=%X{method:-} status=%X{status:-} trace=%X{traceId:-} evt=%X{evt:-} durMs=%X{durMs:-} msg=%msg%n%ex{10}&ndash;&gt;-->
+<!--            &lt;!&ndash;            </pattern>&ndash;&gt;-->
+<!--            <pattern>-->
+<!--                {"timestamp":%d{yyyy-MM-dd'T'HH:mm:ss.SSSX},"level":"%-5level","logger":"%logger","thread":"%thread","path":%X{path:-},"method":%X{method:-},"status":%X{status:-},"trace":%X{traceId:-},"evt":%X{evt:-},"durMs":%X{durMs:-},"msg":"%msg%ex{10}"}%n-->
+<!--            </pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
+
+<!--    &lt;!&ndash; Async wrapper prevents blocking Netty event-loop &ndash;&gt;-->
+<!--    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">-->
+<!--        <appender-ref ref="CONSOLE"/>-->
+<!--        <queueSize>8192</queueSize>-->
+<!--        <discardingThreshold>0</discardingThreshold>-->
+<!--        <neverBlock>true</neverBlock>-->
+<!--    </appender>-->
+
+<!--    <root level="INFO">-->
+<!--        <appender-ref ref="ASYNC_CONSOLE"/>-->
+<!--    </root>-->
+<!--</configuration>-->
