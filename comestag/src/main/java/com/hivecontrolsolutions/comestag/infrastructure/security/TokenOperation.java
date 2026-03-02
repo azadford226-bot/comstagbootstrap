@@ -28,7 +28,7 @@ import static com.hivecontrolsolutions.comestag.core.constant.SecurityConstant.*
 @RequiredArgsConstructor
 public class TokenOperation {
 
-    @Value("${" + AUTH_TOKEN_USER_SECRET_KEY + "}")
+    @Value("${" + AUTH_TOKEN_USER_SECRET_KEY + ":${APP_SECURITY_JWT_SECRET:}}")
     private CharSequence jwtSecretKey;
     private static SecretKey secretKey = null;
 
