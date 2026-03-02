@@ -1,5 +1,0 @@
-onlyBuiltDependencies:
-  - '@vercel/speed-insights'
-  - msw
-  - sharp
-  - unrs-resolver

@@ -73,6 +73,13 @@ coverage/
 # Archive files
 *.zip
 
-# Phase folders (if you want to exclude them)
-# Phase 1-*/
-# Phase 2-*/
+# Phase folders (old code)
+Phase 1-*/
+Phase 2-*/
+
+# Log files
+*.log
+logs/
+
+# Temporary documentation (keep only essential docs)
+# Keep: README.md, QUICK_START.md, VERCEL_DEPLOYMENT.md, DEPLOYMENT_GUIDE.md
