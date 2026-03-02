@@ -1,0 +1,22 @@
+# Render Blueprint for Comestag Backend
+# Deploy with: render blueprint launch
+
+services:
+  - type: web
+    name: comestag-backend
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/comestag-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_PORT
+        value: 10000
+      # Add other environment variables in Render dashboard
+    healthCheckPath: /actuator/health
+
+databases:
+  - name: comestag-db
+    databaseName: comestag
+    user: comestag
+    plan: free

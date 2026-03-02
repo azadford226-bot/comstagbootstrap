@@ -97,17 +97,26 @@ docker run -p 3000:3000 comestag:latest
 
 ## 🌐 Deployment
 
-### Vercel (Frontend)
+### Frontend (Vercel)
 
 The frontend can be deployed to Vercel. See [VERCEL_DEPLOYMENT.md](comestag/VERCEL_DEPLOYMENT.md) for detailed instructions.
 
-### Backend Hosting
+### Backend (Separate Platform Required)
 
-Deploy the backend to platforms that support Java:
-- Railway
+Since Vercel doesn't support Java/Spring Boot, deploy the backend separately:
+
+**Recommended: Railway** (Easiest)
+- Quick setup with GitHub integration
+- Built-in PostgreSQL database
+- Free tier available
+
+**Quick Start**: See [BACKEND_DEPLOYMENT_QUICK.md](comestag/BACKEND_DEPLOYMENT_QUICK.md)
+
+**Full Guide**: See [BACKEND_DEPLOYMENT.md](comestag/BACKEND_DEPLOYMENT.md) for:
+- Railway (Recommended)
 - Render
 - Fly.io
-- AWS/Heroku
+- Docker deployments
 
 ## 📝 License
 
