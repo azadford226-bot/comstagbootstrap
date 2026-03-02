@@ -60,10 +60,15 @@ COPY --from=backend-builder /app/target/comestag-0.0.1-SNAPSHOT.jar app.jar
 # Default profile (can be overridden)
 ENV SPRING_PROFILES_ACTIVE=prod
 
+# Railway sets PORT environment variable, Spring Boot will use it
+# Default to 8080 if PORT is not set
+ENV PORT=8080
+
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+# Health check - use PORT env var or default to 8080
+# Increased start-period to 120s to allow for database migrations
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

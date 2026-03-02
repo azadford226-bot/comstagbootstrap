@@ -104,6 +104,8 @@ public class SecurityConfig {
                                 "/robots.txt",
                                 "/sitemap.xml"
                         ).permitAll()
+                        // Allow actuator health endpoint (needed for Railway health checks)
+                        .requestMatchers("/actuator/health").permitAll()
                         // Allow API endpoints that don't require auth
                         .requestMatchers("/v1/auth/**", "/home/dynamic", "/v1/contact").permitAll()
                         // Allow frontend routes (SPA) - frontend handles its own auth
