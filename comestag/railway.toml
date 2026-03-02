@@ -1,5 +1,6 @@
 # Railway configuration file
 # This helps Railway detect and configure your Spring Boot application
+# NOTE: Root Directory must be set to "comestag" in Railway Settings for this to work
 
 [build]
   builder = "NIXPACKS"
