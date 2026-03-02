@@ -12,11 +12,13 @@ import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 
 import static com.sendgrid.Method.POST;
 
 @Profile({"stag", "prod"})
+@ConditionalOnProperty(name = "sendgrid.apiKey", matchIfMissing = false)
 @Client
 @Slf4j
 public class SendGridEmailNotificationClient implements EmailSenderPort {
@@ -25,9 +27,15 @@ public class SendGridEmailNotificationClient implements EmailSenderPort {
     private final String fromName;
 
     public SendGridEmailNotificationClient(
-            @Value("${sendgrid.apiKey}") String apiKey,
-            @Value("${mail.from}") String from,
+            @Value("${sendgrid.apiKey:}") String apiKey,
+            @Value("${mail.from:}") String from,
             @Value("${mail.fromName:no-reply}") String fromName) {
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new IllegalStateException("sendgrid.apiKey must be set when SendGridEmailNotificationClient is enabled");
+        }
+        if (from == null || from.isEmpty()) {
+            throw new IllegalStateException("mail.from must be set when SendGridEmailNotificationClient is enabled");
+        }
         this.sg = new SendGrid(apiKey);
         this.from = from;
         this.fromName = fromName;
