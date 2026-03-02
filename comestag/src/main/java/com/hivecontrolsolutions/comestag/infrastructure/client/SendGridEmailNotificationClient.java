@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 
 import static com.sendgrid.Method.POST;
 
-@Profile("stag")
+@Profile({"stag", "prod"})
 @Client
 @Slf4j
 public class SendGridEmailNotificationClient implements EmailSenderPort {
