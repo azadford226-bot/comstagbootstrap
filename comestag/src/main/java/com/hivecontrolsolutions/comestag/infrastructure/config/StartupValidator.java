@@ -42,24 +42,29 @@ public class StartupValidator implements ApplicationListener<ApplicationReadyEve
         log.info("Starting production configuration validation...");
         boolean hasErrors = false;
 
-        // Validate CORS configuration
-        if (!validateCorsConfiguration()) {
-            hasErrors = true;
-        }
+        try {
+            // Validate CORS configuration
+            if (!validateCorsConfiguration()) {
+                hasErrors = true;
+            }
 
-        // Validate JWT secret
-        if (!validateJwtSecret()) {
-            hasErrors = true;
-        }
+            // Validate JWT secret
+            if (!validateJwtSecret()) {
+                hasErrors = true;
+            }
 
-        // Validate database configuration
-        if (!validateDatabaseConfiguration()) {
-            hasErrors = true;
-        }
+            // Validate database configuration
+            if (!validateDatabaseConfiguration()) {
+                hasErrors = true;
+            }
 
-        // Validate email configuration
-        if (!validateEmailConfiguration()) {
-            hasErrors = true;
+            // Validate email configuration
+            if (!validateEmailConfiguration()) {
+                hasErrors = true;
+            }
+        } catch (Exception e) {
+            log.error("Exception during validation: {}", e.getMessage(), e);
+            throw new IllegalStateException("Production configuration validation failed with exception: " + e.getMessage(), e);
         }
 
         if (hasErrors) {
@@ -67,10 +72,12 @@ public class StartupValidator implements ApplicationListener<ApplicationReadyEve
             log.error("PRODUCTION CONFIGURATION VALIDATION FAILED!");
             log.error("Please fix the issues above before deploying.");
             log.error("================================================");
-            throw new IllegalStateException(
+            IllegalStateException ex = new IllegalStateException(
                     "Production configuration validation failed. " +
                     "Please check the logs above for details."
             );
+            log.error("Throwing exception: {}", ex.getMessage(), ex);
+            throw ex;
         }
 
         log.info("✅ Production configuration validation passed");
@@ -188,34 +195,35 @@ public class StartupValidator implements ApplicationListener<ApplicationReadyEve
     }
 
     private boolean validateEmailConfiguration() {
-        String mailHost = environment.getProperty("spring.mail.host");
-        String mailUsername = environment.getProperty("spring.mail.username");
-        String mailPassword = environment.getProperty("spring.mail.password");
-        String mailFrom = environment.getProperty("mail.from");
+        try {
+            // Check for any email service configuration (Zoho, Resend, or SendGrid)
+            String zohoEmail = System.getenv("ZOHO_MAIL_EMAIL");
+            String zohoPassword = System.getenv("ZOHO_MAIL_PASSWORD");
+            String resendApiKey = System.getenv("RESEND_API_KEY");
+            String sendgridApiKey = System.getenv("SENDGRID_API_KEY");
+            String mailFrom = environment.getProperty("mail.from");
 
-        if (mailHost == null || mailHost.isEmpty()) {
-            log.warn("⚠️  Email Configuration Warning:");
-            log.warn("   MAIL_HOST is not set. Email functionality may not work.");
-            // Don't fail - email is not critical for startup
+            boolean hasEmailConfig = (zohoEmail != null && !zohoEmail.isEmpty() && 
+                                     zohoPassword != null && !zohoPassword.isEmpty()) ||
+                                    (resendApiKey != null && !resendApiKey.isEmpty() && 
+                                     mailFrom != null && !mailFrom.isEmpty()) ||
+                                    (sendgridApiKey != null && !sendgridApiKey.isEmpty() && 
+                                     mailFrom != null && !mailFrom.isEmpty());
+
+            if (!hasEmailConfig) {
+                log.warn("⚠️  Email Configuration Warning:");
+                log.warn("   No email service configured (ZOHO_MAIL_EMAIL/ZOHO_MAIL_PASSWORD, RESEND_API_KEY, or SENDGRID_API_KEY with MAIL_FROM).");
+                log.warn("   Email functionality will not work.");
+            } else {
+                log.info("✅ Email Configuration: Email service configured (Zoho, Resend, or SendGrid)");
+            }
+
+            // Email is not critical for startup, so we just warn
+            return true;
+        } catch (Exception e) {
+            log.error("Exception during email validation: {}", e.getMessage(), e);
+            // Don't fail on email validation errors - email is not critical
+            return true;
         }
-
-        if (mailUsername == null || mailUsername.isEmpty()) {
-            log.warn("⚠️  Email Configuration Warning:");
-            log.warn("   MAIL_USERNAME is not set. Email functionality may not work.");
-        }
-
-        if (mailPassword == null || mailPassword.isEmpty()) {
-            log.warn("⚠️  Email Configuration Warning:");
-            log.warn("   MAIL_PASSWORD is not set. Email functionality may not work.");
-        }
-
-        if (mailFrom == null || mailFrom.isEmpty()) {
-            log.warn("⚠️  Email Configuration Warning:");
-            log.warn("   MAIL_FROM is not set. Defaulting to info@comstag.com");
-        }
-
-        // Email is not critical for startup, so we just warn
-        log.info("✅ Email Configuration: Checked (warnings may appear above)");
-        return true;
     }
 }
