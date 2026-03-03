@@ -21,7 +21,7 @@ public class ProductionValidationConfig {
     @Value("${app.security.jwt-secret:}")
     private String jwtSecret;
 
-    @Value("${app.cors.allowed-origins:}")
+    @Value("${CORS_ALLOWED_ORIGINS:}")
     private String corsAllowedOrigins;
 
     @Value("${spring.datasource.url:}")
@@ -32,12 +32,6 @@ public class ProductionValidationConfig {
 
     @Value("${spring.datasource.password:}")
     private String datasourcePassword;
-
-    @Value("${MAIL_USERNAME:}")
-    private String mailUsername;
-
-    @Value("${MAIL_PASSWORD:}")
-    private String mailPassword;
 
     @EventListener(ApplicationReadyEvent.class)
     public void validateProductionConfig() {
@@ -80,12 +74,24 @@ public class ProductionValidationConfig {
         }
         
         // Validate Email Configuration (warn but don't fail)
-        if (mailUsername == null || mailUsername.isEmpty() || mailUsername.equals("test@test.com")) {
-            log.warn("WARNING: MAIL_USERNAME is not configured. Email functionality will not work.");
-        }
+        // Check for Zoho, Resend, or SendGrid configuration
+        String zohoEmail = System.getenv("ZOHO_MAIL_EMAIL");
+        String zohoPassword = System.getenv("ZOHO_MAIL_PASSWORD");
+        String resendApiKey = System.getenv("RESEND_API_KEY");
+        String sendgridApiKey = System.getenv("SENDGRID_API_KEY");
+        String mailFrom = System.getenv("MAIL_FROM");
         
-        if (mailPassword == null || mailPassword.isEmpty() || mailPassword.equals("test")) {
-            log.warn("WARNING: MAIL_PASSWORD is not configured. Email functionality will not work.");
+        boolean hasEmailConfig = (zohoEmail != null && !zohoEmail.isEmpty() && 
+                                 zohoPassword != null && !zohoPassword.isEmpty()) ||
+                                (resendApiKey != null && !resendApiKey.isEmpty() && 
+                                 mailFrom != null && !mailFrom.isEmpty()) ||
+                                (sendgridApiKey != null && !sendgridApiKey.isEmpty() && 
+                                 mailFrom != null && !mailFrom.isEmpty());
+        
+        if (!hasEmailConfig) {
+            log.warn("WARNING: No email service configured (ZOHO_MAIL_EMAIL/ZOHO_MAIL_PASSWORD, RESEND_API_KEY, or SENDGRID_API_KEY with MAIL_FROM). Email functionality will not work.");
+        } else {
+            log.info("Email service configured (Zoho, Resend, or SendGrid)");
         }
         
         if (hasErrors) {
@@ -94,7 +100,9 @@ public class ProductionValidationConfig {
             log.error("==========================================");
             log.error("Please set all required environment variables before deploying to production.");
             log.error("See PRODUCTION_ENV_VARIABLES.md for the complete list.");
-            throw new IllegalStateException("Production configuration validation failed. Check logs for details.");
+            IllegalStateException ex = new IllegalStateException("Production configuration validation failed. Check logs for details.");
+            log.error("Throwing exception: {}", ex.getMessage(), ex);
+            throw ex;
         }
         
         log.info("Production configuration validation passed.");
