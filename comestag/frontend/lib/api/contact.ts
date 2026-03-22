@@ -8,9 +8,14 @@ export interface ContactFormRequest {
   message: string;
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "/api/proxy";
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_USE_PROXY === "true") return "/api/proxy";
+  if (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app")) {
+    return "/api/proxy";
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "";
+}
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Submit contact form (no authentication required)

@@ -1,6 +1,16 @@
 # Fix Login When Hosted on Railway
 
-If login fails with "Invalid credentials" when your app is deployed on Railway, follow these steps.
+If login fails with "Invalid credentials" or CORS errors when your app is deployed on Railway, follow these steps.
+
+---
+
+## CORS Fix (Automatic)
+
+The app **automatically uses the proxy** when hosted on `*.vercel.app`, so CORS is avoided. Ensure:
+
+1. **Vercel** has `BACKEND_URL` = `https://comstagbootstrap-production.up.railway.app` (your Railway URL)
+2. **Optional**: Remove `NEXT_PUBLIC_API_BASE_URL` from Vercel (no longer needed)
+3. **Custom domain**: Add `NEXT_PUBLIC_USE_PROXY=true` in Vercel to use the proxy
 
 ---
 

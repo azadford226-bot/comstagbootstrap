@@ -8,11 +8,16 @@ import {
 } from "@/lib/secure-storage";
 import { isDevMode } from "@/lib/dev-auth";
 
-// API base URL - when not set, use Next.js proxy to avoid 404 on same-origin
-// Set NEXT_PUBLIC_API_BASE_URL to your backend URL (e.g. Railway) for direct calls
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "/api/proxy";
+// On Vercel: use proxy to avoid CORS (set BACKEND_URL to Railway URL).
+// Set NEXT_PUBLIC_USE_PROXY=true for custom domains. On unified/Spring Boot: use relative paths.
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_USE_PROXY === "true") return "/api/proxy";
+  if (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app")) {
+    return "/api/proxy";
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "";
+}
+const API_BASE_URL = getApiBaseUrl();
 
 // Types for registration
 export interface OrganizationRegistrationRequest {

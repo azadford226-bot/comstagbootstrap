@@ -7,10 +7,14 @@ import {
   removeRefreshToken,
 } from "../secure-storage";
 
-// API base URL - when not set, use Next.js proxy to avoid 404 on same-origin
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "/api/proxy";
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_USE_PROXY === "true") return "/api/proxy";
+  if (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app")) {
+    return "/api/proxy";
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "";
+}
+const API_BASE_URL = getApiBaseUrl();
 
 // Track if we're currently refreshing to avoid multiple refresh attempts
 let isRefreshing = false;

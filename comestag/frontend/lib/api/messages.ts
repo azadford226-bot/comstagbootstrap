@@ -296,8 +296,10 @@ export function connectMessageStreamAuthenticated(
 
   try {
     const API_BASE_URL =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "/api/proxy";
+      process.env.NEXT_PUBLIC_USE_PROXY === "true" ||
+      (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app"))
+        ? "/api/proxy"
+        : (process.env.NEXT_PUBLIC_API_BASE_URL || "");
 
     const token = getAccessToken();
     if (!token) {
