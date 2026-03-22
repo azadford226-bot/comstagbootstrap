@@ -30,36 +30,44 @@ public class CorsFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String origin = request.getHeader("Origin");
-        
+        CorsConfiguration config = corsConfigurationSource.getCorsConfiguration(request);
+
+        if (config == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        boolean originAllowed = isOriginAllowed(origin, config);
+
         // Handle CORS preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            CorsConfiguration config = corsConfigurationSource.getCorsConfiguration(request);
-            
-            if (config != null) {
-                // Check if origin is allowed
-                if (origin != null && config.getAllowedOrigins().contains(origin)) {
-                    response.setHeader("Access-Control-Allow-Origin", origin);
-                    response.setHeader("Access-Control-Allow-Methods", String.join(", ", config.getAllowedMethods()));
-                    response.setHeader("Access-Control-Allow-Headers", String.join(", ", config.getAllowedHeaders()));
-                    response.setHeader("Access-Control-Allow-Credentials", String.valueOf(config.getAllowCredentials()));
-                    response.setHeader("Access-Control-Max-Age", String.valueOf(config.getMaxAge()));
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    return; // Don't continue the filter chain for OPTIONS
-                }
-            }
-        }
-        
-        // For non-OPTIONS requests, add CORS headers if origin is allowed
-        if (origin != null) {
-            CorsConfiguration config = corsConfigurationSource.getCorsConfiguration(request);
-            if (config != null && config.getAllowedOrigins().contains(origin)) {
+            if (originAllowed && origin != null) {
                 response.setHeader("Access-Control-Allow-Origin", origin);
+                response.setHeader("Access-Control-Allow-Methods", String.join(", ", config.getAllowedMethods()));
+                response.setHeader("Access-Control-Allow-Headers", String.join(", ", config.getAllowedHeaders()));
                 response.setHeader("Access-Control-Allow-Credentials", String.valueOf(config.getAllowCredentials()));
+                response.setHeader("Access-Control-Max-Age", String.valueOf(config.getMaxAge()));
+                response.setStatus(HttpServletResponse.SC_OK);
+                return;
             }
         }
-        
+
+        // For non-OPTIONS requests, add CORS headers if origin is allowed
+        if (originAllowed && origin != null) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Credentials", String.valueOf(config.getAllowCredentials()));
+        }
+
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isOriginAllowed(String origin, CorsConfiguration config) {
+        if (origin == null) return false;
+        var allowed = config.getAllowedOrigins();
+        if (allowed == null) return false;
+        if (allowed.contains("*")) return true;
+        return allowed.contains(origin);
     }
 }

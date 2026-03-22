@@ -16,7 +16,7 @@ import {
 // Test admin credentials for quick login
 const TEST_ADMIN_CREDENTIALS = {
   email: "admin@comstag.com",
-  password: "Admin123!",
+  password: "Admin@123!",
   displayName: "Admin User"
 };
 

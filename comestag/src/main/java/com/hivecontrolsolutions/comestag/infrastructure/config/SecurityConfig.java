@@ -133,6 +133,11 @@ public class SecurityConfig {
         
         // Set allowed origins from configuration
         List<String> allowedOrigins = corsConfig.getAllowedOrigins();
+        if (allowedOrigins != null) {
+            allowedOrigins = allowedOrigins.stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .toList();
+        }
         if (allowedOrigins == null || allowedOrigins.isEmpty()) {
             // In production, log a warning but don't fail - allow all origins as fallback
             // This prevents startup failures when CORS_ALLOWED_ORIGINS is not set
