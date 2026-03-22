@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (typeof window !== "undefined" ? "" : "http://localhost:3000");
+  "/api/proxy";
 
 const ADMIN_ENDPOINTS = {
   STATS: "/v1/admin/stats",

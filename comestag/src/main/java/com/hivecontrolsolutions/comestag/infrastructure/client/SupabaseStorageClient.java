@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Client
 @RequiredArgsConstructor
-@Profile({"stag", "local", "prod"})
+@Profile({"stag", "prod"})
 public class SupabaseStorageClient implements FileStoragePort {
 
     private final SupabaseProperties supabaseProperties;

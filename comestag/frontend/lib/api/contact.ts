@@ -10,9 +10,7 @@ export interface ContactFormRequest {
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (typeof window !== "undefined"
-    ? "" // Use relative paths when served from same origin
-    : "http://localhost:3000"); // SSR fallback
+  "/api/proxy";
 
 /**
  * Submit contact form (no authentication required)

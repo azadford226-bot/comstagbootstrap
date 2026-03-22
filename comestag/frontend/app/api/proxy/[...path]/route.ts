@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-const API_BASE_URL = "https://comstag-back.onrender.com";
+// Backend URL: BACKEND_URL (server-only) or NEXT_PUBLIC_API_BASE_URL, then fallback
+// Set BACKEND_URL in Vercel to your Railway URL so the proxy forwards to the correct backend
+const API_BASE_URL =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://comstag-back.onrender.com";
 
 // API routes are not supported in static export
 // This file will be ignored during static export build

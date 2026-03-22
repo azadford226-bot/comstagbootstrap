@@ -8,14 +8,11 @@ import {
 } from "@/lib/secure-storage";
 import { isDevMode } from "@/lib/dev-auth";
 
-// API base URL - use relative path when served from same origin as backend
-// When frontend and backend are on the same port, use empty string for relative paths
-// Otherwise use the configured URL or default to localhost:3000
+// API base URL - when not set, use Next.js proxy to avoid 404 on same-origin
+// Set NEXT_PUBLIC_API_BASE_URL to your backend URL (e.g. Railway) for direct calls
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (typeof window !== "undefined"
-    ? "" // Use relative paths when served from same origin
-    : "http://localhost:3000"); // SSR fallback
+  "/api/proxy";
 
 // Types for registration
 export interface OrganizationRegistrationRequest {

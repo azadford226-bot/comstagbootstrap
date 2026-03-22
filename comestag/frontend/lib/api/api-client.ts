@@ -7,14 +7,10 @@ import {
   removeRefreshToken,
 } from "../secure-storage";
 
-// API base URL - use relative path when served from same origin as backend
-// When frontend and backend are on the same port, use empty string for relative paths
-// Otherwise use the configured URL or default to localhost:3000
+// API base URL - when not set, use Next.js proxy to avoid 404 on same-origin
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (typeof window !== "undefined"
-    ? "" // Use relative paths when served from same origin
-    : "http://localhost:3000"); // SSR fallback
+  "/api/proxy";
 
 // Track if we're currently refreshing to avoid multiple refresh attempts
 let isRefreshing = false;
