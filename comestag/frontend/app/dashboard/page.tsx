@@ -4,78 +4,14 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign } from "lucide-react";
+import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search } from "lucide-react";
 import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getPosts, Post } from "@/lib/api/posts";
 import { listRfqs, Rfq } from "@/lib/api/rfq";
 import { PostsFeed } from "@/components/ui/posts-feed";
-import { mockApiResponse, mockApiListResponse, mockProfile, mockPosts } from "@/lib/dev-mock-api";
+import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { getMediaUrl } from "@/lib/api/media";
 import Button from "@/components/atoms/button";
-
-// Mock RFQs for dev mode
-const mockRfqs: Rfq[] = [
-  {
-    id: "rfq-1",
-    organizationId: "org-other-1",
-    title: "E-commerce Platform Development",
-    description: "Looking for an experienced team to develop a modern e-commerce platform with payment integration and inventory management.",
-    category: "Software Development",
-    industryId: 1,
-    budget: 50000,
-    budgetCurrency: "USD",
-    deadline: "2025-02-15T00:00:00Z",
-    requirements: "5+ years experience, React/Node.js stack, payment gateway integration",
-    status: "OPEN",
-    visibility: "PUBLIC",
-    awardedToId: null,
-    createdAt: "2025-01-15T10:00:00Z",
-    updatedAt: "2025-01-15T10:00:00Z",
-    proposalCount: 3,
-    hasSubmitted: false,
-    isOwner: false,
-  },
-  {
-    id: "rfq-2",
-    organizationId: "org-other-2",
-    title: "Cloud Migration Services",
-    description: "Need assistance migrating our infrastructure to AWS. Looking for certified cloud architects.",
-    category: "Cloud Services",
-    industryId: 1,
-    budget: 75000,
-    budgetCurrency: "USD",
-    deadline: "2025-03-01T00:00:00Z",
-    requirements: "AWS certification required, experience with large-scale migrations",
-    status: "OPEN",
-    visibility: "PUBLIC",
-    awardedToId: null,
-    createdAt: "2025-01-10T14:30:00Z",
-    updatedAt: "2025-01-10T14:30:00Z",
-    proposalCount: 5,
-    hasSubmitted: false,
-    isOwner: false,
-  },
-  {
-    id: "rfq-3",
-    organizationId: "org-other-3",
-    title: "Mobile App Development",
-    description: "Seeking a team to build a cross-platform mobile application for iOS and Android.",
-    category: "Software Development",
-    industryId: 1,
-    budget: 40000,
-    budgetCurrency: "USD",
-    deadline: "2025-02-28T00:00:00Z",
-    requirements: "React Native or Flutter experience, published apps in portfolio",
-    status: "OPEN",
-    visibility: "PUBLIC",
-    awardedToId: null,
-    createdAt: "2025-01-12T09:00:00Z",
-    updatedAt: "2025-01-12T09:00:00Z",
-    proposalCount: 2,
-    hasSubmitted: false,
-    isOwner: false,
-  },
-];
 
 export default function DashboardPage() {
   const { user } = useAuth(true);
@@ -83,6 +19,8 @@ export default function DashboardPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [rfqs, setRfqs] = useState<Rfq[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [feedSearch, setFeedSearch] = useState("");
+  const [feedTab, setFeedTab] = useState<"all" | "latest" | "trending">("all");
 
   useEffect(() => {
     loadDashboardData();
@@ -92,38 +30,20 @@ export default function DashboardPage() {
     try {
       setIsLoading(true);
 
-      // Load profile
-      const profileRes = await mockApiResponse(() => getProfile(), mockProfile);
+      const [profileRes, postsRes, rfqsRes] = await Promise.all([
+        getProfile(),
+        getPosts(),
+        listRfqs({ filter: "available", page: 0, size: 10 }),
+      ]);
+
       if (profileRes.success && profileRes.data && isOrganizationProfile(profileRes.data)) {
         setProfile(profileRes.data);
       }
 
-      // Load posts (all posts, not just mine)
-      const postsRes = await mockApiResponse(
-        () => getPosts(),
-        {
-          items: mockPosts,
-          totalItems: mockPosts.length,
-          totalPages: 1,
-          page: 1,
-          size: mockPosts.length,
-        } as { items: Post[]; totalItems: number; totalPages: number; page: number; size: number }
-      );
       if (postsRes.success && postsRes.data && "items" in postsRes.data) {
         setPosts(postsRes.data.items || []);
       }
 
-      // Load RFQs (available opportunities)
-      const rfqsRes = await mockApiResponse(
-        () => listRfqs({ filter: "available", page: 0, size: 10 }),
-        {
-          content: mockRfqs,
-          totalElements: mockRfqs.length,
-          totalPages: 1,
-          size: 10,
-          number: 0,
-        } as { content: Rfq[]; totalElements: number; totalPages: number; size: number; number: number }
-      );
       if (rfqsRes.success && rfqsRes.data && "content" in rfqsRes.data) {
         setRfqs(rfqsRes.data.content || []);
       }
@@ -162,6 +82,22 @@ export default function DashboardPage() {
     return diffDays;
   };
 
+  const filteredPosts = posts
+    .filter((p) => {
+      if (!feedSearch.trim()) return true;
+      const q = feedSearch.toLowerCase();
+      return (
+        p.body?.toLowerCase().includes(q) ||
+        p.organizationName?.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      if (feedTab === "trending") {
+        return (b.reactionsCount ?? 0) - (a.reactionsCount ?? 0);
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -177,9 +113,7 @@ export default function DashboardPage() {
       {/* Main Content - Three Column Layout */}
       <div className="max-w-[1440px] w-full mx-auto px-4 sm:px-6 md:px-10 lg:px-[50px] py-6 md:py-[46px]">
         {isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
+          <DashboardSkeleton />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column - Company Profile Card */}
@@ -316,13 +250,38 @@ export default function DashboardPage() {
             </div>
 
             {/* Center Column - Posts Feed */}
-            <div className="lg:col-span-6 space-y-6">
+            <div className="lg:col-span-6 space-y-4">
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search posts..."
+                  value={feedSearch}
+                  onChange={(e) => setFeedSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg shadow-sm border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                />
+              </div>
+
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-primary-dark flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Recent Posts
-                  </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+                    {(["all", "latest", "trending"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setFeedTab(tab)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${
+                          feedTab === tab
+                            ? "bg-white text-primary shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        {tab === "trending" ? (
+                          <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />{tab}</span>
+                        ) : tab}
+                      </button>
+                    ))}
+                  </div>
                   <Link
                     href="/posts"
                     className="text-sm text-primary hover:text-primary-dark flex items-center gap-1"
@@ -332,12 +291,24 @@ export default function DashboardPage() {
                   </Link>
                 </div>
 
-                {posts.length > 0 ? (
-                  <PostsFeed posts={posts} showFullContent={false} />
+                {filteredPosts.length > 0 ? (
+                  <PostsFeed posts={filteredPosts} showFullContent={false} />
                 ) : (
-                  <div className="text-center py-12">
-                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600">No posts available yet</p>
+                  <div className="text-center py-12 px-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
+                      <FileText className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">No posts yet</h3>
+                    <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
+                      Your feed will light up once companies in your network start sharing updates.
+                    </p>
+                    <Link
+                      href="/rfq"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark"
+                    >
+                      Explore RFQs instead
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
                 )}
               </div>
@@ -422,14 +393,17 @@ export default function DashboardPage() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600 mb-4">No opportunities available</p>
+                  <div className="text-center py-8 px-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 mb-3">
+                      <Briefcase className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">No open opportunities</p>
+                    <p className="text-xs text-gray-500 mb-4">Post an RFQ to get proposals from the community.</p>
                     <Link
                       href="/rfq"
-                      className="inline-block text-sm text-primary hover:text-primary-dark font-medium"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
                     >
-                      Browse All RFQs
+                      Browse RFQs
                     </Link>
                   </div>
                 )}

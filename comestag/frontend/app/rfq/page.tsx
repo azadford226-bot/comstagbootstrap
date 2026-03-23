@@ -9,6 +9,7 @@ import {
   Calendar, Tag, Loader2, X, ChevronRight
 } from 'lucide-react'
 import { listRfqs, createRfq, type Rfq, type CreateRfqRequest } from '@/lib/api/rfq'
+import { RfqCardSkeleton } from '@/components/ui/skeleton'
 
 const CATEGORIES = [
   'Software Development',
@@ -227,8 +228,11 @@ export default function RFQPage() {
 
         {/* RFQ List */}
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          <div className="space-y-4">
+            <RfqCardSkeleton />
+            <RfqCardSkeleton />
+            <RfqCardSkeleton />
+            <RfqCardSkeleton />
           </div>
         ) : filteredRFQs.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">

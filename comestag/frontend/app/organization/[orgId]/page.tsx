@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Star, MapPin, Globe, Calendar } from "lucide-react";
+import { Star, MapPin, Globe, Calendar, UserPlus, UserCheck, Building2 } from "lucide-react";
 import Image from "next/image";
 import { getPublicProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getCapabilities, Capability } from "@/lib/api/capabilities";
@@ -22,6 +22,7 @@ import { PostsFeed } from "@/components/ui/posts-feed";
 import { logger } from "@/lib/logger";
 import Button from "@/components/atoms/button";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PublicOrganizationProfile() {
   const params = useParams();
@@ -35,6 +36,7 @@ export default function PublicOrganizationProfile() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [showTestimonialForm, setShowTestimonialForm] = useState(false);
+  const [following, setFollowing] = useState(false);
   const [hoveredCert, setHoveredCert] = useState<Certificate | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -104,8 +106,37 @@ export default function PublicOrganizationProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Skeleton className="h-64 w-full rounded-none" />
+        <div className="max-w-7xl mx-auto px-4 -mt-20 relative z-10">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <Skeleton className="w-32 h-32 rounded-full shrink-0" />
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-lg shadow p-6 space-y-3">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow p-6 space-y-3">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -222,13 +253,35 @@ export default function PublicOrganizationProfile() {
               )}
             </div>
 
-            <Button
-              onClick={() => setShowTestimonialForm(true)}
-              type="primary"
-              size="small"
-            >
-              Write a Review
-            </Button>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => setFollowing(!following)}
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  following
+                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-primary text-white hover:bg-primary-dark"
+                }`}
+              >
+                {following ? (
+                  <>
+                    <UserCheck className="w-4 h-4" />
+                    Following
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    Follow
+                  </>
+                )}
+              </button>
+              <Button
+                onClick={() => setShowTestimonialForm(true)}
+                type="primary"
+                size="small"
+              >
+                Write a Review
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -454,6 +507,27 @@ export default function PublicOrganizationProfile() {
                 </div>
               </div>
             )}
+
+            {/* Similar Companies - placeholder for discovery */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Similar Companies</h2>
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center shrink-0">
+                      <Building2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Skeleton className="h-4 w-28 mb-1" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-3 text-center">
+                Partner recommendations coming soon
+              </p>
+            </div>
 
             {/* Floating Certificate Detail Card */}
             {hoveredCert &&

@@ -5,9 +5,10 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, DollarSign, Clock, Users, Send, Eye,
-  CheckCircle, Building2, Calendar, Tag, Loader2,
+  CheckCircle, Building2, Calendar, Tag,
   AlertCircle, Globe, Lock, FileText, Shield
 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getRfq, type Rfq } from '@/lib/api/rfq'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
@@ -72,10 +73,32 @@ export default function RfqDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-3" />
-          <p className="text-gray-500">Loading RFQ details...</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+          <Skeleton className="h-5 w-32" />
+          <div className="bg-white rounded-xl p-6 space-y-4">
+            <Skeleton className="h-7 w-2/3" />
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl p-4 space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-28" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-xl p-6 space-y-3">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
         </div>
       </div>
     )

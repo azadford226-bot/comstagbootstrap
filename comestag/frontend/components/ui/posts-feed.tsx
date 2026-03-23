@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Edit2, Trash2, X, Save, Upload, Heart, MessageCircle, Send as SendIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Save, Upload, Heart, MessageCircle, Send as SendIcon, Bookmark, Share2 } from "lucide-react";
 import { getMediaUrl } from "@/lib/api/media";
 import { Post, formatPostDate, getPostExcerpt } from "@/lib/utils/posts";
 import {
@@ -358,6 +358,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.reactionsCount || 0);
+  const [bookmarked, setBookmarked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<PostComment[]>([]);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
@@ -487,23 +488,49 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {/* Reactions & Comments */}
       <div className="mt-3 pt-3 border-t border-gray-200">
-        <div className="flex items-center gap-6">
-          <button
-            onClick={handleLike}
-            className={`flex items-center gap-1.5 text-sm transition-colors ${
-              liked ? "text-red-500" : "text-gray-500 hover:text-red-500"
-            }`}
-          >
-            <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
-            <span>{likesCount > 0 ? likesCount : "Like"}</span>
-          </button>
-          <button
-            onClick={handleToggleComments}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>{commentsCount > 0 ? commentsCount : "Comment"}</span>
-          </button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-1.5 text-sm transition-colors ${
+                liked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
+              <span>{likesCount > 0 ? likesCount : "Like"}</span>
+            </button>
+            <button
+              onClick={handleToggleComments}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>{commentsCount > 0 ? commentsCount : "Comment"}</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setBookmarked(!bookmarked)}
+              className={`p-1.5 rounded-md transition-colors ${
+                bookmarked ? "text-blue-600" : "text-gray-400 hover:text-blue-600"
+              }`}
+              title={bookmarked ? "Remove bookmark" : "Bookmark this post"}
+            >
+              <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-current" : ""}`} />
+            </button>
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: post.body?.slice(0, 60), url: window.location.href });
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                }
+              }}
+              className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 transition-colors"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {showComments && (
