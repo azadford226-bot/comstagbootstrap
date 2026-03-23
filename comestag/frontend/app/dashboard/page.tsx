@@ -182,51 +182,87 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column - Company Information */}
+            {/* Left Column - Company Profile Card */}
             <div className="lg:col-span-3 space-y-6">
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-                <h2 className="text-xl font-semibold text-primary-dark mb-4 flex items-center gap-2">
-                  <Building2 className="w-5 h-5" />
-                  Company Info
-                </h2>
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-6">
+                {/* Cover / Banner */}
+                <div className="h-20 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 relative">
+                  {profile?.coverImage && (
+                    <Image
+                      src={profile.coverImage}
+                      alt="Cover"
+                      fill
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+
+                {/* Profile Photo */}
+                <div className="px-4 -mt-12 relative z-10">
+                  {profile?.profileImage ? (
+                    <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden">
+                      <Image
+                        src={profile.profileImage}
+                        alt={profile.displayName}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-full border-4 border-white shadow-md bg-primary flex items-center justify-center">
+                      <span className="text-3xl text-white font-bold">
+                        {profile?.displayName?.charAt(0)?.toUpperCase() || "C"}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 {profile && (
-                  <div className="space-y-4">
-                    {/* Company Logo/Image */}
-                    {profile.profileImage && (
-                      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-4">
-                        <Image
-                          src={profile.profileImage}
-                          alt={profile.displayName}
-                          fill
-                          className="object-cover"
-                        />
+                  <div className="px-4 pt-3 pb-5">
+                    {/* Name + Verified Badge */}
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-bold text-lg text-gray-900 leading-tight truncate">
+                        {profile.displayName}
+                      </h3>
+                      <svg className="w-5 h-5 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                      </svg>
+                    </div>
+
+                    {/* Industry / Title */}
+                    {(profile.industry || profile.whoWeAre) && (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        {profile.industry?.name}
+                        {profile.industry && profile.whoWeAre && " · "}
+                        {profile.whoWeAre}
+                      </p>
+                    )}
+
+                    {/* Location */}
+                    {(profile.city || profile.state || profile.country) && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {[profile.city, profile.state, profile.country]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
+
+                    {/* Company badge */}
+                    {profile.size && (
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <Building2 className="w-4 h-4 text-gray-500" />
+                        <span className="text-xs text-gray-600 font-medium">
+                          {profile.size} employees
+                        </span>
                       </div>
                     )}
 
-                    {/* Company Name */}
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900">{profile.displayName}</h3>
-                      {profile.industry && (
-                        <p className="text-sm text-gray-600 mt-1">{profile.industry.name}</p>
-                      )}
-                    </div>
-
-                    {/* Company Details */}
-                    <div className="space-y-2 text-sm">
-                      {(profile.city || profile.state || profile.country) && (
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>
-                            {[profile.city, profile.state, profile.country]
-                              .filter(Boolean)
-                              .join(", ")}
-                          </span>
-                        </div>
-                      )}
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 mt-4 pt-4">
+                      {/* Website */}
                       {profile.website && (
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Globe className="w-4 h-4" />
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                          <Globe className="w-4 h-4 flex-shrink-0" />
                           <a
                             href={profile.website}
                             target="_blank"
@@ -238,35 +274,29 @@ export default function DashboardPage() {
                         </div>
                       )}
                       {profile.established && (
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="w-4 h-4" />
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 flex-shrink-0" />
                           <span>Est. {new Date(profile.established).getFullYear()}</span>
-                        </div>
-                      )}
-                      {profile.size && (
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Users className="w-4 h-4" />
-                          <span>{profile.size} employees</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Quick Stats */}
-                    <div className="pt-4 border-t border-gray-200">
+                    {/* Stats */}
+                    <div className="border-t border-gray-100 mt-4 pt-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-primary">{posts.length}</div>
-                          <div className="text-xs text-gray-600">Posts</div>
+                          <div className="text-xs text-gray-500">Posts</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-primary">{rfqs.length}</div>
-                          <div className="text-xs text-gray-600">Opportunities</div>
+                          <div className="text-xs text-gray-500">Opportunities</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className="pt-4 border-t border-gray-200 space-y-2">
+                    {/* Actions */}
+                    <div className="mt-4 space-y-2">
                       <Link
                         href="/profile"
                         className="block w-full text-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
@@ -275,7 +305,7 @@ export default function DashboardPage() {
                       </Link>
                       <Link
                         href="/profile/edit"
-                        className="block w-full text-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary-light transition-colors text-sm font-medium"
+                        className="block w-full text-center px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                       >
                         Edit Profile
                       </Link>
