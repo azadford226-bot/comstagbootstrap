@@ -62,3 +62,44 @@ export async function getBookmarks(
     totalPages: number;
   }>(`/v1/bookmarks?${params}`);
 }
+
+// ─── Reviews ─────────────────────────────────────────────
+export interface Review {
+  id: string;
+  reviewerId: string;
+  reviewedOrgId: string;
+  rating: number;
+  title: string;
+  body: string;
+  engagementType: string;
+  createdAt: string;
+}
+
+export interface ReviewSummary {
+  averageRating: number;
+  totalReviews: number;
+}
+
+export interface ReviewsData {
+  reviews: Review[];
+  averageRating: number;
+  totalReviews: number;
+}
+
+export function createReview(data: {
+  reviewedOrgId: string;
+  rating: number;
+  title?: string;
+  body?: string;
+  engagementType?: string;
+}) {
+  return authenticatedPost<Review>("/v1/reviews", data);
+}
+
+export function getOrgReviews(orgId: string) {
+  return authenticatedGet<ReviewsData>(`/v1/reviews/org/${orgId}`);
+}
+
+export function getOrgReviewSummary(orgId: string) {
+  return authenticatedGet<ReviewSummary>(`/v1/reviews/org/${orgId}/summary`);
+}

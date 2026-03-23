@@ -515,6 +515,40 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* Recommended Partners */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-sm font-semibold text-primary-dark flex items-center gap-2 mb-4">
+                  <Users className="w-4 h-4 text-primary" />
+                  Recommended Partners
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { name: "TechVentures Inc.", type: "Enterprise", match: 92, industry: "Cloud Services" },
+                    { name: "DataFlow Systems", type: "Vendor", match: 87, industry: "Data Analytics" },
+                    { name: "InnovateLab", type: "Startup", match: 81, industry: "AI/ML" },
+                  ].map((partner) => (
+                    <div
+                      key={partner.name}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/20 hover:bg-blue-50/30 transition-colors cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{partner.name}</div>
+                        <div className="text-xs text-gray-500">{partner.industry} &middot; {partner.type}</div>
+                      </div>
+                      <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0">
+                        {partner.match}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/rfq" className="flex items-center justify-center gap-1 text-xs text-primary font-medium mt-3 hover:underline">
+                  Discover more partners <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+
               {/* Analytics Quick Link */}
               <Link
                 href="/analytics"

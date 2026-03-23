@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, DollarSign, Clock, Users, CheckCircle, XCircle,
-  Award, Loader2, AlertCircle, FileText, Star
+  Award, Loader2, AlertCircle, FileText, Star, LayoutGrid, Table2
 } from 'lucide-react'
 import {
   getRfq, listProposals, awardRfq,
@@ -47,6 +47,7 @@ export default function RfqProposalsPage() {
   const [awardSuccess, setAwardSuccess] = useState(false)
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [viewMode, setViewMode] = useState<'cards' | 'compare'>('cards')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -172,12 +173,126 @@ export default function RfqProposalsPage() {
           )}
         </div>
 
+        {/* View Toggle */}
+        {proposals.length > 1 && (
+          <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-0.5 w-fit">
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'cards' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Cards
+            </button>
+            <button
+              onClick={() => setViewMode('compare')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'compare' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Table2 className="w-3.5 h-3.5" />
+              Compare
+            </button>
+          </div>
+        )}
+
         {/* Proposals */}
         {proposals.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No proposals yet</h3>
             <p className="text-gray-500">When suppliers submit proposals, they will appear here.</p>
+          </div>
+        ) : viewMode === 'compare' && proposals.length > 1 ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left p-4 font-semibold text-gray-700 min-w-[120px]">Criteria</th>
+                  {proposals.map((p, idx) => (
+                    <th key={p.id} className={`text-center p-4 font-semibold min-w-[180px] ${
+                      rfq.awardedToId === p.organizationId ? 'bg-green-50 text-green-800' : 'text-gray-700'
+                    }`}>
+                      Proposal #{idx + 1}
+                      {rfq.awardedToId === p.organizationId && (
+                        <span className="ml-1 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Awarded</span>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr>
+                  <td className="p-4 font-medium text-gray-700">Price</td>
+                  {proposals.map((p) => {
+                    const lowest = Math.min(...proposals.map(pr => pr.price));
+                    return (
+                      <td key={p.id} className={`p-4 text-center font-semibold ${
+                        p.price === lowest ? 'text-green-700' : 'text-gray-900'
+                      }`}>
+                        {formatCurrency(p.price, p.currency)}
+                        {p.price === lowest && <span className="block text-[10px] text-green-600 font-normal">Lowest</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-gray-700">Delivery Time</td>
+                  {proposals.map((p) => (
+                    <td key={p.id} className="p-4 text-center text-gray-600">
+                      {p.deliveryTime || 'Not specified'}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-gray-700">Status</td>
+                  {proposals.map((p) => {
+                    const badge = STATUS_BADGE[p.status] || STATUS_BADGE.SUBMITTED;
+                    return (
+                      <td key={p.id} className="p-4 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-gray-700">Submitted</td>
+                  {proposals.map((p) => (
+                    <td key={p.id} className="p-4 text-center text-gray-500 text-xs">
+                      {formatDate(p.submittedAt)}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-gray-700 align-top">Proposal</td>
+                  {proposals.map((p) => (
+                    <td key={p.id} className="p-4 text-xs text-gray-600 max-w-[200px]">
+                      <p className="line-clamp-4">{p.proposalText}</p>
+                    </td>
+                  ))}
+                </tr>
+                {isOpen && !isAwarded && (
+                  <tr>
+                    <td className="p-4 font-medium text-gray-700">Action</td>
+                    {proposals.map((p) => (
+                      <td key={p.id} className="p-4 text-center">
+                        <button
+                          onClick={() => handleAward(p.organizationId)}
+                          disabled={awarding === p.organizationId}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          <Award className="h-3 w-3" />
+                          Award
+                        </button>
+                      </td>
+                    ))}
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="space-y-4">

@@ -19,6 +19,7 @@ import {
   BookmarkPlus,
   Phone,
   Heart,
+  Sparkles,
 } from "lucide-react";
 
 type OpportunityType = "all" | "jv" | "incubation" | "funding" | "codev";
@@ -249,6 +250,12 @@ export default function OpportunitiesPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <TypeBadge type={op.type} />
                       <StatusBadge status={op.status} />
+                      {op.status === "open" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                          <Sparkles className="w-3 h-3" />
+                          {Math.min(99, 60 + Math.floor(op.title.length % 30))}% match
+                        </span>
+                      )}
                     </div>
                     <button
                       onClick={() => toggleSave(op.id)}

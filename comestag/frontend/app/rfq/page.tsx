@@ -10,8 +10,9 @@ import {
 } from 'lucide-react'
 import { listRfqs, createRfq, type Rfq, type CreateRfqRequest } from '@/lib/api/rfq'
 import { RfqCardSkeleton } from '@/components/ui/skeleton'
-import { Upload, Paperclip } from 'lucide-react'
+import { Upload, Paperclip, Sparkles } from 'lucide-react'
 import { uploadPostMedia } from '@/lib/api/media'
+import { getProfile, isOrganizationProfile, OrganizationProfile } from '@/lib/api/profile'
 
 const CATEGORIES = [
   'Software Development',
@@ -40,6 +41,7 @@ export default function RFQPage() {
   const router = useRouter()
   const [rfqs, setRfqs] = useState<Rfq[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [userProfile, setUserProfile] = useState<OrganizationProfile | null>(null)
   const [filter, setFilter] = useState<'all' | 'mine' | 'available'>('all')
   const [statusFilter, setStatusFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -85,8 +87,12 @@ export default function RFQPage() {
   }, [filter, statusFilter])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRFQs()
+    getProfile().then((res) => {
+      if (res.success && res.data && isOrganizationProfile(res.data)) {
+        setUserProfile(res.data);
+      }
+    }).catch(() => {});
   }, [fetchRFQs])
 
   const handleCreate = async () => {
@@ -135,6 +141,23 @@ export default function RFQPage() {
     }
     setIsCreating(false)
   }
+
+  const computeMatchScore = (rfq: Rfq): number => {
+    if (rfq.isOwner) return 0;
+    let score = 50;
+    if (userProfile?.industry?.name && rfq.category) {
+      const ind = userProfile.industry.name.toLowerCase();
+      const cat = rfq.category.toLowerCase();
+      if (ind.includes(cat) || cat.includes(ind)) score += 25;
+    }
+    if (rfq.deadline) {
+      const daysLeft = Math.max(0, (new Date(rfq.deadline).getTime() - Date.now()) / 86400000);
+      if (daysLeft > 0 && daysLeft < 14) score += 15;
+      else if (daysLeft >= 14 && daysLeft < 60) score += 10;
+    }
+    if (rfq.status === "OPEN") score += 10;
+    return Math.min(99, score);
+  };
 
   const filteredRFQs = rfqs.filter(rfq =>
     rfq.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -324,6 +347,19 @@ export default function RFQPage() {
                           Proposal Sent
                         </span>
                       )}
+                      {!rfq.isOwner && rfq.status === "OPEN" && (() => {
+                        const score = computeMatchScore(rfq);
+                        return score >= 60 ? (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            score >= 80 ? "bg-green-100 text-green-700" :
+                            score >= 60 ? "bg-amber-100 text-amber-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>
+                            <Sparkles className="w-3 h-3" />
+                            {score}% match
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{rfq.title}</h3>
                     <p className="text-gray-600 text-sm line-clamp-2 mb-4">{rfq.description}</p>

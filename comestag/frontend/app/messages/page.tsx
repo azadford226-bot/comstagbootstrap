@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X } from "lucide-react";
 import Image from "next/image";
 import {
   getConversations,
@@ -26,6 +26,9 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [meetingDate, setMeetingDate] = useState("");
+  const [meetingTime, setMeetingTime] = useState("10:00");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageStreamAbortController = useRef<AbortController | null>(null);
@@ -460,7 +463,8 @@ export default function MessagesPage() {
                 </button>
                 <button
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  title="Video call"
+                  title="Schedule meeting"
+                  onClick={() => setShowScheduler(true)}
                 >
                   <Video className="w-5 h-5 text-gray-600" />
                 </button>
@@ -632,6 +636,76 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Meeting Scheduler Modal */}
+      {showScheduler && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                Schedule a Meeting
+              </h2>
+              <button onClick={() => setShowScheduler(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={meetingDate}
+                  onChange={(e) => setMeetingDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                <input
+                  type="time"
+                  value={meetingTime}
+                  onChange={(e) => setMeetingTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Google Meet", "Zoom", "Teams"].map((platform) => (
+                    <button
+                      key={platform}
+                      type="button"
+                      className="px-3 py-2 text-xs border border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors font-medium"
+                    >
+                      {platform}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  if (meetingDate && selectedConversation) {
+                    const meetingMsg = `[Meeting Scheduled] ${meetingDate} at ${meetingTime}`;
+                    await handleSendMessage(undefined, meetingMsg);
+                    setShowScheduler(false);
+                    setMeetingDate("");
+                    setMeetingTime("10:00");
+                  }
+                }}
+                disabled={!meetingDate}
+                className="w-full px-4 py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark disabled:opacity-50 transition-colors"
+              >
+                Send Meeting Invite
+              </button>
+              <p className="text-xs text-gray-400 text-center">
+                A meeting link will be generated and sent in the conversation
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

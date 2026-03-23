@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, DollarSign, Clock, Users, Send, Eye,
   CheckCircle, Building2, Calendar, Tag,
-  AlertCircle, Globe, Lock, FileText, Shield
+  AlertCircle, Globe, Lock, FileText, Shield, MessageCircle
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getRfq, type Rfq } from '@/lib/api/rfq'
@@ -301,6 +301,17 @@ export default function RfqDetailPage() {
                     <Lock className="h-4 w-4" />
                     {rfq.status === 'AWARDED' ? 'RFQ has been awarded' : 'RFQ is closed'}
                   </div>
+                )}
+
+                {/* Thread-based discussion link */}
+                {rfq.status === 'OPEN' && (
+                  <Link
+                    href={`/messages?rfq=${rfq.id}&subject=${encodeURIComponent(`RFQ: ${rfq.title}`)}`}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Start RFQ Discussion
+                  </Link>
                 )}
               </div>
             </div>

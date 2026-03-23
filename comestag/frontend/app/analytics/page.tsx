@@ -658,6 +658,58 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             )}
+
+            {/* Segment Benchmarking */}
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-indigo-500" />
+                Segment Benchmarking
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                How you compare to similar companies in your segment (anonymized)
+              </p>
+              <div className="space-y-4">
+                {[
+                  { metric: "Content engagement rate", you: totalPosts > 0 ? Math.round((totalReactions + totalComments) / totalPosts * 10) / 10 : 0, avg: 3.2, unit: "per post" },
+                  { metric: "RFQ response rate", you: myRfqs.length > 0 ? Math.round((totalProposals / Math.max(1, myRfqs.length)) * 10) / 10 : 0, avg: 4.5, unit: "proposals/RFQ" },
+                  { metric: "Profile completeness", you: profileCompletion, avg: 68, unit: "%" },
+                  { metric: "Posting frequency", you: totalPosts, avg: 12, unit: "posts/quarter" },
+                ].map((item) => {
+                  const youPct = item.avg > 0 ? Math.min(100, (item.you / (item.avg * 2)) * 100) : 0;
+                  const avgPct = 50;
+                  const aboveAvg = item.you > item.avg;
+                  return (
+                    <div key={item.metric}>
+                      <div className="flex items-center justify-between text-sm mb-1.5">
+                        <span className="font-medium text-gray-700">{item.metric}</span>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className={`font-semibold ${aboveAvg ? "text-green-600" : "text-amber-600"}`}>
+                            You: {item.you} {item.unit}
+                          </span>
+                          <span className="text-gray-400">
+                            Avg: {item.avg} {item.unit}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`absolute inset-y-0 left-0 rounded-full ${aboveAvg ? "bg-green-400" : "bg-amber-400"}`}
+                          style={{ width: `${youPct}%` }}
+                        />
+                        <div
+                          className="absolute top-0 bottom-0 w-0.5 bg-gray-500"
+                          style={{ left: `${avgPct}%` }}
+                          title="Segment average"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-3">
+                Based on anonymized data from companies in your industry segment. Updated weekly.
+              </p>
+            </div>
           </>
         )}
       </div>

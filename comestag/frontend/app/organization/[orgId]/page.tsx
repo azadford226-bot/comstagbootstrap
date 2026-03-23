@@ -23,7 +23,7 @@ import { logger } from "@/lib/logger";
 import Button from "@/components/atoms/button";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { followUser, unfollowUser, getFollowStatus, getFollowCounts } from "@/lib/api/social";
+import { followUser, unfollowUser, getFollowStatus, getFollowCounts, getOrgReviews, createReview, type Review, type ReviewsData } from "@/lib/api/social";
 
 export default function PublicOrganizationProfile() {
   const params = useParams();
@@ -41,6 +41,12 @@ export default function PublicOrganizationProfile() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, title: "", body: "", engagementType: "RFQ" });
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [hoveredCert, setHoveredCert] = useState<Certificate | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -110,6 +116,17 @@ export default function PublicOrganizationProfile() {
         }
       } catch {
         // Follow status is non-critical
+      }
+
+      try {
+        const reviewsRes = await getOrgReviews(_orgId);
+        if (reviewsRes.success && reviewsRes.data) {
+          setReviews(reviewsRes.data.reviews || []);
+          setAvgRating(reviewsRes.data.averageRating || 0);
+          setReviewCount(reviewsRes.data.totalReviews || 0);
+        }
+      } catch {
+        // Reviews are non-critical
       }
     } catch (error) {
       logger.error("Failed to load public profile", error);
@@ -356,6 +373,161 @@ export default function PublicOrganizationProfile() {
                 <PostsFeed posts={getLatestPosts(posts, 3)} maxPosts={3} />
               </div>
             )}
+
+            {/* Partner Reviews */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-500" />
+                  Partner Reviews
+                </h2>
+                <button
+                  onClick={() => setShowReviewForm(!showReviewForm)}
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  {showReviewForm ? "Cancel" : "Write a Review"}
+                </button>
+              </div>
+
+              {/* Rating Summary */}
+              <div className="flex items-center gap-4 mb-4 p-4 bg-amber-50 rounded-lg">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-amber-700">{avgRating.toFixed(1)}</div>
+                  <div className="flex gap-0.5 mt-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`w-4 h-4 ${s <= Math.round(avgRating) ? "text-amber-500 fill-current" : "text-gray-300"}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-amber-600 mt-1">{reviewCount} review{reviewCount !== 1 ? "s" : ""}</div>
+                </div>
+                <div className="flex-1 space-y-1">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = reviews.filter((r) => r.rating === star).length;
+                    const pct = reviewCount > 0 ? (count / reviewCount) * 100 : 0;
+                    return (
+                      <div key={star} className="flex items-center gap-2 text-xs">
+                        <span className="w-3 text-right text-gray-500">{star}</span>
+                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="w-6 text-right text-gray-400">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Review Form */}
+              {showReviewForm && (
+                <div className="mb-6 p-4 border border-gray-200 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">Rating:</span>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setReviewForm({ ...reviewForm, rating: s })}
+                      >
+                        <Star
+                          className={`w-6 h-6 cursor-pointer transition-colors ${
+                            s <= reviewForm.rating ? "text-amber-500 fill-current" : "text-gray-300 hover:text-amber-300"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <select
+                    value={reviewForm.engagementType}
+                    onChange={(e) => setReviewForm({ ...reviewForm, engagementType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  >
+                    <option value="RFQ">RFQ Engagement</option>
+                    <option value="JV">Joint Venture</option>
+                    <option value="PROJECT">Project Collaboration</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Review title"
+                    value={reviewForm.title}
+                    onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                  <textarea
+                    placeholder="Share your experience working with this company..."
+                    value={reviewForm.body}
+                    onChange={(e) => setReviewForm({ ...reviewForm, body: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!reviewForm.body.trim()) return;
+                      setSubmittingReview(true);
+                      try {
+                        await createReview({
+                          reviewedOrgId: _orgId,
+                          rating: reviewForm.rating,
+                          title: reviewForm.title,
+                          body: reviewForm.body,
+                          engagementType: reviewForm.engagementType,
+                        });
+                        const res = await getOrgReviews(_orgId);
+                        if (res.success && res.data) {
+                          setReviews(res.data.reviews || []);
+                          setAvgRating(res.data.averageRating || 0);
+                          setReviewCount(res.data.totalReviews || 0);
+                        }
+                        setShowReviewForm(false);
+                        setReviewForm({ rating: 5, title: "", body: "", engagementType: "RFQ" });
+                      } catch { /* ignore */ }
+                      setSubmittingReview(false);
+                    }}
+                    disabled={submittingReview || !reviewForm.body.trim()}
+                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
+                  >
+                    {submittingReview ? "Submitting..." : "Submit Review"}
+                  </button>
+                </div>
+              )}
+
+              {/* Review List */}
+              {reviews.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No reviews yet. Be the first to share your experience!</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.slice(0, 5).map((review) => (
+                    <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`w-3.5 h-3.5 ${s <= review.rating ? "text-amber-500 fill-current" : "text-gray-300"}`}
+                            />
+                          ))}
+                        </div>
+                        {review.engagementType && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                            {review.engagementType}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-400 ml-auto">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {review.title && (
+                        <h4 className="text-sm font-medium text-gray-900">{review.title}</h4>
+                      )}
+                      <p className="text-sm text-gray-600 mt-1">{review.body}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Activity Timeline */}
             <div className="bg-white rounded-lg shadow p-6">
