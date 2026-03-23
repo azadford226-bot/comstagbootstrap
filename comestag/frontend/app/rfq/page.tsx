@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   FileText, Plus, ArrowLeft, Search, Clock, DollarSign,
   Users, CheckCircle, XCircle, Eye, Send, Building2, BadgeCheck,
@@ -33,6 +34,7 @@ const INDUSTRIES = [
 ]
 
 export default function RFQPage() {
+  const router = useRouter()
   const [rfqs, setRfqs] = useState<Rfq[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'mine' | 'available'>('all')
@@ -40,7 +42,6 @@ export default function RFQPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [selectedRFQ, setSelectedRFQ] = useState<Rfq | null>(null)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -251,7 +252,7 @@ export default function RFQPage() {
               <div
                 key={rfq.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:border-primary-200 transition-colors cursor-pointer"
-                onClick={() => setSelectedRFQ(rfq)}
+                onClick={() => router.push(`/rfq/${rfq.id}`)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -471,105 +472,6 @@ export default function RFQPage() {
         </div>
       )}
 
-      {/* RFQ Detail Modal */}
-      {selectedRFQ && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(selectedRFQ.status)}`}>
-                      {selectedRFQ.status}
-                    </span>
-                    {selectedRFQ.category && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
-                        {selectedRFQ.category}
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedRFQ.title}</h2>
-                </div>
-                <button
-                  onClick={() => setSelectedRFQ(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Details */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg text-center">
-                  <DollarSign className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Budget</p>
-                  <p className="font-semibold">{formatCurrency(selectedRFQ.budget, selectedRFQ.budgetCurrency)}</p>
-                </div>
-                <div className="p-4 border rounded-lg text-center">
-                  <Clock className="h-6 w-6 text-amber-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Deadline</p>
-                  <p className="font-semibold">
-                    {selectedRFQ.deadline
-                      ? new Date(selectedRFQ.deadline).toLocaleDateString()
-                      : 'Open'}
-                  </p>
-                </div>
-                <div className="p-4 border rounded-lg text-center">
-                  <Users className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Proposals</p>
-                  <p className="font-semibold">{selectedRFQ.proposalCount}</p>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-600 whitespace-pre-wrap">{selectedRFQ.description}</p>
-              </div>
-
-              {selectedRFQ.requirements && (
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Requirements</h3>
-                  <p className="text-gray-600 whitespace-pre-wrap">{selectedRFQ.requirements}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedRFQ(null)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                Close
-              </button>
-              {selectedRFQ.isOwner ? (
-                <Link
-                  href={`/rfq/${selectedRFQ.id}/proposals`}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2"
-                >
-                  <Eye className="h-4 w-4" />
-                  View Proposals
-                </Link>
-              ) : selectedRFQ.status === 'OPEN' && !selectedRFQ.hasSubmitted ? (
-                <Link
-                  href={`/rfq/${selectedRFQ.id}/submit`}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2"
-                >
-                  <Send className="h-4 w-4" />
-                  Submit Proposal
-                </Link>
-              ) : selectedRFQ.hasSubmitted ? (
-                <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Proposal Submitted
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

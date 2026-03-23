@@ -97,6 +97,16 @@ export const MEDIA_ENDPOINTS = {
     `/v1/profile/cover?mediaId=${mediaId}`,
 } as const;
 
+// Notification endpoints
+export const NOTIFICATION_ENDPOINTS = {
+  BASE: "/v1/notifications",
+  UNREAD_COUNT: "/v1/notifications/unread-count",
+  MARK_READ: (id: string) => `/v1/notifications/${id}/read`,
+  MARK_ALL_READ: "/v1/notifications/read-all",
+  STREAM: "/v1/notifications/stream",
+  SETTINGS: "/v1/notifications/settings",
+} as const;
+
 // Contact endpoints
 export const CONTACT_ENDPOINTS = {
   SUBMIT: "/v1/contact",
@@ -127,6 +137,7 @@ export const API_ENDPOINTS = {
   EVENT: EVENT_ENDPOINTS,
   POST: POST_ENDPOINTS,
   MEDIA: MEDIA_ENDPOINTS,
+  NOTIFICATION: NOTIFICATION_ENDPOINTS,
 } as const;
 
 export default API_ENDPOINTS;

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Star, MapPin, Globe, Calendar } from "lucide-react";
 import Image from "next/image";
-import { getOrganizationProfile, OrganizationProfile } from "@/lib/api/profile";
+import { getPublicProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getCapabilities, Capability } from "@/lib/api/capabilities";
 import {
   getCertificates,
@@ -22,15 +22,6 @@ import { PostsFeed } from "@/components/ui/posts-feed";
 import { logger } from "@/lib/logger";
 import Button from "@/components/atoms/button";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
-import {
-  mockApiResponse,
-  mockProfile,
-  mockCapabilities,
-  mockCertificates,
-  mockSuccessStories,
-  mockTestimonials,
-  mockPosts,
-} from "@/lib/dev-mock-api";
 
 export default function PublicOrganizationProfile() {
   const params = useParams();
@@ -57,7 +48,6 @@ export default function PublicOrganizationProfile() {
     try {
       setIsLoading(true);
 
-      // Fetch all public data for this organization
       const [
         profileRes,
         capabilitiesRes,
@@ -66,46 +56,18 @@ export default function PublicOrganizationProfile() {
         postsRes,
         testimonialsRes,
       ] = await Promise.all([
-        mockApiResponse(getOrganizationProfile, mockProfile),
-        mockApiResponse(getCapabilities, {
-          items: mockCapabilities,
-          totalItems: mockCapabilities.length,
-          totalPages: 1,
-          page: 1,
-          size: mockCapabilities.length,
-        }),
-        mockApiResponse(getCertificates, {
-          items: mockCertificates,
-          totalItems: mockCertificates.length,
-          totalPages: 1,
-          page: 1,
-          size: mockCertificates.length,
-        }),
-        mockApiResponse(getSuccessStories, {
-          items: mockSuccessStories,
-          totalItems: mockSuccessStories.length,
-          totalPages: 1,
-          page: 1,
-          size: mockSuccessStories.length,
-        }),
-        mockApiResponse(getPosts, {
-          items: mockPosts,
-          totalItems: mockPosts.length,
-          totalPages: 1,
-          page: 1,
-          size: mockPosts.length,
-        }),
-        mockApiResponse(getTestimonials, {
-          items: mockTestimonials,
-          totalItems: mockTestimonials.length,
-          totalPages: 1,
-          page: 1,
-          size: mockTestimonials.length,
-        }),
+        getPublicProfile(_orgId),
+        getCapabilities(_orgId),
+        getCertificates(_orgId),
+        getSuccessStories(_orgId),
+        getPosts(_orgId),
+        getTestimonials(_orgId),
       ]);
 
-      if (profileRes.success && profileRes.data) {
+      if (profileRes.success && profileRes.data && isOrganizationProfile(profileRes.data)) {
         setProfile(profileRes.data);
+      } else if (profileRes.success && profileRes.data) {
+        setProfile(profileRes.data as OrganizationProfile);
       }
 
       if (capabilitiesRes.success && capabilitiesRes.data) {

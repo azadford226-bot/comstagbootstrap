@@ -1,12 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Edit2, Trash2, X, Save, Upload } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Save, Upload, Heart, MessageCircle, Send as SendIcon } from "lucide-react";
 import { getMediaUrl } from "@/lib/api/media";
 import { Post, formatPostDate, getPostExcerpt } from "@/lib/utils/posts";
-import { createPost, updatePost, deletePost } from "@/lib/api/posts";
+import {
+  createPost, updatePost, deletePost,
+  reactToPost, removeReaction,
+  getPostComments, addComment,
+  type PostComment,
+} from "@/lib/api/posts";
 import { uploadPostMedia } from "@/lib/api/media";
 
 interface PostsFeedProps {
@@ -351,6 +356,57 @@ export const PostCard: React.FC<PostCardProps> = ({
   isSubmitting = false,
   isEditing = false,
 }) => {
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.reactionsCount || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  const handleLike = async () => {
+    if (liked) {
+      setLiked(false);
+      setLikesCount((c) => Math.max(0, c - 1));
+      await removeReaction(post.id);
+    } else {
+      setLiked(true);
+      setLikesCount((c) => c + 1);
+      await reactToPost(post.id, "LIKE");
+    }
+  };
+
+  const handleToggleComments = useCallback(async () => {
+    if (showComments) {
+      setShowComments(false);
+      return;
+    }
+    setShowComments(true);
+    setLoadingComments(true);
+    const result = await getPostComments(post.id, 0, 50);
+    if (result.success && result.data) {
+      setComments(result.data.items);
+    }
+    setLoadingComments(false);
+  }, [showComments, post.id]);
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    setSubmittingComment(true);
+    const result = await addComment(post.id, commentText.trim());
+    if (result.success) {
+      setCommentText("");
+      setCommentsCount((c) => c + 1);
+      const refreshed = await getPostComments(post.id, 0, 50);
+      if (refreshed.success && refreshed.data) {
+        setComments(refreshed.data.items);
+      }
+    }
+    setSubmittingComment(false);
+  };
+
   return (
     <div
       className={`bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors ${className}`}
@@ -420,7 +476,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           <p className="text-xs text-gray-500">
             By{" "}
             <Link
-              href={`/profile/${post.organizationId}`}
+              href={`/organization/${post.organizationId}`}
               className="font-medium text-primary hover:text-primary-dark hover:underline"
             >
               {post.organizationName}
@@ -428,6 +484,70 @@ export const PostCard: React.FC<PostCardProps> = ({
           </p>
         </div>
       )}
+
+      {/* Reactions & Comments */}
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 text-sm transition-colors ${
+              liked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
+            <span>{likesCount > 0 ? likesCount : "Like"}</span>
+          </button>
+          <button
+            onClick={handleToggleComments}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>{commentsCount > 0 ? commentsCount : "Comment"}</span>
+          </button>
+        </div>
+
+        {showComments && (
+          <div className="mt-3 space-y-3">
+            {loadingComments ? (
+              <div className="flex justify-center py-3">
+                <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
+                {comments.map((c) => (
+                  <div key={c.id} className="flex gap-2">
+                    <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+                      U
+                    </div>
+                    <div className="bg-white rounded-lg px-3 py-2 text-sm flex-1">
+                      <p className="text-gray-700">{c.body}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <form onSubmit={handleAddComment} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Write a comment..."
+                    className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-400 focus:border-blue-400 outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submittingComment || !commentText.trim()}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                  >
+                    <SendIcon className="w-4 h-4" />
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

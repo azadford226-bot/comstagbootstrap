@@ -2,6 +2,7 @@
 
 import Button from "@/components/atoms/button";
 import Logo from "../logo";
+import NotificationBell from "../notification-bell";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -61,33 +62,58 @@ export default function Navbar() {
           <Logo />
 
           {/* Desktop Menu items */}
-          <div className="hidden lg:flex items-center gap-[60px]">
-            {!isAuthenticated && (
-              <Link
-                href="/"
-                className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-              >
-                Home
-              </Link>
+          <div className="hidden lg:flex items-center gap-8">
+            {!isAuthenticated ? (
+              <>
+                <Link
+                  href="/"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/contact"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  Contact Us
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  Feed
+                </Link>
+                <Link
+                  href="/rfq"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  RFQ
+                </Link>
+                <Link
+                  href="/messages"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  Messages
+                </Link>
+                <Link
+                  href="/events"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  Events
+                </Link>
+              </>
             )}
-            <Link
-              href="/messages"
-              className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-            >
-              Messages
-            </Link>
-            <Link
-              href="/contact"
-              className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-            >
-              Contact Us
-            </Link>
           </div>
 
           {/* Desktop Auth buttons or User Dropdown */}
-          <div className="hidden lg:flex items-center gap-[25px] h-[35px]">
+          <div className="hidden lg:flex items-center gap-3 h-[35px]">
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+                <div className="relative">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-off-white transition-colors"
@@ -166,6 +192,7 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+              </div>
             ) : (
               <>
                 <Button href="/signup-select">Sign Up</Button>
@@ -203,29 +230,62 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-200">
           <div className="max-w-[1440px] mx-auto px-4 py-4 flex flex-col gap-4">
-            {!isAuthenticated && (
-              <Link
-                href="/"
-                className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
+            {!isAuthenticated ? (
+              <>
+                <Link
+                  href="/"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/contact"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Contact Us
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Feed
+                </Link>
+                <Link
+                  href="/rfq"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  RFQ
+                </Link>
+                <Link
+                  href="/messages"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Messages
+                </Link>
+                <Link
+                  href="/events"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Events
+                </Link>
+                <Link
+                  href="/notifications"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Notifications
+                </Link>
+              </>
             )}
-            <Link
-              href="/messages"
-              className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Messages
-            </Link>
-            <Link
-              href="/contact"
-              className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Contact Us
-            </Link>
 
             {isAuthenticated ? (
               <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-light-gray">
@@ -240,34 +300,18 @@ export default function Navbar() {
                   </span>
                 </div>
                 <Link
-                  href="/dashboard"
-                  className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
                   href="/profile"
                   className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   My Profile
                 </Link>
-                {userType === 'CONSUMER' && (
-                  <Link
-                    href="/events"
-                    className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    My Events
-                  </Link>
-                )}
                 <Link
-                  href="/messages"
+                  href="/settings"
                   className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Messages
+                  Settings
                 </Link>
                 <button
                   onClick={() => {

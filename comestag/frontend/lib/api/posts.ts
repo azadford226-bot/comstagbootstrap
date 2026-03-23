@@ -27,15 +27,16 @@ export interface UpdatePostRequest {
 
 export interface Post {
   id: string;
-  // Note: Posts don't have titles according to Swagger spec
   body: string;
   mediaIds?: string[];
   hashtags?: number[];
+  reactionsCount?: number;
+  commentsCount?: number;
+  views?: number;
   createdAt: string;
   updatedAt?: string;
   organizationId: string;
   organizationName?: string;
-  // Add more fields based on API response
 }
 
 export interface PostListResponse {
@@ -123,4 +124,64 @@ export async function updatePost(postId: string, data: UpdatePostRequest) {
 export async function deletePost(postId: string) {
   logger.info("Deleting post", { postId });
   return authenticatedDelete(POST_ENDPOINTS.BY_ID(postId));
+}
+
+/**
+ * React to a post (like, celebrate, etc.)
+ */
+export async function reactToPost(
+  postId: string,
+  reaction: "LIKE" | "CELEBRATE" | "SUPPORT" | "LOVE" | "INSIGHTFUL" | "CURIOUS"
+) {
+  logger.info("Reacting to post", { postId, reaction });
+  return authenticatedPost(`/v1/post/${postId}/react`, { reaction });
+}
+
+/**
+ * Remove reaction from a post
+ */
+export async function removeReaction(postId: string) {
+  logger.info("Removing reaction from post", { postId });
+  return authenticatedDelete(`/v1/post/${postId}/react`);
+}
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  accountId: string;
+  body: string;
+  parentCommentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentListResponse {
+  items: PostComment[];
+  totalItems: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+/**
+ * List comments for a post
+ */
+export async function getPostComments(postId: string, page = 0, size = 20) {
+  return authenticatedGet<CommentListResponse>(
+    `/v1/post/${postId}/comments?page=${page}&size=${size}`
+  );
+}
+
+/**
+ * Add a comment to a post
+ */
+export async function addComment(
+  postId: string,
+  body: string,
+  parentCommentId?: string
+) {
+  return authenticatedPost(`/v1/post/${postId}/comment`, {
+    body,
+    parentCommentId: parentCommentId || null,
+  });
 }

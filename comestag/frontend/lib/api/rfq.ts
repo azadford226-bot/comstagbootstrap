@@ -21,6 +21,27 @@ export interface Rfq {
   isOwner: boolean;
 }
 
+export interface RfqProposal {
+  id: string;
+  rfqId: string;
+  organizationId: string;
+  proposalText: string;
+  price: number;
+  currency: string;
+  deliveryTime: string | null;
+  status: string;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface ProposalListResponse {
+  content: RfqProposal[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 export interface CreateRfqRequest {
   title: string;
   description: string;
@@ -122,6 +143,19 @@ export async function awardRfq(
     success: response.success,
     message: response.message,
   };
+}
+
+/**
+ * List proposals for an RFQ (owner only)
+ */
+export async function listProposals(
+  rfqId: string,
+  page = 0,
+  size = 20
+): Promise<{ success: boolean; data?: ProposalListResponse; message?: string }> {
+  return authenticatedGet<ProposalListResponse>(
+    `/v1/rfq/${rfqId}/proposals?page=${page}&size=${size}`
+  );
 }
 
 
