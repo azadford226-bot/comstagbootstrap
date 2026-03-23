@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2 } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2, Pin } from "lucide-react";
 import Image from "next/image";
 import { uploadPostMedia } from "@/lib/api/media";
 import { getMediaUrl } from "@/lib/api/media";
@@ -32,6 +32,9 @@ export default function MessagesPage() {
   const [meetingDate, setMeetingDate] = useState("");
   const [meetingTime, setMeetingTime] = useState("10:00");
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [messageSearch, setMessageSearch] = useState("");
+  const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageStreamAbortController = useRef<AbortController | null>(null);
@@ -472,6 +475,13 @@ export default function MessagesPage() {
                   <Video className="w-5 h-5 text-gray-600" />
                 </button>
                 <button
+                  className={`p-2 rounded-full transition-colors ${showMessageSearch ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100 text-gray-600'}`}
+                  title="Search messages"
+                  onClick={() => { setShowMessageSearch(!showMessageSearch); setMessageSearch(""); }}
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+                <button
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   title="More options"
                 >
@@ -479,6 +489,37 @@ export default function MessagesPage() {
                 </button>
               </div>
             </div>
+
+            {/* In-thread search bar */}
+            {showMessageSearch && (
+              <div className="px-4 py-2 border-b bg-white flex items-center gap-2">
+                <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <input
+                  type="text"
+                  value={messageSearch}
+                  onChange={(e) => setMessageSearch(e.target.value)}
+                  placeholder="Search in this conversation..."
+                  className="flex-1 text-sm bg-transparent outline-none"
+                  autoFocus
+                />
+                {messageSearch && (
+                  <span className="text-xs text-gray-500 flex-shrink-0">
+                    {messages.filter(m => m.content.toLowerCase().includes(messageSearch.toLowerCase())).length} results
+                  </span>
+                )}
+                <button onClick={() => { setShowMessageSearch(false); setMessageSearch(""); }} className="p-1 hover:bg-gray-100 rounded">
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            )}
+
+            {/* Pinned messages */}
+            {pinnedMessageIds.size > 0 && (
+              <div className="px-4 py-2 border-b bg-amber-50 flex items-center gap-2">
+                <Pin className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                <span className="text-xs text-amber-700 font-medium">{pinnedMessageIds.size} pinned message{pinnedMessageIds.size > 1 ? 's' : ''}</span>
+              </div>
+            )}
 
             {/* Messages */}
             <div
@@ -521,32 +562,58 @@ export default function MessagesPage() {
                           <div className="bg-gray-200 h-px flex-1"></div>
                         </div>
                       )}
-                      <div className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
-                        <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                            isOwnMessage
-                              ? "bg-primary text-white"
-                              : "bg-white text-gray-800 border border-gray-200"
-                          }`}
-                        >
-                          {!isOwnMessage && (
-                            <p className="text-xs font-semibold mb-1 text-gray-600">
-                              {message.senderName}
-                            </p>
-                          )}
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {message.content}
-                          </p>
-                          <p
-                            className={`text-xs mt-1 ${
-                              isOwnMessage ? "text-blue-100" : "text-gray-500"
+                      <div className={`flex group/msg ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+                        <div className="relative">
+                          <div
+                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                              isOwnMessage
+                                ? "bg-primary text-white"
+                                : "bg-white text-gray-800 border border-gray-200"
+                            } ${pinnedMessageIds.has(message.id) ? "ring-2 ring-amber-300" : ""} ${
+                              messageSearch && message.content.toLowerCase().includes(messageSearch.toLowerCase()) ? "ring-2 ring-yellow-400 bg-yellow-50" : ""
                             }`}
                           >
-                            {formatTime(message.timestamp)}
-                            {isOwnMessage && message.read && (
-                              <span className="ml-1">✓✓</span>
+                            {pinnedMessageIds.has(message.id) && (
+                              <div className="flex items-center gap-1 text-[10px] text-amber-600 mb-1">
+                                <Pin className="w-2.5 h-2.5" /> Pinned
+                              </div>
                             )}
-                          </p>
+                            {!isOwnMessage && (
+                              <p className="text-xs font-semibold mb-1 text-gray-600">
+                                {message.senderName}
+                              </p>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.content}
+                            </p>
+                            <p
+                              className={`text-xs mt-1 ${
+                                isOwnMessage ? "text-blue-100" : "text-gray-500"
+                              }`}
+                            >
+                              {formatTime(message.timestamp)}
+                              {isOwnMessage && message.read && (
+                                <span className="ml-1">✓✓</span>
+                              )}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPinnedMessageIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(message.id)) next.delete(message.id);
+                                else next.add(message.id);
+                                return next;
+                              });
+                            }}
+                            className={`absolute -top-2 ${isOwnMessage ? '-left-6' : '-right-6'} opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-200 ${
+                              pinnedMessageIds.has(message.id) ? 'text-amber-500 opacity-100' : 'text-gray-400'
+                            }`}
+                            title={pinnedMessageIds.has(message.id) ? "Unpin message" : "Pin message"}
+                          >
+                            <Pin className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>

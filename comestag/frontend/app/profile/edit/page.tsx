@@ -38,6 +38,7 @@ export default function EditProfilePage() {
     whoWeAre: "",
     whatWeDo: "",
   });
+  const [profileVisibility, setProfileVisibility] = useState<"public" | "private">("public");
 
   const [profileImage, setProfileImage] = useState<string>("");
   const [coverImage, setCoverImage] = useState<string>("");
@@ -350,6 +351,38 @@ export default function EditProfilePage() {
               value={formData.whatWeDo}
               onChange={handleInputChange}
             />
+
+            {/* Profile Visibility */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Profile Visibility</h3>
+              <p className="text-xs text-gray-500 mb-3">Control who can see your company profile and capabilities.</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setProfileVisibility("public")}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium border-2 transition-colors ${
+                    profileVisibility === "public"
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  Public
+                  <p className="text-xs font-normal mt-0.5 opacity-70">Visible to all companies</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProfileVisibility("private")}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium border-2 transition-colors ${
+                    profileVisibility === "private"
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  Private
+                  <p className="text-xs font-normal mt-0.5 opacity-70">Only followers can view</p>
+                </button>
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
               <button

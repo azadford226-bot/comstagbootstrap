@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { listRfqs, createRfq, type Rfq, type CreateRfqRequest } from '@/lib/api/rfq'
 import { RfqCardSkeleton } from '@/components/ui/skeleton'
-import { Upload, Paperclip, Sparkles } from 'lucide-react'
+import { Upload, Paperclip, Sparkles, SlidersHorizontal } from 'lucide-react'
 import { uploadPostMedia } from '@/lib/api/media'
 import { getProfile, isOrganizationProfile, OrganizationProfile } from '@/lib/api/profile'
 
@@ -45,6 +45,10 @@ export default function RFQPage() {
   const [filter, setFilter] = useState<'all' | 'mine' | 'available'>('all')
   const [statusFilter, setStatusFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [budgetMin, setBudgetMin] = useState('')
+  const [budgetMax, setBudgetMax] = useState('')
+  const [deadlineFilter, setDeadlineFilter] = useState<'' | '7d' | '30d' | '90d'>('')
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [alertEnabled, setAlertEnabled] = useState(false)
@@ -160,19 +164,40 @@ export default function RFQPage() {
     return Math.min(99, score);
   };
 
-  const filteredRFQs = rfqs.filter(rfq =>
-    rfq.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rfq.description.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredRFQs = rfqs.filter(rfq => {
+    const matchesSearch = !searchQuery ||
+      rfq.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rfq.description.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (budgetMin && rfq.budget != null && rfq.budget < parseFloat(budgetMin)) return false;
+    if (budgetMax && rfq.budget != null && rfq.budget > parseFloat(budgetMax)) return false;
+
+    if (deadlineFilter && rfq.deadline) {
+      const deadlineDate = new Date(rfq.deadline);
+      const now = new Date();
+      const daysLeft = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const maxDays = deadlineFilter === '7d' ? 7 : deadlineFilter === '30d' ? 30 : 90;
+      if (daysLeft > maxDays || daysLeft < 0) return false;
+    }
+
+    return true;
+  })
+
+  const STATUS_CONFIG: Record<string, { style: string; label: string; step: number }> = {
+    OPEN: { style: 'bg-green-100 text-green-800', label: 'Open', step: 1 },
+    REVIEW: { style: 'bg-amber-100 text-amber-800', label: 'In Review', step: 2 },
+    AWARDED: { style: 'bg-blue-100 text-blue-800', label: 'Awarded', step: 3 },
+    CLOSED: { style: 'bg-gray-100 text-gray-800', label: 'Closed', step: 4 },
+    CANCELLED: { style: 'bg-red-100 text-red-800', label: 'Cancelled', step: 0 },
+  };
 
   const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      OPEN: 'bg-green-100 text-green-800',
-      CLOSED: 'bg-gray-100 text-gray-800',
-      AWARDED: 'bg-blue-100 text-blue-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-    }
-    return styles[status] || 'bg-gray-100 text-gray-800'
+    return STATUS_CONFIG[status]?.style || 'bg-gray-100 text-gray-800';
+  }
+
+  const getStatusLabel = (status: string) => {
+    return STATUS_CONFIG[status]?.label || status;
   }
 
   const formatCurrency = (amount: number | null, currency: string) => {
@@ -284,7 +309,69 @@ export default function RFQPage() {
               )}
               {alertEnabled ? 'Alerts On' : 'Set Alert'}
             </button>
+
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors shrink-0 ${
+                showAdvancedFilters
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {(budgetMin || budgetMax || deadlineFilter) && (
+                <span className="w-2 h-2 bg-primary rounded-full" />
+              )}
+            </button>
           </div>
+
+          {/* Advanced Filters Panel */}
+          {showAdvancedFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Budget Range</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={budgetMin}
+                    onChange={(e) => setBudgetMin(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  />
+                  <span className="text-gray-400">—</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={budgetMax}
+                    onChange={(e) => setBudgetMax(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Deadline</label>
+                <select
+                  value={deadlineFilter}
+                  onChange={(e) => setDeadlineFilter(e.target.value as typeof deadlineFilter)}
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Any deadline</option>
+                  <option value="7d">Within 7 days</option>
+                  <option value="30d">Within 30 days</option>
+                  <option value="90d">Within 90 days</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => { setBudgetMin(''); setBudgetMax(''); setDeadlineFilter(''); }}
+                  className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Clear filters
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Alert toast */}
@@ -331,7 +418,7 @@ export default function RFQPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(rfq.status)}`}>
-                        {rfq.status}
+                        {getStatusLabel(rfq.status)}
                       </span>
                       {rfq.category && (
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">

@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [feedSearch, setFeedSearch] = useState("");
   const [feedTab, setFeedTab] = useState<"all" | "latest" | "trending">("all");
+  const [feedIndustry, setFeedIndustry] = useState("");
   const [showChecklist, setShowChecklist] = useState(true);
 
   useEffect(() => {
@@ -274,16 +275,31 @@ export default function DashboardPage() {
 
             {/* Center Column - Posts Feed */}
             <div className="lg:col-span-6 space-y-4">
-              {/* Search bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search posts..."
-                  value={feedSearch}
-                  onChange={(e) => setFeedSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg shadow-sm border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                />
+              {/* Search + Filters */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search posts..."
+                    value={feedSearch}
+                    onChange={(e) => setFeedSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg shadow-sm border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  />
+                </div>
+                <select
+                  value={feedIndustry}
+                  onChange={(e) => setFeedIndustry(e.target.value)}
+                  className="px-3 py-2.5 bg-white rounded-lg shadow-sm border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                >
+                  <option value="">All Industries</option>
+                  <option value="technology">Technology</option>
+                  <option value="manufacturing">Manufacturing</option>
+                  <option value="automotive">Automotive</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="fintech">Fintech</option>
+                  <option value="energy">Energy</option>
+                </select>
               </div>
 
               <div className="bg-white rounded-lg shadow-sm p-6">

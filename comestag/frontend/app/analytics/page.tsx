@@ -710,6 +710,42 @@ export default function AnalyticsPage() {
                 Based on anonymized data from companies in your industry segment. Updated weekly.
               </p>
             </div>
+
+            {/* Opportunity Pipeline */}
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
+                Opportunity Pipeline
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Track your joint ventures, incubation, and funding activity
+              </p>
+              <div className="space-y-4">
+                {[
+                  { stage: "Expressed Interest", count: 5, color: "bg-blue-500", width: "100%" },
+                  { stage: "In Discussion", count: 3, color: "bg-amber-500", width: "60%" },
+                  { stage: "Proposal Sent", count: 2, color: "bg-purple-500", width: "40%" },
+                  { stage: "Active Partnership", count: 1, color: "bg-emerald-500", width: "20%" },
+                ].map((item) => (
+                  <div key={item.stage}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-700 font-medium">{item.stage}</span>
+                      <span className="text-gray-500">{item.count}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5">
+                      <div
+                        className={`h-2.5 rounded-full ${item.color} transition-all duration-500`}
+                        style={{ width: item.width }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
+                <span className="text-gray-600">Pipeline conversion rate</span>
+                <span className="font-semibold text-emerald-600">20%</span>
+              </div>
+            </div>
           </>
         )}
       </div>

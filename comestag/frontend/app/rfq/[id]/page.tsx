@@ -13,12 +13,13 @@ import { getRfq, type Rfq } from '@/lib/api/rfq'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
   OPEN: { label: 'Open', color: 'bg-green-100 text-green-800 border-green-200', icon: Globe },
-  CLOSED: { label: 'Closed', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Lock },
+  REVIEW: { label: 'In Review', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: Eye },
   AWARDED: { label: 'Awarded', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: CheckCircle },
+  CLOSED: { label: 'Closed', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Lock },
   CANCELLED: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle },
 }
 
-const STATUS_STEPS = ['OPEN', 'AWARDED', 'CLOSED']
+const STATUS_STEPS = ['OPEN', 'REVIEW', 'AWARDED', 'CLOSED']
 
 function formatCurrency(amount: number | null, currency: string) {
   if (!amount) return 'Not specified'
