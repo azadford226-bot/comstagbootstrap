@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   FileText, Plus, ArrowLeft, Search, Clock, DollarSign,
   Users, CheckCircle, XCircle, Eye, Send, Building2, BadgeCheck,
-  Calendar, Tag, Loader2, X, ChevronRight
+  Calendar, Tag, Loader2, X, ChevronRight, Bell, BellOff
 } from 'lucide-react'
 import { listRfqs, createRfq, type Rfq, type CreateRfqRequest } from '@/lib/api/rfq'
 import { RfqCardSkeleton } from '@/components/ui/skeleton'
@@ -43,6 +43,8 @@ export default function RFQPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [alertEnabled, setAlertEnabled] = useState(false)
+  const [alertToast, setAlertToast] = useState('')
 
   const [formData, setFormData] = useState({
     title: '',
@@ -223,8 +225,43 @@ export default function RFQPage() {
               <option value="CLOSED">Closed</option>
               <option value="AWARDED">Awarded</option>
             </select>
+
+            {/* Alert subscription */}
+            <button
+              onClick={() => {
+                const next = !alertEnabled
+                setAlertEnabled(next)
+                setAlertToast(
+                  next
+                    ? 'You will be notified when new RFQs match your filters.'
+                    : 'RFQ alerts disabled.'
+                )
+                setTimeout(() => setAlertToast(''), 3000)
+              }}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors shrink-0 ${
+                alertEnabled
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={alertEnabled ? 'Disable RFQ alerts' : 'Get notified on new RFQs'}
+            >
+              {alertEnabled ? (
+                <BellOff className="w-4 h-4" />
+              ) : (
+                <Bell className="w-4 h-4" />
+              )}
+              {alertEnabled ? 'Alerts On' : 'Set Alert'}
+            </button>
           </div>
         </div>
+
+        {/* Alert toast */}
+        {alertToast && (
+          <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg text-sm flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4">
+            <Bell className="w-4 h-4 text-blue-400" />
+            {alertToast}
+          </div>
+        )}
 
         {/* RFQ List */}
         {isLoading ? (

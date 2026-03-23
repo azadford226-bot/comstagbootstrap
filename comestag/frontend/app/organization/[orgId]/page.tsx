@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Star, MapPin, Globe, Calendar, UserPlus, UserCheck, Building2 } from "lucide-react";
+import { Star, MapPin, Globe, Calendar, UserPlus, UserCheck, Building2, FileText, Briefcase, MessageCircle, Activity } from "lucide-react";
 import Image from "next/image";
 import { getPublicProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getCapabilities, Capability } from "@/lib/api/capabilities";
@@ -312,21 +312,91 @@ export default function PublicOrganizationProfile() {
             )}
 
             {/* Latest Posts */}
-            {successStories.length > 0 && (
+            {posts.length > 0 && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   Latest Posts
                 </h2>
-                <PostsFeed posts={getLatestPosts(posts, 2)} maxPosts={2} />
-                {successStories.length > 2 && (
-                  <div className="mt-4">
-                    <p className="text-gray-600 text-sm">
-                      View all {successStories.length} success stories below
-                    </p>
-                  </div>
-                )}
+                <PostsFeed posts={getLatestPosts(posts, 3)} maxPosts={3} />
               </div>
             )}
+
+            {/* Activity Timeline */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                Recent Activity
+              </h2>
+              {posts.length === 0 && successStories.length === 0 ? (
+                <p className="text-gray-500 text-center py-6">No recent activity to display.</p>
+              ) : (
+                <div className="relative pl-6 space-y-0">
+                  <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200" />
+                  {[
+                    ...posts.map((p) => ({
+                      type: "post" as const,
+                      id: p.id,
+                      title: p.body?.slice(0, 100) || "Published a post",
+                      date: p.createdAt,
+                      reactions: p.reactionsCount || 0,
+                      comments: p.commentsCount || 0,
+                    })),
+                    ...successStories.map((s) => ({
+                      type: "story" as const,
+                      id: s.id,
+                      title: s.title || "Shared a success story",
+                      date: s.createdAt,
+                      reactions: 0,
+                      comments: 0,
+                    })),
+                  ]
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 8)
+                    .map((item) => (
+                      <div key={item.id} className="relative pb-5 last:pb-0">
+                        <div className="absolute -left-[18px] top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm bg-primary" />
+                        <div className="pl-3">
+                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                            {item.type === "post" ? (
+                              <FileText className="w-3 h-3" />
+                            ) : (
+                              <Briefcase className="w-3 h-3" />
+                            )}
+                            <span className="capitalize">{item.type === "story" ? "Success Story" : "Post"}</span>
+                            <span>&middot;</span>
+                            <span>
+                              {new Date(item.date).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-800 line-clamp-2">
+                            {item.title}
+                          </p>
+                          {(item.reactions > 0 || item.comments > 0) && (
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                              {item.reactions > 0 && (
+                                <span className="flex items-center gap-0.5">
+                                  <span className="text-red-400">&#x2764;</span>
+                                  {item.reactions}
+                                </span>
+                              )}
+                              {item.comments > 0 && (
+                                <span className="flex items-center gap-0.5">
+                                  <MessageCircle className="w-3 h-3" />
+                                  {item.comments}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
 
             {/* Success Stories */}
             {successStories.length > 0 && (

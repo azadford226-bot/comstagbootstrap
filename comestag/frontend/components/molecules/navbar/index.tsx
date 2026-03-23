@@ -176,6 +176,13 @@ export default function Navbar() {
                       Messages
                     </Link>
                     <Link
+                      href="/analytics"
+                      className="block px-4 py-2 text-text-dark hover:bg-off-white transition-colors"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Analytics
+                    </Link>
+                    <Link
                       href="/settings"
                       className="block px-4 py-2 text-text-dark hover:bg-off-white transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
@@ -305,6 +312,13 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   My Profile
+                </Link>
+                <Link
+                  href="/analytics"
+                  className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Analytics
                 </Link>
                 <Link
                   href="/settings"

@@ -408,6 +408,68 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+
+              {/* Trending in Your Network */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-sm font-semibold text-primary-dark flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  Trending in Your Network
+                </h2>
+                {posts.length > 0 ? (
+                  <div className="space-y-3">
+                    {posts
+                      .slice()
+                      .sort((a, b) => (b.reactionsCount || 0) - (a.reactionsCount || 0))
+                      .slice(0, 3)
+                      .map((post, idx) => (
+                        <div
+                          key={post.id}
+                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="text-lg font-bold text-gray-300 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-900 line-clamp-2">
+                              {post.body?.slice(0, 80)}
+                              {(post.body?.length || 0) > 80 ? "..." : ""}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                              {post.organizationName && (
+                                <span>{post.organizationName}</span>
+                              )}
+                              {(post.reactionsCount || 0) > 0 && (
+                                <span className="flex items-center gap-0.5">
+                                  <span className="text-red-400">&#x2764;</span>
+                                  {post.reactionsCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 text-center py-4">
+                    Nothing trending yet. Activity will appear as the network grows.
+                  </p>
+                )}
+              </div>
+
+              {/* Analytics Quick Link */}
+              <Link
+                href="/analytics"
+                className="flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-indigo-100 hover:border-indigo-200 transition-colors group"
+              >
+                <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-900">View Analytics</div>
+                  <div className="text-xs text-gray-500">Track your performance</div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400 ml-auto" />
+              </Link>
             </div>
           </div>
         )}

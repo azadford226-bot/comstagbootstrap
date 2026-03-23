@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Send, Search, MoreVertical, Phone, Video, Plus } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import {
   getConversations,
@@ -335,8 +335,19 @@ export default function MessagesPage() {
           {/* Conversations */}
           <div className="flex-1 overflow-y-auto">
             {isLoading && conversations.length === 0 ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="space-y-0">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="p-4 flex items-start gap-3 border-b border-gray-100 animate-pulse">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between">
+                        <div className="h-4 w-28 bg-gray-200 rounded" />
+                        <div className="h-3 w-12 bg-gray-200 rounded" />
+                      </div>
+                      <div className="h-3 w-40 bg-gray-200 rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="text-center py-12 px-4">
@@ -371,10 +382,12 @@ export default function MessagesPage() {
                         conversation.otherUserName.charAt(0).toUpperCase()
                       )}
                     </div>
-                    {conversation.unreadCount > 0 && (
+                    {conversation.unreadCount > 0 ? (
                       <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
                         {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
                       </div>
+                    ) : (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
                     )}
                   </div>
                   <div className="flex-1 text-left overflow-hidden min-w-0">
@@ -422,14 +435,19 @@ export default function MessagesPage() {
                   )}
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-800">
-                    {selectedConversation.otherUserName}
-                  </h2>
-                  <p className="text-xs text-gray-500">
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="font-semibold text-gray-800">
+                      {selectedConversation.otherUserName}
+                    </h2>
+                    <span title="Verified &amp; Encrypted"><Shield className="w-3.5 h-3.5 text-green-500" /></span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                    Online &middot;{" "}
                     {selectedConversation.otherUserType === "ORGANIZATION"
                       ? "Organization"
                       : "Consumer"}
-                  </p>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -533,9 +551,23 @@ export default function MessagesPage() {
             {/* Message Input */}
             <form
               onSubmit={handleSendMessage}
-              className="px-6 py-4 border-t border-gray-200 bg-white"
+              className="px-6 py-3 border-t border-gray-200 bg-white"
             >
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Attach file"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Send image"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                </button>
                 <input
                   type="text"
                   value={newMessage}
@@ -552,6 +584,12 @@ export default function MessagesPage() {
                 >
                   <Send className="w-5 h-5" />
                 </button>
+              </div>
+              <div className="flex items-center justify-between mt-1 px-2">
+                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                  <Shield className="w-3 h-3" />
+                  <span>End-to-end encrypted</span>
+                </div>
               </div>
             </form>
           </div>
