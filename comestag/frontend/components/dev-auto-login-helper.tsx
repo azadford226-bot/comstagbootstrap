@@ -17,7 +17,7 @@ import { Shield, Building2, LogIn, X, ChevronDown } from "lucide-react";
  */
 export default function DevAutoLoginHelper() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
