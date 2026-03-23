@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 import { getPosts, type Post } from "@/lib/api/posts";
 import { listRfqs, type Rfq } from "@/lib/api/rfq";
+import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserPlus, CheckCircle } from "lucide-react";
 
 interface MetricCard {
   label: string;
@@ -118,18 +120,23 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
   const [rfqs, setRfqs] = useState<Rfq[]>([]);
+  const [profile, setProfile] = useState<OrganizationProfile | null>(null);
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [postsRes, rfqsMine, rfqsAvail] = await Promise.all([
+      const [postsRes, rfqsMine, rfqsAvail, profileRes] = await Promise.all([
         getPosts(),
         listRfqs({ filter: "mine", page: 0, size: 100 }),
         listRfqs({ filter: "available", page: 0, size: 100 }),
+        getProfile(),
       ]);
       if (postsRes.success && postsRes.data?.items) {
         setPosts(postsRes.data.items);
+      }
+      if (profileRes.success && profileRes.data && isOrganizationProfile(profileRes.data)) {
+        setProfile(profileRes.data);
       }
       const allRfqs = [
         ...((rfqsMine.success && rfqsMine.data?.content) || []),
@@ -159,6 +166,22 @@ export default function AnalyticsPage() {
   const openRfqs = myRfqs.filter((r) => r.status === "OPEN");
   const awardedRfqs = myRfqs.filter((r) => r.status === "AWARDED");
   const totalProposals = myRfqs.reduce((s, r) => s + (r.proposalCount || 0), 0);
+
+  const profileFields = profile
+    ? [
+        !!(profile.profileImageId || profile.profileImage),
+        !!(profile.profileCoverId || profile.coverImage),
+        !!profile.whoWeAre,
+        !!profile.whatWeDo,
+        !!profile.website,
+        !!profile.country,
+        !!profile.industry,
+        !!profile.companyType,
+      ]
+    : [];
+  const profileCompletion = profileFields.length
+    ? Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100)
+    : 0;
 
   const conversionRate =
     myRfqs.length > 0
@@ -474,6 +497,106 @@ export default function AnalyticsPage() {
                       <div className="text-xs text-gray-500">Connect with partners</div>
                     </div>
                   </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Completion + Growth */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Profile Completion Score */}
+              <div className="bg-white rounded-xl border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  Profile Completion
+                </h3>
+                <div className="flex items-center gap-6">
+                  <div className="relative w-24 h-24 flex-shrink-0">
+                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="42"
+                        fill="none"
+                        stroke={profileCompletion >= 80 ? "#22c55e" : profileCompletion >= 50 ? "#f59e0b" : "#ef4444"}
+                        strokeWidth="8"
+                        strokeDasharray={`${(profileCompletion / 100) * 264} 264`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xl font-bold text-gray-900">{profileCompletion}%</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {profileFields.length > 0 && (
+                      <>
+                        {[
+                          { done: profileFields[0], label: "Profile photo" },
+                          { done: profileFields[1], label: "Cover image" },
+                          { done: profileFields[2], label: "Company description" },
+                          { done: profileFields[3], label: "What we do" },
+                          { done: profileFields[4], label: "Website URL" },
+                          { done: profileFields[5], label: "Location" },
+                          { done: profileFields[6], label: "Industry" },
+                          { done: profileFields[7], label: "Company type" },
+                        ].filter(i => !i.done).slice(0, 3).map((item) => (
+                          <div key={item.label} className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            {item.label}
+                          </div>
+                        ))}
+                        {profileFields.filter(f => !f).length > 3 && (
+                          <p className="text-xs text-gray-400">+{profileFields.filter(f => !f).length - 3} more</p>
+                        )}
+                        {profileCompletion < 100 && (
+                          <Link
+                            href="/profile/edit"
+                            className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline mt-1"
+                          >
+                            Complete profile
+                            <ArrowUpRight className="w-3 h-3" />
+                          </Link>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Follower Growth */}
+              <div className="bg-white rounded-xl border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-blue-500" />
+                  Network Growth
+                </h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-700">{totalPosts}</div>
+                    <div className="text-xs text-blue-600 mt-1">Content Published</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-700">{totalReactions + totalComments}</div>
+                    <div className="text-xs text-green-600 mt-1">Total Engagement</div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Avg. engagement per post</span>
+                    <span className="font-medium text-gray-900">
+                      {totalPosts > 0 ? ((totalReactions + totalComments) / totalPosts).toFixed(1) : "0"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Active RFQs</span>
+                    <span className="font-medium text-gray-900">{openRfqs.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Visibility score</span>
+                    <span className="font-medium text-gray-900">
+                      {Math.min(100, Math.round(profileCompletion * 0.4 + totalPosts * 5 + myRfqs.length * 10))}%
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

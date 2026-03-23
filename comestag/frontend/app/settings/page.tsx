@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { updateEmail } from "@/lib/api/profile";
 import { changePassword } from "@/lib/api/auth";
-import { Mail, Lock, Save, AlertCircle, CheckCircle } from "lucide-react";
+import { Mail, Lock, Save, AlertCircle, CheckCircle, Bell, Smartphone } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuth(true);
@@ -19,6 +19,16 @@ export default function SettingsPage() {
   const [emailError, setEmailError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [notifPrefs, setNotifPrefs] = useState({
+    emailDigest: "daily" as "immediate" | "daily" | "weekly" | "off",
+    inAppEnabled: true,
+    pushEnabled: false,
+    rfqAlerts: true,
+    messageAlerts: true,
+    opportunityAlerts: true,
+    systemAlerts: true,
+  });
+  const [notifSaved, setNotifSaved] = useState(false);
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,6 +310,123 @@ export default function SettingsPage() {
                 {isSubmitting ? "Changing..." : "Change Password"}
               </button>
             </form>
+          </div>
+
+          {/* Notification Preferences */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Bell className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-primary-dark">Notification Preferences</h2>
+                <p className="text-sm text-gray-600">Control how and when you receive notifications</p>
+              </div>
+            </div>
+
+            {notifSaved && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-green-800">Notification preferences saved!</p>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              {/* Email Digest */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Digest Frequency
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(["immediate", "daily", "weekly", "off"] as const).map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setNotifPrefs({ ...notifPrefs, emailDigest: val })}
+                      className={`px-3 py-2 text-sm rounded-lg border transition-colors capitalize ${
+                        notifPrefs.emailDigest === val
+                          ? "border-primary bg-primary/5 text-primary font-medium"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {notifPrefs.emailDigest === "immediate" && "Get an email for every notification"}
+                  {notifPrefs.emailDigest === "daily" && "One daily summary email at 9 AM"}
+                  {notifPrefs.emailDigest === "weekly" && "One weekly summary email on Mondays"}
+                  {notifPrefs.emailDigest === "off" && "No email notifications"}
+                </p>
+              </div>
+
+              {/* Channel Toggles */}
+              <div className="space-y-3 pt-3 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700">Channels</h3>
+                <label className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-700">In-app notifications</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notifPrefs.inAppEnabled}
+                    onChange={(e) => setNotifPrefs({ ...notifPrefs, inAppEnabled: e.target.checked })}
+                    className="w-4 h-4 text-primary rounded focus:ring-primary"
+                  />
+                </label>
+                <label className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <span className="text-sm text-gray-700">Push notifications</span>
+                      <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">Coming soon</span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notifPrefs.pushEnabled}
+                    onChange={(e) => setNotifPrefs({ ...notifPrefs, pushEnabled: e.target.checked })}
+                    className="w-4 h-4 text-primary rounded focus:ring-primary"
+                    disabled
+                  />
+                </label>
+              </div>
+
+              {/* Category Toggles */}
+              <div className="space-y-3 pt-3 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700">Categories</h3>
+                {[
+                  { key: "rfqAlerts" as const, label: "RFQ updates and proposals" },
+                  { key: "messageAlerts" as const, label: "New messages" },
+                  { key: "opportunityAlerts" as const, label: "Opportunities and JV updates" },
+                  { key: "systemAlerts" as const, label: "System announcements" },
+                ].map(({ key, label }) => (
+                  <label key={key} className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-700">{label}</span>
+                    <input
+                      type="checkbox"
+                      checked={notifPrefs[key]}
+                      onChange={(e) => setNotifPrefs({ ...notifPrefs, [key]: e.target.checked })}
+                      className="w-4 h-4 text-primary rounded focus:ring-primary"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setNotifSaved(true);
+                  setTimeout(() => setNotifSaved(false), 3000);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-semibold"
+              >
+                <Save className="w-4 h-4" />
+                Save Preferences
+              </button>
+            </div>
           </div>
 
           {/* Account Information */}

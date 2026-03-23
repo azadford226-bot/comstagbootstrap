@@ -55,7 +55,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white">
+    <nav className="bg-white" aria-label="Main navigation">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[50px]">
         <div className="flex justify-between items-center h-[63px]">
           {/* Logo/Title */}
@@ -218,7 +218,9 @@ export default function Navbar() {
           <button
             className="lg:hidden flex flex-col gap-1.5 w-6 h-6 justify-center"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav-menu"
           >
             <span
               className={`w-full h-0.5 bg-black transition-transform duration-300 ${
@@ -241,7 +243,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-200">
+        <div id="mobile-nav-menu" className="lg:hidden bg-white border-t border-gray-200" role="menu">
           <div className="max-w-[1440px] mx-auto px-4 py-4 flex flex-col gap-4">
             {!isAuthenticated ? (
               <>

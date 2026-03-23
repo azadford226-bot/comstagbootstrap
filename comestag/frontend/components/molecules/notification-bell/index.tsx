@@ -122,7 +122,9 @@ export default function NotificationBell() {
       <button
         onClick={handleOpen}
         className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        aria-label="Notifications"
+        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         <svg
           className="w-6 h-6 text-gray-600"

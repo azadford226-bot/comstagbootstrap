@@ -6,6 +6,7 @@ import DevModeInitializer from "@/components/dev-mode-initializer";
 import EnvDebugger from "@/components/env-debugger";
 import VercelAnalytics from "@/components/vercel-analytics";
 import DevAutoLoginHelper from "@/components/dev-auto-login-helper";
+import { ToastProvider } from "@/components/ui/toast";
 
 // Using system fonts instead of Google Fonts to avoid network issues during build
 // Font variables will use CSS fallbacks
@@ -32,13 +33,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <EnvDebugger />
-        <DevModeInitializer />
-        <DevAutoLoginHelper />
-        <Navbar />
-        {children}
-        <ConditionalFooter />
-        <VercelAnalytics />
+        <ToastProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-medium"
+          >
+            Skip to main content
+          </a>
+          <EnvDebugger />
+          <DevModeInitializer />
+          <DevAutoLoginHelper />
+          <Navbar />
+          <main id="main-content">{children}</main>
+          <ConditionalFooter />
+          <VercelAnalytics />
+        </ToastProvider>
       </body>
     </html>
   );

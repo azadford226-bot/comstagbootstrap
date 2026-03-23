@@ -22,6 +22,9 @@ export default function SubmitProposalPage() {
 
   const [formData, setFormData] = useState({
     proposalText: '',
+    approach: '',
+    teamSize: '',
+    relevantExperience: '',
     price: '',
     currency: 'USD',
     deliveryTime: '',
@@ -72,9 +75,16 @@ export default function SubmitProposalPage() {
 
     setIsSubmitting(true)
     try {
+      const fullProposal = [
+        formData.proposalText,
+        formData.approach ? `\n\n**Approach & Methodology:**\n${formData.approach}` : '',
+        formData.teamSize ? `\n\n**Team Size:** ${formData.teamSize}` : '',
+        formData.relevantExperience ? `\n\n**Relevant Experience:**\n${formData.relevantExperience}` : '',
+      ].join('');
+
       const request: SubmitProposalRequest = {
         rfqId,
-        proposalText: formData.proposalText,
+        proposalText: fullProposal,
         price: parseFloat(formData.price),
         currency: formData.currency,
         deliveryTime: formData.deliveryTime || undefined,
@@ -229,57 +239,54 @@ export default function SubmitProposalPage() {
           )}
 
           <div className="space-y-6">
-            {/* Proposal Text */}
+            {/* Proposal Summary */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Proposal Description <span className="text-red-500">*</span>
+                Proposal Summary <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={formData.proposalText}
                 onChange={(e) => setFormData({ ...formData, proposalText: e.target.value })}
-                rows={8}
+                rows={5}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                placeholder="Describe your proposal, approach, deliverables, and why you're the best fit for this RFQ..."
+                placeholder="Executive summary: what you'll deliver and why you're the best fit..."
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Be specific about your approach, timeline, and what you&apos;ll deliver.
-              </p>
             </div>
 
-            {/* Price and Currency */}
+            {/* Approach & Methodology */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Approach & Methodology
+              </label>
+              <textarea
+                value={formData.approach}
+                onChange={(e) => setFormData({ ...formData, approach: e.target.value })}
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                placeholder="Describe your technical approach, tools, methodology, and key milestones..."
+              />
+            </div>
+
+            {/* Team & Experience row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price <span className="text-red-500">*</span>
+                  Team Size
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="INR">INR</option>
-                    <option value="CAD">CAD</option>
-                    <option value="AUD">AUD</option>
-                  </select>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
+                <select
+                  value={formData.teamSize}
+                  onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white"
+                >
+                  <option value="">Select team size</option>
+                  <option value="1 person">1 person</option>
+                  <option value="2-5 people">2-5 people</option>
+                  <option value="6-10 people">6-10 people</option>
+                  <option value="11-25 people">11-25 people</option>
+                  <option value="25+ people">25+ people</option>
+                </select>
               </div>
-
-              {/* Delivery Time */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Estimated Delivery Time
@@ -290,13 +297,70 @@ export default function SubmitProposalPage() {
                     value={formData.deliveryTime}
                     onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="e.g., 2 weeks, 1 month, 3-6 months"
+                    placeholder="e.g., 2 weeks, 3 months"
                   />
                   <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Optional: Estimated time to complete the project
-                </p>
+              </div>
+            </div>
+
+            {/* Relevant Experience */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Relevant Experience
+              </label>
+              <textarea
+                value={formData.relevantExperience}
+                onChange={(e) => setFormData({ ...formData, relevantExperience: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                placeholder="Describe similar projects you've completed, relevant certifications, or case studies..."
+              />
+            </div>
+
+            {/* Price and Currency */}
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Pricing
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Proposed Price <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.currency}
+                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      className="px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-sm"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="INR">INR</option>
+                      <option value="CAD">CAD</option>
+                      <option value="AUD">AUD</option>
+                    </select>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                </div>
+                {rfq?.budget && (
+                  <div className="flex items-end">
+                    <p className="text-xs text-gray-500">
+                      RFQ Budget: <span className="font-medium text-gray-700">{rfq.budgetCurrency} {rfq.budget.toLocaleString()}</span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

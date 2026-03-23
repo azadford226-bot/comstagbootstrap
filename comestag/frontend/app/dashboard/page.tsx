@@ -110,6 +110,16 @@ export default function DashboardPage() {
         <p className="text-3xl sm:text-4xl md:text-[48px] text-white text-center font-['Hubballi']">
           Your Dashboard
         </p>
+        {profile && !(profile.profileImageId || profile.profileImage) && (
+          <Link
+            href="/profile/edit"
+            className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full text-sm text-white transition-colors"
+          >
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            Complete your profile to get discovered
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        )}
       </div>
 
       {/* Main Content - Three Column Layout */}
@@ -326,6 +336,45 @@ export default function DashboardPage() {
 
             {/* Right Column - Opportunities */}
             <div className="lg:col-span-3 space-y-6">
+              {/* Role-aware CTA */}
+              {profile?.companyType && (
+                <div className={`rounded-lg p-4 border ${
+                  profile.companyType === "ENTERPRISE" ? "bg-gradient-to-br from-slate-50 to-blue-50 border-blue-100" :
+                  profile.companyType === "VENDOR" ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-100" :
+                  profile.companyType === "STARTUP" ? "bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100" :
+                  profile.companyType === "INVESTOR" ? "bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100" :
+                  "bg-gradient-to-br from-cyan-50 to-sky-50 border-cyan-100"
+                }`}>
+                  <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 ${
+                    profile.companyType === "ENTERPRISE" ? "bg-blue-100 text-blue-700" :
+                    profile.companyType === "VENDOR" ? "bg-emerald-100 text-emerald-700" :
+                    profile.companyType === "STARTUP" ? "bg-orange-100 text-orange-700" :
+                    profile.companyType === "INVESTOR" ? "bg-purple-100 text-purple-700" :
+                    "bg-cyan-100 text-cyan-700"
+                  }`}>
+                    {profile.companyType.replace("_", " ")}
+                  </span>
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {profile.companyType === "ENTERPRISE" && "Find suppliers & technology partners"}
+                    {profile.companyType === "VENDOR" && "Discover new enterprise clients"}
+                    {profile.companyType === "STARTUP" && "Connect with investors & incubators"}
+                    {profile.companyType === "INVESTOR" && "Browse startups seeking funding"}
+                    {profile.companyType === "SERVICE_PROVIDER" && "Find project opportunities"}
+                  </p>
+                  <Link
+                    href={profile.companyType === "INVESTOR" ? "/opportunities" : "/rfq"}
+                    className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                  >
+                    {profile.companyType === "ENTERPRISE" && "Browse RFQ marketplace"}
+                    {profile.companyType === "VENDOR" && "Browse open RFQs"}
+                    {profile.companyType === "STARTUP" && "View opportunities"}
+                    {profile.companyType === "INVESTOR" && "Explore deal flow"}
+                    {profile.companyType === "SERVICE_PROVIDER" && "Find projects"}
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              )}
+
               <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-primary-dark flex items-center gap-2">
