@@ -27,8 +27,9 @@ export interface ConsumerProfile extends UserProfile {
 }
 
 export interface OrganizationProfile extends UserProfile {
+  companyType?: string;
   industryId?: number;
-  industry?: { id: number; name: string }; // API returns this format
+  industry?: { id: number; name: string };
   size: string;
   country: string;
   state?: string;
@@ -53,6 +54,7 @@ export interface UpdateConsumerProfileRequest {
 
 export interface UpdateOrganizationProfileRequest {
   displayName?: string;
+  companyType?: string;
   industryId?: number;
   size?: string;
   country?: string;

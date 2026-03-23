@@ -23,6 +23,7 @@ import { logger } from "@/lib/logger";
 import Button from "@/components/atoms/button";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { followUser, unfollowUser, getFollowStatus, getFollowCounts } from "@/lib/api/social";
 
 export default function PublicOrganizationProfile() {
   const params = useParams();
@@ -37,6 +38,9 @@ export default function PublicOrganizationProfile() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [showTestimonialForm, setShowTestimonialForm] = useState(false);
   const [following, setFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
   const [hoveredCert, setHoveredCert] = useState<Certificate | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -90,6 +94,22 @@ export default function PublicOrganizationProfile() {
 
       if (testimonialsRes.success && testimonialsRes.data) {
         setTestimonials(testimonialsRes.data.items || []);
+      }
+
+      try {
+        const [followStatus, followCounts] = await Promise.all([
+          getFollowStatus(_orgId),
+          getFollowCounts(_orgId),
+        ]);
+        if (followStatus.success && followStatus.data) {
+          setFollowing(followStatus.data.following);
+        }
+        if (followCounts.success && followCounts.data) {
+          setFollowersCount(followCounts.data.followers);
+          setFollowingCount(followCounts.data.following);
+        }
+      } catch {
+        // Follow status is non-critical
       }
     } catch (error) {
       logger.error("Failed to load public profile", error);
@@ -255,8 +275,24 @@ export default function PublicOrganizationProfile() {
 
             <div className="flex gap-2 shrink-0">
               <button
-                onClick={() => setFollowing(!following)}
-                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                onClick={async () => {
+                  if (followLoading) return;
+                  setFollowLoading(true);
+                  try {
+                    if (following) {
+                      await unfollowUser(_orgId);
+                      setFollowing(false);
+                      setFollowersCount((c) => Math.max(0, c - 1));
+                    } else {
+                      await followUser(_orgId);
+                      setFollowing(true);
+                      setFollowersCount((c) => c + 1);
+                    }
+                  } catch { /* ignore */ }
+                  setFollowLoading(false);
+                }}
+                disabled={followLoading}
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-60 ${
                   following
                     ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     : "bg-primary text-white hover:bg-primary-dark"

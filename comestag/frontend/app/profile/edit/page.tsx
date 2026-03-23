@@ -27,6 +27,7 @@ export default function EditProfilePage() {
 
   const [formData, setFormData] = useState({
     displayName: "",
+    companyType: "",
     industryId: 0,
     size: "",
     established: "",
@@ -56,6 +57,7 @@ export default function EditProfilePage() {
         const industryId = profile.industry?.id || profile.industryId || 0;
         setFormData({
           displayName: profile.displayName || "",
+          companyType: profile.companyType || "",
           industryId: industryId,
           size: profile.size || "",
           established: profile.established || "",
@@ -270,6 +272,25 @@ export default function EditProfilePage() {
               onChange={handleInputChange}
               required
             />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Type
+              </label>
+              <select
+                name="companyType"
+                value={formData.companyType}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Select company type</option>
+                <option value="ENTERPRISE">Enterprise / Corporation</option>
+                <option value="VENDOR">Software Vendor / Supplier</option>
+                <option value="STARTUP">Startup</option>
+                <option value="INVESTOR">Investor / VC / Accelerator</option>
+                <option value="SERVICE_PROVIDER">Service Provider / Consultancy</option>
+              </select>
+            </div>
 
             <IndustrySelect
               name="industryId"

@@ -9,6 +9,8 @@ import java.time.LocalDate;
 public record AuthRegisterOrgRequest(
         @NotBlank(message = "Invalid name") String displayName,
 
+        String companyType,
+
         @NotNull(message = "Invalid industry") Long industryId,
 
         @Size(max = 500, message = "who we are is too long") String whoWeAre,

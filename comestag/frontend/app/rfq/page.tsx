@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { listRfqs, createRfq, type Rfq, type CreateRfqRequest } from '@/lib/api/rfq'
 import { RfqCardSkeleton } from '@/components/ui/skeleton'
+import { Upload, Paperclip } from 'lucide-react'
+import { uploadPostMedia } from '@/lib/api/media'
 
 const CATEGORIES = [
   'Software Development',
@@ -56,7 +58,10 @@ export default function RFQPage() {
     deadline: '',
     requirements: '',
     visibility: 'PUBLIC',
+    ndaRequired: false,
   })
+  const [rfqMediaIds, setRfqMediaIds] = useState<string[]>([])
+  const [uploadingRfqFiles, setUploadingRfqFiles] = useState(false)
 
   const fetchRFQs = useCallback(async () => {
     setIsLoading(true)
@@ -99,6 +104,7 @@ export default function RFQPage() {
         deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
         requirements: formData.requirements || undefined,
         visibility: formData.visibility,
+        mediaIds: rfqMediaIds.length > 0 ? rfqMediaIds : undefined,
       }
 
       const result = await createRfq(request)
@@ -115,7 +121,9 @@ export default function RFQPage() {
           deadline: '',
           requirements: '',
           visibility: 'PUBLIC',
+          ndaRequired: false,
         })
+        setRfqMediaIds([])
         await fetchRFQs()
       } else {
         console.error('Error creating RFQ:', result.message)
@@ -461,6 +469,70 @@ export default function RFQPage() {
                   placeholder="List specific requirements, technologies, deliverables..."
                 />
               </div>
+
+              {/* File Attachments */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Attachments
+                </label>
+                <label className="flex items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div className="flex flex-col items-center gap-1">
+                    <Paperclip className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-500">
+                      {uploadingRfqFiles ? 'Uploading...' : 'Click to attach files (specs, NDAs, docs)'}
+                    </span>
+                    {rfqMediaIds.length > 0 && (
+                      <span className="text-xs text-primary font-medium">{rfqMediaIds.length} file(s) attached</span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    disabled={uploadingRfqFiles}
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+                      setUploadingRfqFiles(true);
+                      try {
+                        const result = await uploadPostMedia(files);
+                        if (result.success && result.data?.mediaIds) {
+                          setRfqMediaIds((prev) => [...prev, ...result.data!.mediaIds]);
+                        }
+                      } catch { /* ignore */ }
+                      setUploadingRfqFiles(false);
+                      e.target.value = '';
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                {rfqMediaIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {rfqMediaIds.map((id, idx) => (
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md">
+                        File {idx + 1}
+                        <button onClick={() => setRfqMediaIds((prev) => prev.filter((_, i) => i !== idx))} className="hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* NDA Toggle */}
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.ndaRequired}
+                  onChange={(e) => setFormData({ ...formData, ndaRequired: e.target.checked })}
+                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Require NDA</span>
+                  <p className="text-xs text-gray-500">Bidders must sign an NDA before viewing details</p>
+                </div>
+              </label>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>

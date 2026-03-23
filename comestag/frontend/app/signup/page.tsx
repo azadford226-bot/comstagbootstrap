@@ -8,7 +8,7 @@ import {
   Step2,
   Step3,
 } from "@/components/organisms/signup-provider-steps";
-import { registerOrganization } from "@/lib/api/auth";
+import { registerOrganization, type CompanyType } from "@/lib/api/auth";
 import { logger } from "@/lib/logger";
 
 export default function SignupPage() {
@@ -19,6 +19,7 @@ export default function SignupPage() {
 
   const [formData, setFormData] = useState<{
     organizationName: string;
+    companyType: string;
     industryId: number;
     companySize: string;
     establishmentDate: string;
@@ -40,6 +41,7 @@ export default function SignupPage() {
   }>({
     // Step 1: Organization Details
     organizationName: "",
+    companyType: "",
     industryId: 0,
     companySize: "",
     establishmentDate: "",
@@ -79,10 +81,10 @@ export default function SignupPage() {
   const validateStep1 = (): boolean => {
     const requiredFields = [
       { field: "organizationName", label: "Organization Name" },
+      { field: "companyType", label: "Company Type" },
       { field: "companySize", label: "Company Size" },
     ];
 
-    // Check industryId separately since it's a number
     if (!formData.industryId || formData.industryId === 0) {
       setError("Industry is required");
       return false;
@@ -188,6 +190,7 @@ export default function SignupPage() {
       email: formData.organizationEmail,
       password: formData.password,
       displayName: formData.organizationName,
+      companyType: (formData.companyType || undefined) as CompanyType | undefined,
       industryId: formData.industryId,
       country: formData.country,
       state: formData.state,

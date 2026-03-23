@@ -12,6 +12,7 @@ import { PostsFeed } from "@/components/ui/posts-feed";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { getMediaUrl } from "@/lib/api/media";
 import Button from "@/components/atoms/button";
+import OnboardingChecklist from "@/components/molecules/onboarding-checklist";
 
 export default function DashboardPage() {
   const { user } = useAuth(true);
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [feedSearch, setFeedSearch] = useState("");
   const [feedTab, setFeedTab] = useState<"all" | "latest" | "trending">("all");
+  const [showChecklist, setShowChecklist] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
@@ -247,6 +249,14 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+
+              {showChecklist && (
+                <OnboardingChecklist
+                  profile={profile}
+                  postsCount={posts.length}
+                  onDismiss={() => setShowChecklist(false)}
+                />
+              )}
             </div>
 
             {/* Center Column - Posts Feed */}

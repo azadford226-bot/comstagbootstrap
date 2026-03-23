@@ -178,11 +178,12 @@ export default function MessagesPage() {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation || isSending) return;
+  const handleSendMessage = async (e?: React.FormEvent, overrideContent?: string) => {
+    if (e) e.preventDefault();
+    const content = overrideContent || newMessage.trim();
+    if (!content || !selectedConversation || isSending) return;
 
-    const messageContent = newMessage.trim();
+    const messageContent = content;
     setNewMessage("");
     setIsSending(true);
 
@@ -554,20 +555,42 @@ export default function MessagesPage() {
               className="px-6 py-3 border-t border-gray-200 bg-white"
             >
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                <label
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                   title="Attach file"
                 >
                   <Paperclip className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file && selectedConversation) {
+                        await handleSendMessage(undefined, `[File: ${file.name}]`);
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                <label
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                   title="Send image"
                 >
                   <ImageIcon className="w-5 h-5" />
-                </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file && selectedConversation) {
+                        await handleSendMessage(undefined, `[Image: ${file.name}]`);
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
                 <input
                   type="text"
                   value={newMessage}

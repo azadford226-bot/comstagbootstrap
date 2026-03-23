@@ -6,6 +6,7 @@ import java.util.UUID;
 public record UpdateOrgProfileInput(
         UUID id,
         String displayName,
+        String companyType,
         String website,
         Long industryId,
         LocalDate established,

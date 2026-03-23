@@ -20,10 +20,13 @@ function getApiBaseUrl(): string {
 const API_BASE_URL = getApiBaseUrl();
 
 // Types for registration
+export type CompanyType = "ENTERPRISE" | "VENDOR" | "STARTUP" | "INVESTOR" | "SERVICE_PROVIDER";
+
 export interface OrganizationRegistrationRequest {
   email: string;
   password: string;
   displayName: string;
+  companyType?: CompanyType;
   industryId: number | string;
   size: string;
   country: string;

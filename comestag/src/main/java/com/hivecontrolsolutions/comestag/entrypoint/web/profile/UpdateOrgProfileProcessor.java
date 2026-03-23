@@ -36,6 +36,7 @@ public class UpdateOrgProfileProcessor {
         return new UpdateOrgProfileInput(
                 currentUserId,
                 request.displayName(),
+                request.companyType(),
                 request.website(),
                 request.industryId(),
                 request.established(),

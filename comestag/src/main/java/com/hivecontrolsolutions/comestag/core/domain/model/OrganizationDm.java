@@ -19,6 +19,7 @@ public class OrganizationDm {
 
     private UUID id;
     private String displayName;
+    private String companyType;
     private IndustryDm industry;
     private LocalDate established;
     private String website;

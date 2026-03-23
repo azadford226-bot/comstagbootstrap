@@ -47,6 +47,7 @@ public class OrganizationAdapter implements OrganizationPort {
         OrganizationEntity entity = repo.findById(input.id())
                 .orElseThrow(() -> new BusinessException(ACCOUNT_NOT_EXIST));
         entity.setDisplayName(input.displayName());
+        entity.setCompanyType(input.companyType());
         entity.setWebsite(input.website());
         entity.setIndustry(IndustryEntity.builder().id(input.industryId()).build());
         entity.setEstablished(input.established());

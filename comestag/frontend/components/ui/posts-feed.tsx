@@ -13,6 +13,7 @@ import {
   type PostComment,
 } from "@/lib/api/posts";
 import { uploadPostMedia } from "@/lib/api/media";
+import { bookmarkItem, unbookmarkItem } from "@/lib/api/social";
 
 interface PostsFeedProps {
   posts: Post[];
@@ -509,7 +510,17 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setBookmarked(!bookmarked)}
+              onClick={async () => {
+                try {
+                  if (bookmarked) {
+                    await unbookmarkItem("POST", post.id);
+                    setBookmarked(false);
+                  } else {
+                    await bookmarkItem("POST", post.id);
+                    setBookmarked(true);
+                  }
+                } catch { /* ignore */ }
+              }}
               className={`p-1.5 rounded-md transition-colors ${
                 bookmarked ? "text-blue-600" : "text-gray-400 hover:text-blue-600"
               }`}

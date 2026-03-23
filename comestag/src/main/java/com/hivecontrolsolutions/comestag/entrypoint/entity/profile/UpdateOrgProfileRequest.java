@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public record UpdateOrgProfileRequest(
         String displayName,
+        String companyType,
         String website,
         Long industryId,
         LocalDate established,

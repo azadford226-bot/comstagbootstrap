@@ -28,12 +28,32 @@ export function Step1({
       <div className="flex flex-col gap-[27px]">
         <FormInput
           label="Organization Name"
-          placeholder="Enter you organization name"
+          placeholder="Enter your organization name"
           required
           name="organizationName"
           value={formData.organizationName as string}
           onChange={onChange}
         />
+
+        <div>
+          <label className="block text-[16px] font-medium text-text-dark mb-2">
+            Company Type <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="companyType"
+            value={formData.companyType as string}
+            onChange={onChange}
+            required
+            className="w-full px-4 py-3 border border-[#e3e3e3] rounded-[10px] text-[16px] text-text-dark focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="">Select your company type</option>
+            <option value="ENTERPRISE">Enterprise / Corporation</option>
+            <option value="VENDOR">Software Vendor / Supplier</option>
+            <option value="STARTUP">Startup</option>
+            <option value="INVESTOR">Investor / VC / Accelerator</option>
+            <option value="SERVICE_PROVIDER">Service Provider / Consultancy</option>
+          </select>
+        </div>
 
         <IndustrySelect
           name="industryId"

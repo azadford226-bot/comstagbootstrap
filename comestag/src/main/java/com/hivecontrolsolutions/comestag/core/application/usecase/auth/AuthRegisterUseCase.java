@@ -85,6 +85,7 @@ public class AuthRegisterUseCase implements UsecaseWithoutOutput<RegisterInput> 
         var org = OrganizationDm.builder()
                 .id(accountId)
                 .displayName(in.displayName())
+                .companyType(in.companyType())
                 .industry(IndustryDm.builder().id(in.industryId()).build())
                 .established(in.established())
                 .website(in.website())

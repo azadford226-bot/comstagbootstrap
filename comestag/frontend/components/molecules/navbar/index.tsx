@@ -99,6 +99,12 @@ export default function Navbar() {
                   Messages
                 </Link>
                 <Link
+                  href="/opportunities"
+                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                >
+                  Opportunities
+                </Link>
+                <Link
                   href="/events"
                   className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
                 >
@@ -276,6 +282,13 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Messages
+                </Link>
+                <Link
+                  href="/opportunities"
+                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Opportunities
                 </Link>
                 <Link
                   href="/events"

@@ -27,6 +27,9 @@ public class OrganizationEntity {
     @Column(name = "display_name", nullable = false)
     private String displayName;
 
+    @Column(name = "company_type")
+    private String companyType;
+
     @Column(name = "website", nullable = false)
     private String website;
 
@@ -101,6 +104,7 @@ public class OrganizationEntity {
         return OrganizationDm.builder()
                 .id(this.id)
                 .displayName(this.displayName)
+                .companyType(this.companyType)
                 .industry(this.industry.toDm())
                 .established(this.established)
                 .website(this.website)
@@ -126,6 +130,7 @@ public class OrganizationEntity {
         return OrganizationEntity.builder()
                 .id(d.getId())
                 .displayName(d.getDisplayName())
+                .companyType(d.getCompanyType())
                 .industry(IndustryEntity.builder().id(d.getIndustry().getId()).build())
                 .established(d.getEstablished())
                 .website(d.getWebsite())
