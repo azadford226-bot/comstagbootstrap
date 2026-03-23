@@ -14,11 +14,10 @@ import {
   setUserType,
 } from "@/lib/secure-storage";
 
-// Test credentials for quick login
 const TEST_COMPANY_CREDENTIALS = {
-  email: "testcompany@comstag.com",
-  password: "Test123!",
-  displayName: "Test Company Ltd"
+  email: "tester@comstag.com",
+  password: "Test@123!",
+  displayName: "Test User"
 };
 
 export default function LoginForm() {
@@ -35,9 +34,7 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
-  const isDevelopment =
-    process.env.NODE_ENV === "development" ||
-    process.env.NEXT_PUBLIC_DEV_MODE === "true";
+  const [loadingQuick, setLoadingQuick] = useState(false);
 
   // Timer countdown for resend button
   useEffect(() => {
@@ -134,30 +131,28 @@ export default function LoginForm() {
 
   const handleQuickTestLogin = async () => {
     setIsLoading(true);
+    setLoadingQuick(true);
     setError(null);
 
-    // Fill in test credentials
     setFormData({
       email: TEST_COMPANY_CREDENTIALS.email,
       password: TEST_COMPANY_CREDENTIALS.password,
-      rememberMe: false
+      rememberMe: false,
     });
 
-    // Perform login
     const result = await login({
       email: TEST_COMPANY_CREDENTIALS.email,
       password: TEST_COMPANY_CREDENTIALS.password,
     });
 
     if (!result.success) {
-      setError(result.message || "Test login failed. The test account might not exist yet.");
+      setError(result.message || "Test login failed. Account may not exist.");
       setIsLoading(false);
+      setLoadingQuick(false);
       return;
     }
 
-    // Check if this is an ADMIN login with tokens
     if (result.data?.accessToken && result.data?.refreshToken) {
-      // ADMIN login - tokens received directly
       setAccessToken(result.data.accessToken);
       setRefreshToken(result.data.refreshToken);
       setUserEmail(TEST_COMPANY_CREDENTIALS.email);
@@ -166,11 +161,10 @@ export default function LoginForm() {
       window.dispatchEvent(new Event("storage"));
       router.push("/admin/dashboard");
       setIsLoading(false);
+      setLoadingQuick(false);
       return;
     }
 
-    // Regular user login - needs verification code
-    // Save userId and show verification code input
     let receivedUserId: string | null = null;
     if (typeof result.data === "string") {
       receivedUserId = result.data;
@@ -181,6 +175,7 @@ export default function LoginForm() {
     if (!receivedUserId) {
       setError("Login failed - no user ID received");
       setIsLoading(false);
+      setLoadingQuick(false);
       return;
     }
 
@@ -188,6 +183,7 @@ export default function LoginForm() {
     setIsCodeSent(true);
     setResendTimer(30);
     setIsLoading(false);
+    setLoadingQuick(false);
   };
 
   const handleResendCode = async (e?: React.MouseEvent<HTMLButtonElement>) => {
@@ -489,23 +485,30 @@ export default function LoginForm() {
           </Button>
         </div>
 
-        {/* Test Login Button - Development Only */}
-        {isDevelopment && !isCodeSent && (
+        {/* Quick Test Login Button */}
+        {!isCodeSent && (
           <div className="mt-4">
             <button
               type="button"
               onClick={handleQuickTestLogin}
               disabled={isLoading}
-              className="w-full py-3 px-4 border-2 border-yellow-500 bg-yellow-50 text-yellow-800 rounded-lg font-medium hover:bg-yellow-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Quick Test Login (Test Company)
+              {loadingQuick ? (
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              )}
+              <div className="text-left">
+                <div className="font-semibold">Quick Test Login</div>
+                <div className="text-xs text-emerald-200">tester@comstag.com &middot; One-click access</div>
+              </div>
             </button>
-            <p className="text-xs text-center text-gray-500 mt-2">
-              Development Mode: Auto-fill test credentials
-            </p>
           </div>
         )}
 

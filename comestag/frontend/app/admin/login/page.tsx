@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/atoms/button";
 import FormInput from "@/components/atoms/form_input";
@@ -13,12 +13,24 @@ import {
   setUserType,
 } from "@/lib/secure-storage";
 
-// Test admin credentials for quick login
-const TEST_ADMIN_CREDENTIALS = {
-  email: "admin@comstag.com",
-  password: "Admin@123!",
-  displayName: "Admin User"
-};
+const QUICK_LOGINS = {
+  admin: {
+    email: "admin@comstag.com",
+    password: "Admin@123!",
+    displayName: "System Administrator",
+    label: "Admin Login",
+    description: "Full admin dashboard access",
+    color: "blue",
+  },
+  tester: {
+    email: "tester@comstag.com",
+    password: "Test@123!",
+    displayName: "Test User",
+    label: "Test User Login",
+    description: "Test all application features",
+    color: "green",
+  },
+} as const;
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -30,14 +42,8 @@ export default function AdminLoginPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingAccount, setLoadingAccount] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDevelopment, setIsDevelopment] = useState(false);
-
-  // Check if in development mode
-  useEffect(() => {
-    setIsDevelopment(process.env.NODE_ENV === 'development' || 
-                     process.env.NEXT_PUBLIC_DEV_MODE === 'true');
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -47,46 +53,39 @@ export default function AdminLoginPage() {
     }));
   };
 
-  const handleQuickAdminLogin = async () => {
+  const handleQuickLogin = async (accountKey: keyof typeof QUICK_LOGINS) => {
+    const creds = QUICK_LOGINS[accountKey];
     setIsLoading(true);
+    setLoadingAccount(accountKey);
     setError(null);
 
-    // Fill in test credentials
-    setFormData({
-      email: TEST_ADMIN_CREDENTIALS.email,
-      password: TEST_ADMIN_CREDENTIALS.password,
-    });
+    setFormData({ email: creds.email, password: creds.password });
 
     try {
-      const result = await login({
-        email: TEST_ADMIN_CREDENTIALS.email,
-        password: TEST_ADMIN_CREDENTIALS.password,
-      });
-      
+      const result = await login({ email: creds.email, password: creds.password });
+
       if (result.success && result.data) {
-        // Check if this is an ADMIN login with tokens
         if (result.data.accessToken && result.data.refreshToken) {
-          // ADMIN login - tokens received directly, no verification needed
           setAccessToken(result.data.accessToken);
           setRefreshToken(result.data.refreshToken);
-          setUserEmail(TEST_ADMIN_CREDENTIALS.email);
-          setUserName(TEST_ADMIN_CREDENTIALS.displayName);
+          setUserEmail(creds.email);
+          setUserName(creds.displayName);
           setUserType("ADMIN");
           window.dispatchEvent(new Event("storage"));
           router.push("/admin/dashboard");
         } else {
-          // Regular flow - needs verification code
           setUserId(result.data.userId || null);
           setIsCodeSent(true);
         }
       } else {
-        setError(result.message || "Test admin login failed. The admin account might not exist yet.");
+        setError(result.message || `Login failed for ${creds.label}. Account may not exist.`);
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      setError("Unable to connect to the server. Please ensure the backend is running on http://localhost:3000");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Unable to connect to the server.");
     } finally {
       setIsLoading(false);
+      setLoadingAccount(null);
     }
   };
 
@@ -202,7 +201,7 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-dark via-[#3f64c4] to-primary-dark px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-primary-dark mb-2">
             Admin Login
           </h1>
@@ -216,6 +215,64 @@ export default function AdminLoginPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
+          </div>
+        )}
+
+        {/* Quick Login Buttons */}
+        {!isCodeSent && (
+          <div className="space-y-3 mb-6">
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("admin")}
+              disabled={isLoading}
+              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
+            >
+              {loadingAccount === "admin" ? (
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              )}
+              <div className="text-left">
+                <div className="font-semibold">Admin Login</div>
+                <div className="text-xs text-blue-200">admin@comstag.com &middot; Full dashboard access</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("tester")}
+              disabled={isLoading}
+              className="w-full py-3 px-4 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
+            >
+              {loadingAccount === "tester" ? (
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              )}
+              <div className="text-left">
+                <div className="font-semibold">Test User Login</div>
+                <div className="text-xs text-emerald-200">tester@comstag.com &middot; Test all features</div>
+              </div>
+            </button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-white text-gray-400">or sign in manually</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -268,26 +325,6 @@ export default function AdminLoginPage() {
               ? "Verify Code"
               : "Login"}
           </Button>
-
-          {/* Test Admin Login Button - Development Only */}
-          {isDevelopment && !isCodeSent && (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={handleQuickAdminLogin}
-                disabled={isLoading}
-                className="w-full py-3 px-4 border-2 border-yellow-500 bg-yellow-50 text-yellow-800 rounded-lg font-medium hover:bg-yellow-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Quick Admin Login
-              </button>
-              <p className="text-xs text-center text-gray-500 mt-2">
-                Development Mode: Auto-fill admin credentials
-              </p>
-            </div>
-          )}
         </form>
       </div>
     </div>
