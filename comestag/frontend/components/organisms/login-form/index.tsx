@@ -17,7 +17,7 @@ import {
 const TEST_COMPANY_CREDENTIALS = {
   email: "tester@comstag.com",
   password: "Test@123!",
-  displayName: "Test User"
+  displayName: "Test Company",
 };
 
 export default function LoginForm() {
@@ -157,9 +157,9 @@ export default function LoginForm() {
       setRefreshToken(result.data.refreshToken);
       setUserEmail(TEST_COMPANY_CREDENTIALS.email);
       setUserName(TEST_COMPANY_CREDENTIALS.displayName);
-      setUserType("ADMIN");
+      setUserType("ORGANIZATION");
       window.dispatchEvent(new Event("storage"));
-      router.push("/admin/dashboard");
+      router.push("/dashboard");
       setIsLoading(false);
       setLoadingQuick(false);
       return;
@@ -505,8 +505,8 @@ export default function LoginForm() {
                 </svg>
               )}
               <div className="text-left">
-                <div className="font-semibold">Quick Test Login</div>
-                <div className="text-xs text-emerald-200">tester@comstag.com &middot; One-click access</div>
+                <div className="font-semibold">Quick Company Login</div>
+                <div className="text-xs text-emerald-200">tester@comstag.com &middot; Company dashboard</div>
               </div>
             </button>
           </div>

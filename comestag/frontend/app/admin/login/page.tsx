@@ -18,19 +18,17 @@ const QUICK_LOGINS = {
     email: "admin@comstag.com",
     password: "Admin@123!",
     displayName: "System Administrator",
-    label: "Admin Login",
-    description: "Full admin dashboard access",
-    color: "blue",
+    userType: "ADMIN" as const,
+    redirect: "/admin/dashboard",
   },
-  tester: {
+  company: {
     email: "tester@comstag.com",
     password: "Test@123!",
-    displayName: "Test User",
-    label: "Test User Login",
-    description: "Test all application features",
-    color: "green",
+    displayName: "Test Company",
+    userType: "ORGANIZATION" as const,
+    redirect: "/dashboard",
   },
-} as const;
+};
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -70,15 +68,15 @@ export default function AdminLoginPage() {
           setRefreshToken(result.data.refreshToken);
           setUserEmail(creds.email);
           setUserName(creds.displayName);
-          setUserType("ADMIN");
+          setUserType(creds.userType);
           window.dispatchEvent(new Event("storage"));
-          router.push("/admin/dashboard");
+          router.push(creds.redirect);
         } else {
           setUserId(result.data.userId || null);
           setIsCodeSent(true);
         }
       } else {
-        setError(result.message || `Login failed for ${creds.label}. Account may not exist.`);
+        setError(result.message || "Login failed. Account may not exist.");
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -245,23 +243,23 @@ export default function AdminLoginPage() {
 
             <button
               type="button"
-              onClick={() => handleQuickLogin("tester")}
+              onClick={() => handleQuickLogin("company")}
               disabled={isLoading}
               className="w-full py-3 px-4 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
             >
-              {loadingAccount === "tester" ? (
+              {loadingAccount === "company" ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               )}
               <div className="text-left">
-                <div className="font-semibold">Test User Login</div>
-                <div className="text-xs text-emerald-200">tester@comstag.com &middot; Test all features</div>
+                <div className="font-semibold">Test Company Login</div>
+                <div className="text-xs text-emerald-200">tester@comstag.com &middot; Company dashboard</div>
               </div>
             </button>
 
