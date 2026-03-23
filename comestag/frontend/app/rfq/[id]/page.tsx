@@ -152,6 +152,12 @@ export default function RfqDetailPage() {
                       Invite Only
                     </span>
                   )}
+                  {rfq.ndaRequired && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-full text-xs font-medium">
+                      <Lock className="h-3 w-3" />
+                      NDA Required
+                    </span>
+                  )}
                   {rfq.isOwner && (
                     <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-medium">
                       Your RFQ

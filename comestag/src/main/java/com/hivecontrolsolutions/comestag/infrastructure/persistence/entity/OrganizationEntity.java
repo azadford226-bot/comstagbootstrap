@@ -85,6 +85,13 @@ public class OrganizationEntity {
     @Column(name = "profile_cover_id")
     private UUID profileCoverId;
 
+    @Column(name = "verified", nullable = false)
+    @Builder.Default
+    private boolean verified = false;
+
+    @Column(name = "verified_at")
+    private Instant verifiedAt;
+
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", updatable = false, insertable = false)
     @Generated
@@ -121,6 +128,8 @@ public class OrganizationEntity {
                 .views(this.views)
                 .profileImageId(this.profileImageId)
                 .profileCoverId(this.profileCoverId)
+                .verified(this.verified)
+                .verifiedAt(this.verifiedAt)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
                 .build();
@@ -147,6 +156,8 @@ public class OrganizationEntity {
                 .views(d.getViews())
                 .profileImageId(d.getProfileImageId())
                 .profileCoverId(d.getProfileCoverId())
+                .verified(d.isVerified())
+                .verifiedAt(d.getVerifiedAt())
                 .build();
     }
 }

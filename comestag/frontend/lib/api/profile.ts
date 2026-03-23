@@ -28,6 +28,7 @@ export interface ConsumerProfile extends UserProfile {
 
 export interface OrganizationProfile extends UserProfile {
   companyType?: string;
+  verified?: boolean;
   industryId?: number;
   industry?: { id: number; name: string };
   size: string;

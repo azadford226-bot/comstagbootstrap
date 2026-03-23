@@ -17,6 +17,7 @@ export interface Rfq {
   createdAt: string;
   updatedAt: string;
   proposalCount: number;
+  ndaRequired: boolean;
   hasSubmitted: boolean;
   isOwner: boolean;
 }
@@ -52,6 +53,7 @@ export interface CreateRfqRequest {
   deadline?: string;
   requirements?: string;
   visibility: string;
+  ndaRequired?: boolean;
   invitedOrganizationIds?: string[];
   mediaIds?: string[];
 }

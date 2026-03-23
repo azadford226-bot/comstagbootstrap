@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { updateEmail } from "@/lib/api/profile";
 import { changePassword } from "@/lib/api/auth";
-import { Mail, Lock, Save, AlertCircle, CheckCircle, Bell, Smartphone } from "lucide-react";
+import { authenticatedGet, authenticatedPut } from "@/lib/api/api-client";
+import { Mail, Lock, Save, AlertCircle, CheckCircle, Bell, Smartphone, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuth(true);
@@ -29,6 +30,51 @@ export default function SettingsPage() {
     systemAlerts: true,
   });
   const [notifSaved, setNotifSaved] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+
+  const loadNotifPrefs = useCallback(async () => {
+    setNotifLoading(true);
+    try {
+      const res = await authenticatedGet<{
+        emailDigest: string;
+        inAppEnabled: boolean;
+        pushEnabled: boolean;
+        rfqAlerts: boolean;
+        messageAlerts: boolean;
+        opportunityAlerts: boolean;
+        systemAlerts: boolean;
+      }>("/v1/settings/notifications");
+      if (res.success && res.data) {
+        setNotifPrefs({
+          emailDigest: res.data.emailDigest as typeof notifPrefs.emailDigest,
+          inAppEnabled: res.data.inAppEnabled,
+          pushEnabled: res.data.pushEnabled,
+          rfqAlerts: res.data.rfqAlerts,
+          messageAlerts: res.data.messageAlerts,
+          opportunityAlerts: res.data.opportunityAlerts,
+          systemAlerts: res.data.systemAlerts,
+        });
+      }
+    } catch { /* use defaults */ }
+    setNotifLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadNotifPrefs();
+  }, [loadNotifPrefs]);
+
+  const saveNotifPrefs = async () => {
+    setNotifSaving(true);
+    try {
+      const res = await authenticatedPut("/v1/settings/notifications", notifPrefs);
+      if (res.success) {
+        setNotifSaved(true);
+        setTimeout(() => setNotifSaved(false), 3000);
+      }
+    } catch { /* ignore */ }
+    setNotifSaving(false);
+  };
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -417,14 +463,12 @@ export default function SettingsPage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  setNotifSaved(true);
-                  setTimeout(() => setNotifSaved(false), 3000);
-                }}
-                className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-semibold"
+                onClick={saveNotifPrefs}
+                disabled={notifSaving}
+                className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors font-semibold"
               >
-                <Save className="w-4 h-4" />
-                Save Preferences
+                {notifSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {notifSaving ? "Saving..." : "Save Preferences"}
               </button>
             </div>
           </div>

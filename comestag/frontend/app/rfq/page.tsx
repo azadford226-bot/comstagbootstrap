@@ -110,6 +110,7 @@ export default function RFQPage() {
         deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
         requirements: formData.requirements || undefined,
         visibility: formData.visibility,
+        ndaRequired: formData.ndaRequired || undefined,
         mediaIds: rfqMediaIds.length > 0 ? rfqMediaIds : undefined,
       }
 

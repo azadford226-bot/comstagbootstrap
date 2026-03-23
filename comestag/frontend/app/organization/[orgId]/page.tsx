@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Star, MapPin, Globe, Calendar, UserPlus, UserCheck, Building2, FileText, Briefcase, MessageCircle, Activity } from "lucide-react";
+import { Star, MapPin, Globe, Calendar, UserPlus, UserCheck, Building2, FileText, Briefcase, MessageCircle, Activity, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import { getPublicProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getCapabilities, Capability } from "@/lib/api/capabilities";
@@ -234,8 +234,13 @@ export default function PublicOrganizationProfile() {
 
             {/* Organization Info */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
                 {profile.displayName}
+                {profile.verified && (
+                  <span title="Verified company" className="text-blue-500">
+                    <BadgeCheck className="w-6 h-6" />
+                  </span>
+                )}
               </h1>
 
               <div className="flex flex-wrap gap-4 text-gray-600 mb-4">

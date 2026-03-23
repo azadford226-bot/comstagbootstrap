@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { uploadPostMedia } from "@/lib/api/media";
+import { getMediaUrl } from "@/lib/api/media";
 import {
   getConversations,
   getMessages,
@@ -29,6 +31,7 @@ export default function MessagesPage() {
   const [showScheduler, setShowScheduler] = useState(false);
   const [meetingDate, setMeetingDate] = useState("");
   const [meetingTime, setMeetingTime] = useState("10:00");
+  const [uploadingFile, setUploadingFile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageStreamAbortController = useRef<AbortController | null>(null);
@@ -443,11 +446,11 @@ export default function MessagesPage() {
                     <h2 className="font-semibold text-gray-800">
                       {selectedConversation.otherUserName}
                     </h2>
-                    <span title="Verified &amp; Encrypted"><Shield className="w-3.5 h-3.5 text-green-500" /></span>
+                    <span title="Secure connection"><Shield className="w-3.5 h-3.5 text-blue-400" /></span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                    Online &middot;{" "}
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                    Available &middot;{" "}
                     {selectedConversation.otherUserType === "ORGANIZATION"
                       ? "Organization"
                       : "Consumer"}
@@ -560,18 +563,32 @@ export default function MessagesPage() {
             >
               <div className="flex items-center gap-2">
                 <label
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                  className={`p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}
                   title="Attach file"
                 >
-                  <Paperclip className="w-5 h-5" />
+                  {uploadingFile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
                     className="hidden"
+                    disabled={uploadingFile}
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file && selectedConversation) {
-                        await handleSendMessage(undefined, `[File: ${file.name}]`);
+                        setUploadingFile(true);
+                        try {
+                          const uploadRes = await uploadPostMedia(file);
+                          if (uploadRes.success && uploadRes.data?.mediaIds?.length) {
+                            const mediaId = uploadRes.data.mediaIds[0];
+                            const url = getMediaUrl(mediaId);
+                            await handleSendMessage(undefined, `📎 ${file.name}\n${url}`);
+                          } else {
+                            await handleSendMessage(undefined, `📎 ${file.name} (upload failed)`);
+                          }
+                        } catch {
+                          await handleSendMessage(undefined, `📎 ${file.name} (upload failed)`);
+                        }
+                        setUploadingFile(false);
                       }
                       e.target.value = '';
                     }}
@@ -586,10 +603,24 @@ export default function MessagesPage() {
                     type="file"
                     accept="image/*"
                     className="hidden"
+                    disabled={uploadingFile}
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file && selectedConversation) {
-                        await handleSendMessage(undefined, `[Image: ${file.name}]`);
+                        setUploadingFile(true);
+                        try {
+                          const uploadRes = await uploadPostMedia(file);
+                          if (uploadRes.success && uploadRes.data?.mediaIds?.length) {
+                            const mediaId = uploadRes.data.mediaIds[0];
+                            const url = getMediaUrl(mediaId);
+                            await handleSendMessage(undefined, `🖼️ ${file.name}\n${url}`);
+                          } else {
+                            await handleSendMessage(undefined, `🖼️ ${file.name} (upload failed)`);
+                          }
+                        } catch {
+                          await handleSendMessage(undefined, `🖼️ ${file.name} (upload failed)`);
+                        }
+                        setUploadingFile(false);
                       }
                       e.target.value = '';
                     }}
@@ -615,7 +646,7 @@ export default function MessagesPage() {
               <div className="flex items-center justify-between mt-1 px-2">
                 <div className="flex items-center gap-1 text-[10px] text-gray-400">
                   <Shield className="w-3 h-3" />
-                  <span>End-to-end encrypted</span>
+                  <span>Secured with TLS</span>
                 </div>
               </div>
             </form>

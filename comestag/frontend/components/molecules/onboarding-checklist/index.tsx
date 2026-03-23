@@ -27,12 +27,16 @@ interface ChecklistItem {
 interface OnboardingChecklistProps {
   profile: OrganizationProfile | null;
   postsCount: number;
+  rfqCount?: number;
+  messageCount?: number;
   onDismiss: () => void;
 }
 
 export default function OnboardingChecklist({
   profile,
   postsCount,
+  rfqCount = 0,
+  messageCount = 0,
   onDismiss,
 }: OnboardingChecklistProps) {
   const items: ChecklistItem[] = useMemo(() => {
@@ -82,7 +86,7 @@ export default function OnboardingChecklist({
         id: "rfq",
         label: "Post or browse an RFQ",
         description: "Find opportunities or request quotes",
-        done: false,
+        done: rfqCount > 0,
         href: "/rfq",
         icon: <Briefcase className="w-4 h-4" />,
       },
@@ -90,7 +94,7 @@ export default function OnboardingChecklist({
         id: "message",
         label: "Send your first message",
         description: "Start a conversation with a partner",
-        done: false,
+        done: messageCount > 0,
         href: "/messages",
         icon: <MessageCircle className="w-4 h-4" />,
       },
