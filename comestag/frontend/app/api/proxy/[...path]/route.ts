@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-// Backend URL: BACKEND_URL (server-only) or NEXT_PUBLIC_API_BASE_URL, then fallback
-// Set BACKEND_URL in Vercel to your Railway URL so the proxy forwards to the correct backend
+// Backend URL: BACKEND_URL (server-only) > NEXT_PUBLIC_API_BASE_URL
+// Set BACKEND_URL in Vercel to your Railway backend URL (with https://)
 const API_BASE_URL =
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://comstag-back.onrender.com";
+  "";
+
+if (!API_BASE_URL) {
+  console.warn("[Proxy] WARNING: Neither BACKEND_URL nor NEXT_PUBLIC_API_BASE_URL is set. Proxy will fail.");
+} else {
+  console.log("[Proxy] Forwarding to:", API_BASE_URL);
+}
 
 // API routes are not supported in static export
 // This file will be ignored during static export build

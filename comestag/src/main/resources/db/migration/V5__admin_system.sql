@@ -45,7 +45,7 @@ INSERT INTO accounts (
     'System Administrator',
     'ADMIN',
     'admin@comstag.com',
-    '$2a$10$N/uhgFD0aDnyalBvy4J4o.HaGUltOjHiDEKhLQSvPfGboR8siAvqq', -- Admin@123!
+    '$2a$10$n8BTO.VZAO1Y2v0WMbNm6ei4/IAlvWfqRr.X1dvnIdCT/uJaKLbyy', -- Admin@123!
     'ACTIVE',
     true,
     now(),
