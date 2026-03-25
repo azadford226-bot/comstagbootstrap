@@ -42,6 +42,8 @@ public class OrganizationDm {
     private UUID profileImageId;
     private UUID profileCoverId;
 
+    private String techStack;
+
     private boolean verified;
     private Instant verifiedAt;
 

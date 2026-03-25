@@ -49,6 +49,14 @@ public class OpportunityEntity {
     @Column(columnDefinition = "text[]")
     private List<String> tags;
 
+    @Column(name = "cohort_details", columnDefinition = "TEXT")
+    private String cohortDetails;
+
+    @Column(columnDefinition = "TEXT")
+    private String milestones;
+
+    private String duration;
+
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", updatable = false, insertable = false)
     @Generated

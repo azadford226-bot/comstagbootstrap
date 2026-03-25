@@ -1,0 +1,3 @@
+ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS cohort_details TEXT;
+ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS milestones TEXT;
+ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS duration VARCHAR(100);

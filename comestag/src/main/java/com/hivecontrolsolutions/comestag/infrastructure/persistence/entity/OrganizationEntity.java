@@ -85,6 +85,9 @@ public class OrganizationEntity {
     @Column(name = "profile_cover_id")
     private UUID profileCoverId;
 
+    @Column(name = "tech_stack", columnDefinition = "text")
+    private String techStack;
+
     @Column(name = "verified", nullable = false)
     @Builder.Default
     private boolean verified = false;
@@ -128,6 +131,7 @@ public class OrganizationEntity {
                 .views(this.views)
                 .profileImageId(this.profileImageId)
                 .profileCoverId(this.profileCoverId)
+                .techStack(this.techStack)
                 .verified(this.verified)
                 .verifiedAt(this.verifiedAt)
                 .createdAt(this.createdAt)
@@ -156,6 +160,7 @@ public class OrganizationEntity {
                 .views(d.getViews())
                 .profileImageId(d.getProfileImageId())
                 .profileCoverId(d.getProfileCoverId())
+                .techStack(d.getTechStack())
                 .verified(d.isVerified())
                 .verifiedAt(d.getVerifiedAt())
                 .build();

@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search } from "lucide-react";
+import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search, Megaphone } from "lucide-react";
 import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getPosts, Post } from "@/lib/api/posts";
 import { listRfqs, Rfq } from "@/lib/api/rfq";
+import { authenticatedGet } from "@/lib/api/api-client";
 import { PostsFeed } from "@/components/ui/posts-feed";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { getMediaUrl } from "@/lib/api/media";
@@ -24,6 +25,9 @@ export default function DashboardPage() {
   const [feedTab, setFeedTab] = useState<"all" | "latest" | "trending">("all");
   const [feedIndustry, setFeedIndustry] = useState("");
   const [showChecklist, setShowChecklist] = useState(true);
+  const [recommendedPartners, setRecommendedPartners] = useState<
+    { id: string; displayName: string; companyType?: string; industry?: string; matchScore: number; profileImageId?: string; verified?: boolean }[]
+  >([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -50,6 +54,15 @@ export default function DashboardPage() {
       if (rfqsRes.success && rfqsRes.data && "content" in rfqsRes.data) {
         setRfqs(rfqsRes.data.content || []);
       }
+
+      try {
+        const partnersRes = await authenticatedGet<{ id: string; displayName: string; companyType?: string; industry?: string; matchScore: number; profileImageId?: string; verified?: boolean }[]>(
+          "/v1/partners/recommended?limit=5"
+        );
+        if (partnersRes.success && Array.isArray(partnersRes.data)) {
+          setRecommendedPartners(partnersRes.data);
+        }
+      } catch { /* non-critical */ }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {
@@ -206,6 +219,22 @@ export default function DashboardPage() {
                       </div>
                     )}
 
+                    {/* Tech Stack Tags */}
+                    {profile.techStack && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {profile.techStack.split(",").map((t: string) => t.trim()).filter(Boolean).slice(0, 5).map((tag: string) => (
+                          <span key={tag} className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-full">
+                            {tag}
+                          </span>
+                        ))}
+                        {(profile.techStack.split(",").filter(Boolean).length > 5) && (
+                          <span className="px-2 py-0.5 text-[10px] text-gray-400">
+                            +{profile.techStack.split(",").filter(Boolean).length - 5} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Divider */}
                     <div className="border-t border-gray-100 mt-4 pt-4">
                       {/* Website */}
@@ -329,6 +358,33 @@ export default function DashboardPage() {
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
+
+                {/* Sponsored content slot */}
+                {feedTab === "all" && filteredPosts.length > 0 && (
+                  <div className="mb-4 p-4 rounded-lg border border-dashed border-amber-200 bg-amber-50/50">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                        <Megaphone className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Sponsored</span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-900 mb-0.5">Boost your company&apos;s visibility</p>
+                        <p className="text-xs text-gray-500">Promote your RFQs, opportunities, or company profile to reach more partners.</p>
+                        <Link
+                          href="/settings"
+                          className="inline-flex items-center gap-1 text-xs text-amber-700 font-medium mt-2 hover:underline"
+                        >
+                          Learn about promotions <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                      <button className="text-gray-400 hover:text-gray-600 text-xs flex-shrink-0">
+                        Hide
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {filteredPosts.length > 0 ? (
                   <PostsFeed posts={filteredPosts} showFullContent={false} />
@@ -540,30 +596,35 @@ export default function DashboardPage() {
                   <Users className="w-4 h-4 text-primary" />
                   Recommended Partners
                 </h2>
-                <div className="space-y-3">
-                  {[
-                    { name: "TechVentures Inc.", type: "Enterprise", match: 92, industry: "Cloud Services" },
-                    { name: "DataFlow Systems", type: "Vendor", match: 87, industry: "Data Analytics" },
-                    { name: "InnovateLab", type: "Startup", match: 81, industry: "AI/ML" },
-                  ].map((partner) => (
-                    <div
-                      key={partner.name}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/20 hover:bg-blue-50/30 transition-colors cursor-pointer"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">{partner.name}</div>
-                        <div className="text-xs text-gray-500">{partner.industry} &middot; {partner.type}</div>
-                      </div>
-                      <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0">
-                        {partner.match}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <Link href="/rfq" className="flex items-center justify-center gap-1 text-xs text-primary font-medium mt-3 hover:underline">
+                {recommendedPartners.length > 0 ? (
+                  <div className="space-y-3">
+                    {recommendedPartners.map((partner) => (
+                      <Link
+                        key={partner.id}
+                        href={`/organization/${partner.id}`}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/20 hover:bg-blue-50/30 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{partner.displayName}</div>
+                          <div className="text-xs text-gray-500">
+                            {partner.industry || "Technology"} &middot; {(partner.companyType || "").replace("_", " ") || "Company"}
+                          </div>
+                        </div>
+                        <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0">
+                          {partner.matchScore}%
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 text-center py-4">
+                    Partner recommendations will appear as more companies join.
+                  </p>
+                )}
+                <Link href="/opportunities" className="flex items-center justify-center gap-1 text-xs text-primary font-medium mt-3 hover:underline">
                   Discover more partners <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>

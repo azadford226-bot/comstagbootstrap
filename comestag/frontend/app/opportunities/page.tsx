@@ -22,7 +22,9 @@ import {
   Plus,
   X,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   listOpportunities,
@@ -108,6 +110,9 @@ export default function OpportunitiesPage() {
     funding: "",
     stage: "",
     tags: [],
+    cohortDetails: "",
+    milestones: "",
+    duration: "",
   });
   const [tagInput, setTagInput] = useState("");
 
@@ -185,7 +190,7 @@ export default function OpportunitiesPage() {
       });
       if (res.success) {
         setShowCreate(false);
-        setFormData({ title: "", description: "", type: "jv", company: "", location: "", equity: "", funding: "", stage: "", tags: [] });
+        setFormData({ title: "", description: "", type: "jv", company: "", location: "", equity: "", funding: "", stage: "", tags: [], cohortDetails: "", milestones: "", duration: "" });
         fetchData();
       }
     } catch { /* ignore */ }
@@ -348,6 +353,28 @@ export default function OpportunitiesPage() {
                     )}
                   </div>
 
+                  {/* Co-dev / Incubation extra details */}
+                  {(op.cohortDetails || op.milestones || op.duration) && (
+                    <div className="mb-3 p-3 bg-gray-50 rounded-lg text-xs space-y-1.5">
+                      {op.duration && (
+                        <div className="flex items-center gap-1.5 text-gray-600">
+                          <Calendar className="w-3 h-3 flex-shrink-0" />
+                          <span className="font-medium">Duration:</span> {op.duration}
+                        </div>
+                      )}
+                      {op.cohortDetails && (
+                        <div className="text-gray-600">
+                          <span className="font-medium">{op.type === "incubation" ? "Cohort:" : "Pilot:"}</span> {op.cohortDetails}
+                        </div>
+                      )}
+                      {op.milestones && (
+                        <div className="text-gray-500">
+                          <span className="font-medium">Milestones:</span> {op.milestones}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {op.tags && op.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {op.tags.map((tag) => (
@@ -373,10 +400,13 @@ export default function OpportunitiesPage() {
                       {op.hasExpressedInterest ? "Interested" : "Express Interest"}
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                      <Phone className="w-3.5 h-3.5" />
-                      Schedule Call
-                    </button>
+                    <Link
+                      href={`/messages?rfq=${op.id}&subject=${encodeURIComponent(op.title)}`}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Discuss
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -477,6 +507,41 @@ export default function OpportunitiesPage() {
                   placeholder="e.g. Series A, Pre-Seed"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration / Timeline</label>
+                <input
+                  value={formData.duration || ""}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="e.g. 6 months, Q3-Q4 2026"
+                />
+              </div>
+              {(formData.type === "incubation" || formData.type === "codev") && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {formData.type === "incubation" ? "Cohort Details" : "Pilot Program Details"}
+                    </label>
+                    <textarea
+                      value={formData.cohortDetails || ""}
+                      onChange={(e) => setFormData({ ...formData, cohortDetails: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder={formData.type === "incubation" ? "e.g. Batch 5 — 10 startups, mentoring, $50K seed..." : "e.g. Scope, deliverables, success criteria..."}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Key Milestones</label>
+                    <textarea
+                      value={formData.milestones || ""}
+                      onChange={(e) => setFormData({ ...formData, milestones: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="e.g. Week 4: MVP → Week 8: Pilot launch → Week 12: Demo Day"
+                    />
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
                 <div className="flex gap-2">

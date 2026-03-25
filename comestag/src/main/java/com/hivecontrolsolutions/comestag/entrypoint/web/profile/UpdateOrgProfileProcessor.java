@@ -46,7 +46,8 @@ public class UpdateOrgProfileProcessor {
                 request.phone(),
                 request.country(),
                 request.state(),
-                request.city()
+                request.city(),
+                request.techStack()
         );
     }
 }

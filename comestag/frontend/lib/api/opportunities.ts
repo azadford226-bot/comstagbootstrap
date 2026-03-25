@@ -14,6 +14,9 @@ export interface Opportunity {
   stage: string | null;
   deadline: string | null;
   tags: string[] | null;
+  cohortDetails: string | null;
+  milestones: string | null;
+  duration: string | null;
   interestCount: number;
   hasExpressedInterest: boolean;
   createdAt: string;
@@ -36,6 +39,9 @@ export interface CreateOpportunityRequest {
   stage?: string;
   deadline?: string;
   tags?: string[];
+  cohortDetails?: string;
+  milestones?: string;
+  duration?: string;
 }
 
 export async function listOpportunities(type = "all", page = 0, size = 20) {

@@ -699,6 +699,23 @@ export default function PublicOrganizationProfile() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Tech Stack Tags */}
+            {profile.techStack && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Tech Stack</h2>
+                <div className="flex flex-wrap gap-2">
+                  {profile.techStack.split(",").map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Capabilities */}
             {capabilities.length > 0 && (
               <div className="bg-white rounded-lg shadow p-6">

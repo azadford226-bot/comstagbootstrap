@@ -13,7 +13,7 @@ import IndustrySelect from "@/components/atoms/industry_select";
 import CompanySizeSelect from "@/components/atoms/company_size_select";
 import CountryCitySelect from "@/components/molecules/country_city_select";
 import { logger } from "@/lib/logger";
-import { Upload } from "lucide-react";
+import { Upload, X, Plus } from "lucide-react";
 import { mockApiResponse, mockProfile } from "@/lib/dev-mock-api";
 import { getMediaUrl } from "@/lib/api/media";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
@@ -39,6 +39,8 @@ export default function EditProfilePage() {
     whatWeDo: "",
   });
   const [profileVisibility, setProfileVisibility] = useState<"public" | "private">("public");
+  const [techTags, setTechTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
 
   const [profileImage, setProfileImage] = useState<string>("");
   const [coverImage, setCoverImage] = useState<string>("");
@@ -71,6 +73,11 @@ export default function EditProfilePage() {
         });
         setProfileImage(profile.profileImageId || profile.profileImage || "");
         setCoverImage(profile.profileCoverId || profile.coverImage || "");
+        setTechTags(
+          profile.techStack
+            ? profile.techStack.split(",").map((t: string) => t.trim()).filter(Boolean)
+            : []
+        );
       }
     } catch (error) {
       logger.error("Failed to load profile", error);
@@ -149,7 +156,10 @@ export default function EditProfilePage() {
     setIsSaving(true);
 
     try {
-      const result = await updateOrganizationProfile(formData);
+      const result = await updateOrganizationProfile({
+        ...formData,
+        techStack: techTags.join(","),
+      });
       if (!result.success) {
         setError(result.message || "Failed to update profile");
         setIsSaving(false);
@@ -351,6 +361,63 @@ export default function EditProfilePage() {
               value={formData.whatWeDo}
               onChange={handleInputChange}
             />
+
+            {/* Tech Stack / Capability Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tech Stack & Capabilities
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Add technologies, skills, and capabilities your company specializes in.</p>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && tagInput.trim()) {
+                      e.preventDefault();
+                      if (!techTags.includes(tagInput.trim())) {
+                        setTechTags([...techTags, tagInput.trim()]);
+                      }
+                      setTagInput("");
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g. React, Java, AWS, Kubernetes — press Enter to add"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (tagInput.trim() && !techTags.includes(tagInput.trim())) {
+                      setTechTags([...techTags, tagInput.trim()]);
+                      setTagInput("");
+                    }
+                  }}
+                  className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              {techTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {techTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => setTechTags(techTags.filter((t) => t !== tag))}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Profile Visibility */}
             <div className="border border-gray-200 rounded-lg p-4">

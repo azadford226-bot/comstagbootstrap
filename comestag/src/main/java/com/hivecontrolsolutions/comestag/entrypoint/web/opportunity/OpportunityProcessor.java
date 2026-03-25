@@ -36,7 +36,10 @@ public class OpportunityProcessor {
             String funding,
             String stage,
             String deadline,
-            List<String> tags
+            List<String> tags,
+            String cohortDetails,
+            String milestones,
+            String duration
     ) {}
 
     public record OpportunityResponse(
@@ -53,6 +56,9 @@ public class OpportunityProcessor {
             String stage,
             Instant deadline,
             List<String> tags,
+            String cohortDetails,
+            String milestones,
+            String duration,
             long interestCount,
             boolean hasExpressedInterest,
             Instant createdAt
@@ -62,7 +68,8 @@ public class OpportunityProcessor {
                     e.getId(), e.getOrganizationId(), e.getTitle(), e.getDescription(),
                     e.getType(), e.getStatus(), e.getCompany(), e.getLocation(),
                     e.getEquity(), e.getFunding(), e.getStage(), e.getDeadline(),
-                    e.getTags(), interestCount, interested, e.getCreatedAt()
+                    e.getTags(), e.getCohortDetails(), e.getMilestones(), e.getDuration(),
+                    interestCount, interested, e.getCreatedAt()
             );
         }
     }
@@ -117,6 +124,9 @@ public class OpportunityProcessor {
                 .stage(request.stage())
                 .deadline(request.deadline() != null ? Instant.parse(request.deadline()) : null)
                 .tags(request.tags())
+                .cohortDetails(request.cohortDetails())
+                .milestones(request.milestones())
+                .duration(request.duration())
                 .build();
         OpportunityEntity saved = opportunityRepo.save(entity);
         return ResponseEntity.ok(Map.of("success", true, "data", OpportunityResponse.from(saved, 0, false)));

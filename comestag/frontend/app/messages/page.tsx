@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2, Pin } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2, Pin, FileText } from "lucide-react";
 import Image from "next/image";
 import { uploadPostMedia } from "@/lib/api/media";
 import { getMediaUrl } from "@/lib/api/media";
@@ -19,8 +20,19 @@ import { mockApiResponse, mockConversations, mockMessages } from "@/lib/dev-mock
 import { isDevMode } from "@/lib/dev-auth";
 import { logger } from "@/lib/logger";
 
-export default function MessagesPage() {
+export default function MessagesPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+      <MessagesPage />
+    </Suspense>
+  );
+}
+
+function MessagesPage() {
   const { user } = useAuth(true);
+  const searchParams = useSearchParams();
+  const rfqThread = searchParams.get("rfq");
+  const rfqSubject = searchParams.get("subject");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -489,6 +501,16 @@ export default function MessagesPage() {
                 </button>
               </div>
             </div>
+
+            {/* Thread context banner */}
+            {rfqThread && rfqSubject && (
+              <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-2 text-sm">
+                <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                <span className="text-blue-700 font-medium">Thread:</span>
+                <span className="text-blue-600 truncate">{decodeURIComponent(rfqSubject)}</span>
+                <a href={`/rfq/${rfqThread}`} className="ml-auto text-xs text-blue-500 hover:underline flex-shrink-0">View RFQ</a>
+              </div>
+            )}
 
             {/* In-thread search bar */}
             {showMessageSearch && (

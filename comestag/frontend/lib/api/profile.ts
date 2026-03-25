@@ -29,6 +29,7 @@ export interface ConsumerProfile extends UserProfile {
 export interface OrganizationProfile extends UserProfile {
   companyType?: string;
   verified?: boolean;
+  techStack?: string;
   industryId?: number;
   industry?: { id: number; name: string };
   size: string;
@@ -56,6 +57,7 @@ export interface UpdateConsumerProfileRequest {
 export interface UpdateOrganizationProfileRequest {
   displayName?: string;
   companyType?: string;
+  techStack?: string;
   industryId?: number;
   size?: string;
   country?: string;
