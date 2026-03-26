@@ -510,7 +510,10 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div
+                id="network-feed"
+                className="bg-white rounded-lg shadow-sm p-6 scroll-mt-24"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-0.5">
                     {(["all", "latest", "trending", "following"] as const).map((tab) => (
@@ -534,11 +537,11 @@ export default function DashboardPage() {
                     ))}
                   </div>
                   <Link
-                    href="/posts"
+                    href="/profile"
                     className="text-sm text-primary hover:text-primary-dark flex items-center gap-1"
                   >
-                    View All
-                    <ArrowRight className="w-4 h-4" />
+                    My posts
+                    <ArrowRight className="w-4 h-4" aria-hidden />
                   </Link>
                 </div>
                 <p className="text-xs text-gray-500 mb-4" title="How this feed is ordered">

@@ -74,7 +74,10 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white" aria-label="Main navigation">
+    <nav
+      className="sticky top-0 z-50 w-full bg-white border-b border-primary-dark"
+      aria-label="Main navigation"
+    >
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[50px]">
         <div className="flex justify-between items-center h-[63px]">
           {/* Logo/Title */}
@@ -149,7 +152,7 @@ export default function Navbar() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-light-gray rounded-lg shadow-lg py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-light-gray rounded-lg shadow-lg py-2 z-[100]">
                     <Link
                       href="/dashboard"
                       className="block px-4 py-2 text-text-dark hover:bg-off-white transition-colors"

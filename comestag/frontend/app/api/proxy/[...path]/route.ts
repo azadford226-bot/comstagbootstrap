@@ -8,10 +8,16 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "";
 
-if (!API_BASE_URL) {
-  console.warn("[Proxy] WARNING: Neither BACKEND_URL nor NEXT_PUBLIC_API_BASE_URL is set. Proxy will fail.");
-} else {
-  console.log("[Proxy] Forwarding to:", API_BASE_URL);
+function missingBackendResponse() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "BACKEND_URL_NOT_CONFIGURED",
+      message:
+        "Set BACKEND_URL (preferred) or NEXT_PUBLIC_API_BASE_URL in Vercel to your Spring API origin (https://…).",
+    },
+    { status: 503 }
+  );
 }
 
 // API routes are not supported in static export
@@ -22,6 +28,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  if (!API_BASE_URL?.trim()) {
+    return missingBackendResponse();
+  }
   const { path } = await params;
   const pathString = path.join("/");
   const searchParams = request.nextUrl.searchParams.toString();
@@ -84,6 +93,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  if (!API_BASE_URL?.trim()) {
+    return missingBackendResponse();
+  }
   await params;
 
   // Reconstruct the full path from the original request to preserve trailing slashes
@@ -196,6 +208,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  if (!API_BASE_URL?.trim()) {
+    return missingBackendResponse();
+  }
   const { path } = await params;
   const pathString = path.join("/");
   const searchParams = request.nextUrl.searchParams.toString();
@@ -271,6 +286,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  if (!API_BASE_URL?.trim()) {
+    return missingBackendResponse();
+  }
   const { path } = await params;
   const pathString = path.join("/");
   const searchParams = request.nextUrl.searchParams.toString();

@@ -1,4 +1,9 @@
-import { authenticatedGet, authenticatedPost, authenticatedPut } from "./api-client";
+import {
+  authenticatedGet,
+  authenticatedPost,
+  authenticatedPut,
+  getApiBaseUrl,
+} from "./api-client";
 import { logger } from "@/lib/logger";
 import { getAccessToken } from "../secure-storage";
 import { isDevMode } from "../dev-auth";
@@ -372,19 +377,13 @@ export function connectMessageStreamAuthenticated(
   }
 
   try {
-    const API_BASE_URL =
-      process.env.NEXT_PUBLIC_USE_PROXY === "true" ||
-      (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app"))
-        ? "/api/proxy"
-        : (process.env.NEXT_PUBLIC_API_BASE_URL || "");
-
     const token = getAccessToken();
     if (!token) {
       logger.error("Cannot connect to message stream: No access token");
       return null;
     }
 
-    const url = `${API_BASE_URL}${MESSAGE_ENDPOINTS.STREAM}`;
+    const url = `${getApiBaseUrl()}${MESSAGE_ENDPOINTS.STREAM}`;
     logger.info("Connecting to authenticated message stream", { url });
 
     const abortController = new AbortController();

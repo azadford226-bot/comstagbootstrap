@@ -7,14 +7,19 @@ import {
   removeRefreshToken,
 } from "../secure-storage";
 
-function getApiBaseUrl(): string {
+/**
+ * API origin for browser and server. Must match between SSR and client to avoid hydration bugs.
+ * On Vercel, always use the same-origin `/api/proxy` (set BACKEND_URL server-side for the route).
+ */
+export function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_USE_PROXY === "true") return "/api/proxy";
+  // Server + edge on Vercel: align with client (window.hostname check below)
+  if (process.env.VERCEL === "1") return "/api/proxy";
   if (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app")) {
     return "/api/proxy";
   }
   return process.env.NEXT_PUBLIC_API_BASE_URL || "";
 }
-const API_BASE_URL = getApiBaseUrl();
 
 // Track if we're currently refreshing to avoid multiple refresh attempts
 let isRefreshing = false;
@@ -75,9 +80,10 @@ export async function authenticatedFetch(
     isFormData,
   });
 
+  const base = getApiBaseUrl();
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    response = await fetch(`${base}${endpoint}`, {
       ...options,
       headers,
     });

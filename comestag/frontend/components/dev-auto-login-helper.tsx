@@ -18,9 +18,14 @@ import { Shield, Building2, LogIn, X, ChevronDown } from "lucide-react";
 export default function DevAutoLoginHelper() {
   const router = useRouter();
   const { isAuthenticated } = useAuth(false);
+  const [mounted, setMounted] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Debug logging
   useEffect(() => {
@@ -35,7 +40,8 @@ export default function DevAutoLoginHelper() {
     }
   }, [isAuthenticated, isDismissed]);
   
-  const showHelper = !isDismissed && isDevMode() && !isAuthenticated;
+  const showHelper =
+    mounted && !isDismissed && isDevMode() && !isAuthenticated;
 
   const handleAutoLogin = (userType: "ADMIN" | "ORGANIZATION") => {
     setIsLoggingIn(true);
