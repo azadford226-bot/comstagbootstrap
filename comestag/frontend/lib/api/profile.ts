@@ -30,6 +30,8 @@ export interface OrganizationProfile extends UserProfile {
   companyType?: string;
   verified?: boolean;
   techStack?: string;
+  /** Server-stored Calendly / Bookings / etc. URL */
+  schedulerUrl?: string | null;
   profileVisibility?: string;
   industryId?: number;
   industry?: { id: number; name: string };
@@ -60,6 +62,7 @@ export interface UpdateOrganizationProfileRequest {
   companyType?: string;
   techStack?: string;
   profileVisibility?: string;
+  schedulerUrl?: string | null;
   industryId?: number;
   size?: string;
   country?: string;

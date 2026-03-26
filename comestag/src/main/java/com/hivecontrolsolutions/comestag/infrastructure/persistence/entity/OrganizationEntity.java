@@ -99,6 +99,10 @@ public class OrganizationEntity {
     @Builder.Default
     private String profileVisibility = "public";
 
+    /** External scheduling URL (Calendly, Bookings, etc.) */
+    @Column(name = "scheduler_url", length = 2048)
+    private String schedulerUrl;
+
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", updatable = false, insertable = false)
     @Generated
@@ -139,6 +143,7 @@ public class OrganizationEntity {
                 .verified(this.verified)
                 .verifiedAt(this.verifiedAt)
                 .profileVisibility(this.profileVisibility)
+                .schedulerUrl(this.schedulerUrl)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
                 .build();
@@ -169,6 +174,7 @@ public class OrganizationEntity {
                 .verified(d.isVerified())
                 .verifiedAt(d.getVerifiedAt())
                 .profileVisibility(d.getProfileVisibility())
+                .schedulerUrl(d.getSchedulerUrl())
                 .build();
     }
 }

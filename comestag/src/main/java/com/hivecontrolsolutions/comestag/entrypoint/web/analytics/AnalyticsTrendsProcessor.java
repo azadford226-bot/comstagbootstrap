@@ -40,8 +40,20 @@ public class AnalyticsTrendsProcessor {
     public ResponseEntity<Void> trackEvent(@CurrentUserId UUID currentUserId,
                                            @RequestBody Map<String, String> body) {
         var entity = new AnalyticsEventEntity();
-        entity.setAccountId(currentUserId);
-        entity.setEventType(body.getOrDefault("eventType", "generic"));
+        String eventType = body.getOrDefault("eventType", "generic");
+        UUID accountIdForAggregate = currentUserId;
+        if ("profile_view".equals(eventType)) {
+            String target = body.get("targetAccountId");
+            if (target != null && !target.isBlank()) {
+                try {
+                    accountIdForAggregate = UUID.fromString(target.trim());
+                } catch (IllegalArgumentException ignored) {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+        }
+        entity.setAccountId(accountIdForAggregate);
+        entity.setEventType(eventType);
         entity.setEventData(body.getOrDefault("data", "{}"));
         repo.save(entity);
         return ResponseEntity.ok().build();

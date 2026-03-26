@@ -84,6 +84,7 @@ public class GetPublicProfileUseCase implements Usecase<GetPublicProfileInput, O
                 .techStack(organizationDm.getTechStack())
                 .verified(organizationDm.isVerified())
                 .profileVisibility(organizationDm.getProfileVisibility())
+                .schedulerUrl(organizationDm.getSchedulerUrl())
                 .build();
     }
 

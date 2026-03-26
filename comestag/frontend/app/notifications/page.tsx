@@ -7,10 +7,13 @@ import {
   getUnreadCount,
   markNotificationRead,
   markAllNotificationsRead,
+  archiveNotification,
+  archiveAllNotifications,
   type NotificationView,
   type PageResult,
 } from "@/lib/api/notifications";
 import { notificationLabel, notificationCategory } from "@/lib/notification-labels";
+import { useToast } from "@/components/ui/toast";
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -72,6 +75,7 @@ function getIconBg(type: string) {
 }
 
 export default function NotificationsPage() {
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<NotificationView[]>([]);
   const [page, setPage] = useState(0);
   const [pageData, setPageData] = useState<Omit<PageResult<NotificationView>, "items"> | null>(null);
@@ -81,15 +85,8 @@ export default function NotificationsPage() {
   const [category, setCategory] = useState<
     "all" | "rfq" | "message" | "social" | "system" | "opportunity"
   >("all");
-  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("notification_archived_ids");
-      if (raw) setArchivedIds(new Set(JSON.parse(raw) as string[]));
-    } catch { /* ignore */ }
-  }, []);
+  const [archiving, setArchiving] = useState(false);
 
   const fetchPage = useCallback(async (p: number) => {
     setLoading(true);
@@ -141,17 +138,62 @@ export default function NotificationsPage() {
     return msg || notificationLabel(n.type);
   };
 
-  const persistArchived = (next: Set<string>) => {
-    setArchivedIds(next);
-    try {
-      localStorage.setItem("notification_archived_ids", JSON.stringify([...next]));
-    } catch { /* ignore */ }
-  };
-
   const filtered = notifications
-    .filter((n) => !archivedIds.has(n.notificationId))
     .filter((n) => category === "all" || notificationCategory(n.type) === category)
     .filter((n) => (filter === "unread" ? !n.readAt : true));
+
+  const handleArchiveOne = async (id: string) => {
+    setArchiving(true);
+    const res = await archiveNotification(id);
+    setArchiving(false);
+    if (res.success) {
+      setNotifications((prev) => prev.filter((n) => n.notificationId !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      toast("Notification archived", "success");
+    } else {
+      toast(res.message || "Could not archive notification", "error");
+    }
+  };
+
+  const handleArchiveSelected = async () => {
+    if (selectedIds.size === 0) return;
+    setArchiving(true);
+    const ids = [...selectedIds];
+    let failed = 0;
+    for (const id of ids) {
+      const res = await archiveNotification(id);
+      if (!res.success) failed++;
+    }
+    setArchiving(false);
+    setSelectedIds(new Set());
+    await fetchPage(page);
+    getUnreadCount().then((r) => {
+      if (r.success && r.data !== undefined) setUnreadCount(typeof r.data === "number" ? r.data : 0);
+    });
+    if (failed === 0) toast(`${ids.length} notification(s) archived`, "success");
+    else toast(`Archived with ${failed} error(s). Refresh to confirm.`, "error");
+  };
+
+  const handleArchiveAllInbox = async () => {
+    if (!confirm("Archive all notifications in your inbox? This cannot be undone from the app.")) return;
+    setArchiving(true);
+    const res = await archiveAllNotifications();
+    setArchiving(false);
+    if (res.success) {
+      await fetchPage(0);
+      setPage(0);
+      getUnreadCount().then((r) => {
+        if (r.success && r.data !== undefined) setUnreadCount(typeof r.data === "number" ? r.data : 0);
+      });
+      toast("All notifications archived", "success");
+    } else {
+      toast(res.message || "Could not archive all", "error");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -227,15 +269,21 @@ export default function NotificationsPage() {
             {selectedIds.size > 0 && (
               <button
                 type="button"
-                onClick={() => {
-                  const next = new Set(archivedIds);
-                  selectedIds.forEach((id) => next.add(id));
-                  persistArchived(next);
-                  setSelectedIds(new Set());
-                }}
-                className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+                disabled={archiving}
+                onClick={() => void handleArchiveSelected()}
+                className="text-sm text-gray-700 hover:text-gray-900 font-medium disabled:opacity-50"
               >
                 Archive selected ({selectedIds.size})
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                disabled={archiving}
+                onClick={() => void handleArchiveAllInbox()}
+                className="text-sm text-amber-700 hover:text-amber-900 font-medium disabled:opacity-50"
+              >
+                Archive all
               </button>
             )}
           </div>
@@ -326,12 +374,9 @@ export default function NotificationsPage() {
                 )}
                 <button
                   type="button"
-                  onClick={() => {
-                    const next = new Set(archivedIds);
-                    next.add(n.notificationId);
-                    persistArchived(next);
-                  }}
-                  className="text-xs text-gray-500 hover:text-gray-800 whitespace-nowrap"
+                  disabled={archiving}
+                  onClick={() => void handleArchiveOne(n.notificationId)}
+                  className="text-xs text-gray-500 hover:text-gray-800 whitespace-nowrap disabled:opacity-50"
                 >
                   Archive
                 </button>

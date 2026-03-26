@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Star, MapPin, Globe, Calendar, UserPlus, UserCheck, Building2, FileText, Briefcase, MessageCircle, Activity, BadgeCheck } from "lucide-react";
 import Image from "next/image";
-import { getPublicProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
+import { getPublicProfile, getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getCapabilities, Capability } from "@/lib/api/capabilities";
 import {
   getCertificates,
@@ -24,7 +24,7 @@ import Button from "@/components/atoms/button";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { followUser, unfollowUser, getFollowStatus, getFollowCounts, getOrgReviews, createReview, type Review, type ReviewsData } from "@/lib/api/social";
-import { authenticatedGet } from "@/lib/api/api-client";
+import { authenticatedGet, authenticatedPost } from "@/lib/api/api-client";
 import Link from "next/link";
 
 export default function PublicOrganizationProfile() {
@@ -83,6 +83,22 @@ export default function PublicOrganizationProfile() {
         setProfile(profileRes.data);
       } else if (profileRes.success && profileRes.data) {
         setProfile(profileRes.data as OrganizationProfile);
+      }
+
+      if (profileRes.success && profileRes.data?.id) {
+        const viewedId = profileRes.data.id;
+        try {
+          const me = await getProfile();
+          if (me.success && me.data?.id && me.data.id !== viewedId) {
+            await authenticatedPost("/v1/analytics/track", {
+              eventType: "profile_view",
+              targetAccountId: viewedId,
+              data: JSON.stringify({ surface: "organization_profile" }),
+            });
+          }
+        } catch {
+          /* not signed in or tracking optional */
+        }
       }
 
       if (capabilitiesRes.success && capabilitiesRes.data) {
@@ -873,9 +889,12 @@ export default function PublicOrganizationProfile() {
                           <p className="text-xs text-gray-500 truncate">{company.industry}</p>
                         )}
                       </div>
-                      {company.matchScore && (
-                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                          {company.matchScore}%
+                      {company.matchScore != null && (
+                        <span
+                          className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full"
+                          title="Fit score (heuristic) — not semantic AI."
+                        >
+                          Fit score (heuristic) {company.matchScore}%
                         </span>
                       )}
                     </Link>

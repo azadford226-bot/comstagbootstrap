@@ -103,6 +103,8 @@ export const NOTIFICATION_ENDPOINTS = {
   UNREAD_COUNT: "/v1/notifications/unread-count",
   MARK_READ: (id: string) => `/v1/notifications/${id}/read`,
   MARK_ALL_READ: "/v1/notifications/read-all",
+  ARCHIVE: (id: string) => `/v1/notifications/${id}/archive`,
+  ARCHIVE_ALL: "/v1/notifications/archive-all",
   STREAM: "/v1/notifications/stream",
   SETTINGS: "/v1/notifications/settings",
 } as const;

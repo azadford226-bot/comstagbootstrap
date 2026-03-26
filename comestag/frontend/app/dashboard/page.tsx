@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search, Megaphone, SlidersHorizontal, X } from "lucide-react";
+import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search, Megaphone, SlidersHorizontal, X, Sparkles } from "lucide-react";
 import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getPosts, Post } from "@/lib/api/posts";
 import { listRfqs, Rfq } from "@/lib/api/rfq";
@@ -452,6 +452,31 @@ export default function DashboardPage() {
                 </button>
               </div>
 
+              <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-xs text-gray-600 bg-white/80 rounded-lg px-3 py-2 border border-gray-100">
+                <span className="font-semibold text-gray-500 uppercase tracking-wide">Discover</span>
+                <Link href="/rfq" className="text-primary font-medium hover:underline">
+                  RFQ marketplace
+                </Link>
+                <span className="text-gray-300" aria-hidden>
+                  ·
+                </span>
+                <Link href="/opportunities" className="text-primary font-medium hover:underline">
+                  Opportunities hub
+                </Link>
+                <span className="text-gray-300" aria-hidden>
+                  ·
+                </span>
+                <Link href="/messages" className="text-primary font-medium hover:underline">
+                  Messages
+                </Link>
+                <span className="text-gray-300" aria-hidden>
+                  ·
+                </span>
+                <Link href="/analytics" className="text-primary font-medium hover:underline">
+                  Analytics
+                </Link>
+              </div>
+
               {feedDrawerOpen && (
                 <div
                   id="feed-filter-drawer"
@@ -561,6 +586,7 @@ export default function DashboardPage() {
                   <PostsFeed
                     posts={filteredPosts}
                     showFullContent={false}
+                    bookmarkedPostIds={bookmarkedPostIds}
                     relevanceByPostId={
                       feedTab === "all"
                         ? Object.fromEntries(
@@ -840,7 +866,7 @@ export default function DashboardPage() {
                   Recommended partners
                 </h2>
                 <p className="text-[11px] text-gray-400 mb-4 leading-snug">
-                  Fit scores are heuristic (industry overlap, activity) — not semantic AI or embeddings.
+                  Fit score (heuristic): industry overlap and activity — not semantic AI or embeddings.
                 </p>
                 {recommendedPartners.filter((p) => !dismissedPartnerIds.has(p.id)).length > 0 ? (
                   <div className="space-y-3">
@@ -863,10 +889,10 @@ export default function DashboardPage() {
                           </div>
                           <span
                             className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0"
-                            title="Fit score: heuristic based on industry overlap and profile signals (not semantic AI)."
-                          >
-                            Fit {partner.matchScore}%
-                          </span>
+                          title="Fit score (heuristic) from industry overlap and activity — not semantic AI or embeddings."
+                        >
+                          Fit score (heuristic) {partner.matchScore}%
+                        </span>
                         </Link>
                         <button
                           type="button"
@@ -888,6 +914,35 @@ export default function DashboardPage() {
                 <Link href="/opportunities" className="flex items-center justify-center gap-1 text-xs text-primary font-medium mt-3 hover:underline">
                   Discover more partners <ArrowRight className="w-3 h-3" />
                 </Link>
+              </div>
+
+              {/* Roadmap: semantic v2 + unified filters (feed + opportunities) */}
+              <div className="bg-gradient-to-br from-violet-50 to-white rounded-lg border border-violet-100 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-violet-100 text-violet-700">
+                    <Sparkles className="w-5 h-5" aria-hidden />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900">Semantic matching v2 (roadmap)</h3>
+                    <p className="text-[11px] text-gray-600 mt-1 leading-snug">
+                      Planned: embedding-based relevance, shared filter chips, and saved views that stay in sync between the feed and opportunities.
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <Link
+                        href="/dashboard"
+                        className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white border border-violet-200 text-violet-800 hover:bg-violet-50"
+                      >
+                        Feed <ArrowRight className="w-3 h-3" />
+                      </Link>
+                      <Link
+                        href="/opportunities"
+                        className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white border border-violet-200 text-violet-800 hover:bg-violet-50"
+                      >
+                        Opportunities <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Analytics Quick Link */}

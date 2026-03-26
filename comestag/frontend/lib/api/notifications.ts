@@ -52,6 +52,17 @@ export async function markAllNotificationsRead() {
   return authenticatedPost(NOTIFICATION_ENDPOINTS.MARK_ALL_READ);
 }
 
+/** Persists archive on server; archived items no longer appear in the default list. */
+export async function archiveNotification(id: string) {
+  return authenticatedPut<{ archived?: boolean }>(NOTIFICATION_ENDPOINTS.ARCHIVE(id));
+}
+
+export async function archiveAllNotifications() {
+  return authenticatedPut<{ archivedCount?: number }>(
+    NOTIFICATION_ENDPOINTS.ARCHIVE_ALL
+  );
+}
+
 export async function getNotificationSettings() {
   return authenticatedGet<NotificationSettings>(
     NOTIFICATION_ENDPOINTS.SETTINGS

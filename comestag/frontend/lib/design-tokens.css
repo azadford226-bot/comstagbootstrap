@@ -7,7 +7,12 @@
   --cx-radius-md: 0.5rem;
   --cx-radius-lg: 0.75rem;
   --cx-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
-  --cx-transition-fast: 150ms ease;
+  --cx-motion-duration-short: 150ms;
+  --cx-motion-duration-medium: 175ms;
+  --cx-motion-duration-long: 200ms;
+  --cx-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --cx-transition-fast: var(--cx-motion-duration-short) var(--cx-motion-ease);
+  --cx-transition-ui: var(--cx-motion-duration-medium) var(--cx-motion-ease);
   --cx-focus-ring: 0 0 0 3px rgb(32 52 101 / 0.25);
   --cx-space-section: 1.5rem;
 }

@@ -82,19 +82,27 @@ function MessagesPage() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let legacy = "";
     try {
-      setMeetingSchedulerUrl(localStorage.getItem("meeting_scheduler_url") || "");
+      legacy = localStorage.getItem("meeting_scheduler_url") || "";
     } catch { /* ignore */ }
     getProfile().then((res) => {
       if (res.success && res.data && isOrganizationProfile(res.data)) {
         setMyAccountId(res.data.id);
         setMyOrgDisplayName(res.data.displayName || null);
+        const fromProfile = res.data.schedulerUrl?.trim();
+        setMeetingSchedulerUrl(fromProfile || legacy);
       } else if (res.success && res.data && "id" in res.data) {
         setMyAccountId((res.data as { id: string }).id);
         const d = res.data as { displayName?: string };
         setMyOrgDisplayName(d.displayName || null);
+        setMeetingSchedulerUrl(legacy);
+      } else {
+        setMeetingSchedulerUrl(legacy);
       }
-    }).catch(() => {});
+    }).catch(() => {
+      setMeetingSchedulerUrl(legacy);
+    });
   }, []);
 
   useEffect(() => {
@@ -793,6 +801,10 @@ function MessagesPage() {
               onSubmit={handleSendMessage}
               className="px-6 py-3 border-t border-gray-200 bg-white"
             >
+              <p className="text-[11px] text-gray-500 mb-2 leading-snug">
+                Organization-to-organization thread. Messages are encrypted in transit (TLS). Typing and presence are
+                best-effort and may not reflect all clients.
+              </p>
               <div className="flex items-center gap-2">
                 <label
                   className={`p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}

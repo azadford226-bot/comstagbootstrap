@@ -56,5 +56,22 @@ export function getOAuthLoginBaseUrl(): string {
   return raw.replace(/\/$/, "");
 }
 
-/** Registration IDs that exist in application.properties for this project */
+/** Default registration IDs wired in Spring; extend via env when you add Microsoft, LinkedIn, etc. */
 export const OAUTH_REGISTRATION_IDS = new Set(["google", "github"]);
+
+/**
+ * IdPs that may receive a live OAuth redirect when `provider.enabled` and OAuth base URL are set.
+ * Override with `NEXT_PUBLIC_OAUTH_REGISTRATION_IDS=google,github,microsoft` (comma-separated).
+ */
+export function getOAuthRegistrationAllowlist(): Set<string> {
+  const raw = process.env.NEXT_PUBLIC_OAUTH_REGISTRATION_IDS?.trim();
+  if (raw) {
+    return new Set(
+      raw
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean)
+    );
+  }
+  return OAUTH_REGISTRATION_IDS;
+}

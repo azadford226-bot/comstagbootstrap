@@ -5,7 +5,7 @@ import Logo from "../logo";
 import NotificationBell from "../notification-bell";
 import ProfileCompletionBar from "../profile-completion-bar";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { logout } from "@/lib/auth/logout";
 import {
@@ -46,6 +46,24 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
+  /** Vendors (organizations): RFQ before Feed; others default to Feed-first */
+  const mainNavItems = useMemo(() => {
+    const items = [
+      { href: "/dashboard", label: "Feed" },
+      { href: "/rfq", label: "RFQ" },
+      { href: "/messages", label: "Messages" },
+      { href: "/opportunities", label: "Opportunities" },
+      { href: "/analytics", label: "Analytics" },
+      { href: "/events", label: "Events" },
+    ];
+    if (userType === "ORGANIZATION") {
+      const feed = items[0];
+      const rfq = items[1];
+      return [rfq, feed, ...items.slice(2)];
+    }
+    return items;
+  }, [userType]);
+
   const handleLogout = async () => {
     await logout();
     setIsAuthenticated(false);
@@ -81,36 +99,15 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                >
-                  Feed
-                </Link>
-                <Link
-                  href="/rfq"
-                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                >
-                  RFQ
-                </Link>
-                <Link
-                  href="/messages"
-                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                >
-                  Messages
-                </Link>
-                <Link
-                  href="/opportunities"
-                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                >
-                  Opportunities
-                </Link>
-                <Link
-                  href="/events"
-                  className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                >
-                  Events
-                </Link>
+                {mainNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               </>
             )}
           </div>
@@ -266,41 +263,16 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  href="/dashboard"
-                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Feed
-                </Link>
-                <Link
-                  href="/rfq"
-                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  RFQ
-                </Link>
-                <Link
-                  href="/messages"
-                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Messages
-                </Link>
-                <Link
-                  href="/opportunities"
-                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Opportunities
-                </Link>
-                <Link
-                  href="/events"
-                  className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Events
-                </Link>
+                {mainNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
                 <Link
                   href="/notifications"
                   className="py-2 text-black text-[16px] font-medium leading-[18px] hover:text-primary-dark transition-colors"

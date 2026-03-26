@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, X, Save, Upload, Heart, MessageCircle, Send as SendIcon, Bookmark, Share2 } from "lucide-react";
@@ -25,6 +25,8 @@ interface PostsFeedProps {
   onUpdate?: () => void; // Callback after CRUD operations
   /** Optional per-post relevance (0–100) for discovery feeds */
   relevanceByPostId?: Record<string, number>;
+  /** Post IDs the user already bookmarked (e.g. from dashboard) — avoids empty bookmark state until toggle */
+  bookmarkedPostIds?: Set<string>;
 }
 
 export const PostsFeed: React.FC<PostsFeedProps> = ({
@@ -35,6 +37,7 @@ export const PostsFeed: React.FC<PostsFeedProps> = ({
   enableCRUD = false,
   onUpdate,
   relevanceByPostId,
+  bookmarkedPostIds,
 }) => {
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
@@ -334,6 +337,7 @@ export const PostsFeed: React.FC<PostsFeedProps> = ({
               isSubmitting={isSubmitting}
               isEditing={editingId !== null}
               relevanceScore={relevanceByPostId?.[post.id]}
+              initialBookmarked={bookmarkedPostIds?.has(post.id) ?? false}
             />
           ))}
         </div>
@@ -352,6 +356,7 @@ interface PostCardProps {
   isSubmitting?: boolean;
   isEditing?: boolean;
   relevanceScore?: number;
+  initialBookmarked?: boolean;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -364,10 +369,14 @@ export const PostCard: React.FC<PostCardProps> = ({
   isSubmitting = false,
   isEditing = false,
   relevanceScore,
+  initialBookmarked = false,
 }) => {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.reactionsCount || 0);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(initialBookmarked);
+  useEffect(() => {
+    setBookmarked(initialBookmarked);
+  }, [initialBookmarked, post.id]);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<PostComment[]>([]);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
@@ -429,9 +438,9 @@ export const PostCard: React.FC<PostCardProps> = ({
           {relevanceScore !== undefined && (
             <span
               className="px-2 py-1 text-xs font-medium rounded bg-sky-50 text-sky-800 border border-sky-100"
-              title="Heuristic match score from your industry fit, engagement signals, bookmarks, and recency — not a prediction of outcomes."
+              title="Fit score (heuristic): 0–100 from industry overlap, engagement, bookmarks, and recency — not semantic AI or a prediction of outcomes."
             >
-              Match {relevanceScore}
+              Fit score (heuristic) {relevanceScore}
             </span>
           )}
           <span className="text-xs text-gray-500">{formatPostDate(post)}</span>

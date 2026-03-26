@@ -4,28 +4,22 @@ import React from "react";
 function CompanyDetailsSection() {
   return (
     <>
-      {/* Our Vision Section */}
       <CompanyDetailsElement title={<>Our Vision</>}>
-        Lorem Ipsum is simply dummy text of the printing and typesetting
-        industry. Lorem Ipsum has been the industry&apos;s standard dummy text
-        ever since the 1500s, when an unknown printer took a galley of type and
-        scrambled it to make a type specimen book.
+        Comstag connects organizations across industries so buyers, vendors, startups, and investors
+        can discover each other, run structured sourcing, and build partnerships—without being tied to
+        a single software stack or geography.
       </CompanyDetailsElement>
 
-      {/* Our Mission Section - Right Side */}
       <CompanyDetailsElement title={<>Our Mission</>} alignmentVariant="right">
-        Lorem Ipsum is simply dummy text of the printing and typesetting
-        industry. Lorem Ipsum has been the industry&apos;s standard dummy text
-        ever since the 1500s, when an unknown printer took a galley of type and
-        scrambled it to make a type specimen book.
+        We focus on clarity and trust: verified organizations, transparent opportunities, and tools
+        that help teams move from introduction to collaboration with less friction—whether you are
+        procuring solutions, forming a joint venture, or exploring funding.
       </CompanyDetailsElement>
 
-      {/* Who we are Section */}
-      <CompanyDetailsElement title={<>Who we are ?</>}>
-        Lorem Ipsum is simply dummy text of the printing and typesetting
-        industry. Lorem Ipsum has been the industry&apos;s standard dummy text
-        ever since the 1500s, when an unknown printer took a galley of type and
-        scrambled it to make a type specimen book.
+      <CompanyDetailsElement title={<>Who we are</>}>
+        We are building a neutral collaboration layer for B2B relationships—combining network
+        discovery with RFQs, messaging, and opportunities so your team spends less time on admin
+        handoffs and more time on outcomes that matter to your business.
       </CompanyDetailsElement>
     </>
   );

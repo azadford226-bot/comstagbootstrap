@@ -50,6 +50,9 @@ public class OrganizationDm {
     @Builder.Default
     private String profileVisibility = "public";
 
+    /** External meeting scheduler URL stored server-side */
+    private String schedulerUrl;
+
     private Instant createdAt;
     private Instant updatedAt;
 

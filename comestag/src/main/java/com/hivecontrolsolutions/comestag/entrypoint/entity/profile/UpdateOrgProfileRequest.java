@@ -1,5 +1,7 @@
 package com.hivecontrolsolutions.comestag.entrypoint.entity.profile;
 
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDate;
 
 public record UpdateOrgProfileRequest(
@@ -16,5 +18,6 @@ public record UpdateOrgProfileRequest(
         String state,
         String city,
         String techStack,
-        String profileVisibility) {
+        String profileVisibility,
+        @Size(max = 2048) String schedulerUrl) {
 }

@@ -13,7 +13,15 @@ import { getRfq, type Rfq } from '@/lib/api/rfq'
 import { getProfile, isOrganizationProfile } from '@/lib/api/profile'
 import { RFQ_STATUS_CONFIG } from '@/components/rfq/rfq-status-badge'
 
-const STATUS_STEPS = ['OPEN', 'REVIEW', 'AWARDED', 'CLOSED']
+/** Matches API / DB: OPEN → AWARDED or CLOSED; CANCELLED treated as terminal like CLOSED */
+const STATUS_STEPS = ['OPEN', 'AWARDED', 'CLOSED'] as const
+
+const OWNER_ACTIONS_BY_STATUS: Record<string, string> = {
+  OPEN: 'Review incoming proposals, use Messages to clarify scope, then award a vendor or close the RFQ without an award.',
+  AWARDED: 'Work with the awarded vendor on delivery; you can message via the RFQ thread. Mark follow-ups in your internal process.',
+  CLOSED: 'This RFQ is closed — read-only for participants.',
+  CANCELLED: 'This RFQ was cancelled — read-only.',
+}
 
 function formatCurrency(amount: number | null, currency: string) {
   if (!amount) return 'Not specified'
@@ -133,7 +141,11 @@ export default function RfqDetailPage() {
   const statusCfg = RFQ_STATUS_CONFIG[rfq.status] || RFQ_STATUS_CONFIG.OPEN
   const StatusIcon = statusCfg.icon
   const remaining = timeRemaining(rfq.deadline)
-  const currentStepIndex = STATUS_STEPS.indexOf(rfq.status === 'CANCELLED' ? 'CLOSED' : rfq.status)
+  const normalizedStatus = rfq.status === 'CANCELLED' ? 'CLOSED' : rfq.status
+  const currentStepIndex = Math.max(
+    0,
+    STATUS_STEPS.indexOf(normalizedStatus as (typeof STATUS_STEPS)[number])
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -182,7 +194,7 @@ export default function RfqDetailPage() {
               </div>
             </div>
 
-            {/* Status Progress */}
+            {/* Status Progress (aligned to RFQ schema) */}
             <div className="flex items-center gap-0 mb-2">
               {STATUS_STEPS.map((step, i) => {
                 const isActive = i <= currentStepIndex
@@ -202,7 +214,7 @@ export default function RfqDetailPage() {
                         {i + 1}
                       </div>
                       <span className={`text-[11px] mt-1 font-medium ${isActive ? 'text-blue-700' : 'text-gray-400'}`}>
-                        {{ OPEN: 'Open', REVIEW: 'In Review', AWARDED: 'Awarded', CLOSED: 'Closed' }[step] || step}
+                        {step === 'OPEN' ? 'Open' : step === 'AWARDED' ? 'Awarded' : 'Closed'}
                       </span>
                     </div>
                     {i < STATUS_STEPS.length - 1 && (
@@ -215,6 +227,45 @@ export default function RfqDetailPage() {
                   </div>
                 )
               })}
+            </div>
+
+            {/* State machine diagram (schema-aligned) */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">RFQ lifecycle (state machine)</p>
+              <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 overflow-x-auto" aria-hidden>
+                <svg viewBox="0 0 420 100" className="w-full max-w-lg h-[100px] text-gray-700">
+                  <defs>
+                    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="currentColor" />
+                    </marker>
+                  </defs>
+                  <rect x="8" y="28" width="88" height="36" rx="6" fill="#fff" stroke="#94a3b8" strokeWidth="1.5" />
+                  <text x="52" y="50" textAnchor="middle" className="fill-gray-800 text-[11px] font-semibold">OPEN</text>
+                  <line x1="96" y1="46" x2="128" y2="46" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+                  <rect x="128" y="28" width="100" height="36" rx="6" fill="#fff" stroke="#94a3b8" strokeWidth="1.5" />
+                  <text x="178" y="50" textAnchor="middle" className="fill-gray-800 text-[11px] font-semibold">AWARDED</text>
+                  <line x1="228" y1="46" x2="260" y2="46" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+                  <rect x="260" y="28" width="88" height="36" rx="6" fill="#fff" stroke="#94a3b8" strokeWidth="1.5" />
+                  <text x="304" y="50" textAnchor="middle" className="fill-gray-800 text-[11px] font-semibold">CLOSED</text>
+                  <text x="52" y="18" textAnchor="middle" className="fill-gray-500 text-[9px]">Accept proposals</text>
+                  <text x="178" y="18" textAnchor="middle" className="fill-gray-500 text-[9px]">Select vendor</text>
+                  <text x="304" y="18" textAnchor="middle" className="fill-gray-500 text-[9px]">Terminal</text>
+                  <path d="M 52 64 L 52 78 L 304 78 L 304 64" fill="none" stroke="#64748b" strokeWidth="1" strokeDasharray="4 3" markerEnd="url(#arrowhead)" />
+                  <text x="178" y="92" textAnchor="middle" className="fill-gray-500 text-[9px]">May close without award → CLOSED</text>
+                </svg>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-2">
+                States match the RFQ API: <code className="bg-gray-100 px-1 rounded">OPEN</code>,{' '}
+                <code className="bg-gray-100 px-1 rounded">AWARDED</code>,{' '}
+                <code className="bg-gray-100 px-1 rounded">CLOSED</code>,{' '}
+                <code className="bg-gray-100 px-1 rounded">CANCELLED</code>.
+              </p>
+              {rfq.isOwner && (
+                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2 text-sm text-blue-950">
+                  <span className="font-semibold">Owner actions ({rfq.status}): </span>
+                  {OWNER_ACTIONS_BY_STATUS[rfq.status] ?? OWNER_ACTIONS_BY_STATUS.OPEN}
+                </div>
+              )}
             </div>
           </div>
 

@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { updateEmail } from "@/lib/api/profile";
+import {
+  updateEmail,
+  getOrganizationProfile,
+  updateOrganizationProfile,
+} from "@/lib/api/profile";
 import { changePassword } from "@/lib/api/auth";
 import { authenticatedGet, authenticatedPut } from "@/lib/api/api-client";
 import {
@@ -52,6 +56,7 @@ export default function SettingsPage() {
   const [domainMsg, setDomainMsg] = useState<string | null>(null);
   const [domains, setDomains] = useState<DomainVerificationStatus[]>([]);
   const [meetingUrl, setMeetingUrl] = useState("");
+  const [meetingUrlSaving, setMeetingUrlSaving] = useState(false);
   const [rfqSubs, setRfqSubs] = useState<RfqSubscription[]>([]);
   const [pushTestBusy, setPushTestBusy] = useState(false);
 
@@ -66,12 +71,37 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      setMeetingUrl(localStorage.getItem("meeting_scheduler_url") || "");
-    } catch { /* ignore */ }
     loadDomains();
     loadRfqSubs();
   }, [loadDomains, loadRfqSubs]);
+
+  useEffect(() => {
+    if (user?.userType !== "ORGANIZATION") {
+      try {
+        setMeetingUrl(localStorage.getItem("meeting_scheduler_url") || "");
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await getOrganizationProfile();
+      const fromApi = res.success && res.data?.schedulerUrl ? res.data.schedulerUrl.trim() : "";
+      let fromLegacy = "";
+      try {
+        fromLegacy = localStorage.getItem("meeting_scheduler_url")?.trim() || "";
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) {
+        setMeetingUrl(fromApi || fromLegacy || "");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.userType]);
 
   const loadNotifPrefs = useCallback(async () => {
     setNotifLoading(true);
@@ -508,33 +538,51 @@ export default function SettingsPage() {
               ))}
             </ul>
 
-            <div className="mt-8 pt-6 border-t border-gray-100">
+            {user.userType === "ORGANIZATION" && (
+            <div id="meeting-scheduler" className="mt-8 pt-6 border-t border-gray-100 scroll-mt-24">
               <div className="flex items-center gap-2 mb-2">
                 <Link2 className="w-5 h-5 text-gray-600" />
                 <h3 className="text-lg font-semibold text-primary-dark">Meeting scheduler link</h3>
               </div>
-              <p className="text-sm text-gray-600 mb-2">Used in Messages → Schedule (Calendly, Microsoft Bookings, etc.).</p>
-              <div className="flex gap-2">
+              <p className="text-sm text-gray-600 mb-2">
+                Stored on your company profile (embed or link to your chosen provider). Used in Messages → Schedule (Calendly, Microsoft Bookings, etc.).
+              </p>
+              <div className="flex gap-2 flex-wrap">
                 <input
                   type="url"
                   value={meetingUrl}
                   onChange={(e) => setMeetingUrl(e.target.value)}
                   placeholder="https://calendly.com/your-org"
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  className="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm"
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    try {
-                      localStorage.setItem("meeting_scheduler_url", meetingUrl.trim());
-                    } catch { /* ignore */ }
+                  disabled={meetingUrlSaving}
+                  onClick={async () => {
+                    setMeetingUrlSaving(true);
+                    const trimmed = meetingUrl.trim();
+                    const r = await updateOrganizationProfile({
+                      schedulerUrl: trimmed.length > 0 ? trimmed : "",
+                    });
+                    setMeetingUrlSaving(false);
+                    if (r.success) {
+                      try {
+                        localStorage.setItem("meeting_scheduler_url", trimmed);
+                      } catch {
+                        /* ignore */
+                      }
+                      toast("Scheduler link saved.", "success");
+                    } else {
+                      toast(r.message || "Could not save scheduler URL. Try again.", "error");
+                    }
                   }}
-                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm"
+                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm disabled:opacity-50"
                 >
-                  Save
+                  {meetingUrlSaving ? "Saving…" : "Save"}
                 </button>
               </div>
             </div>
+            )}
           </div>
 
           {/* RFQ alert subscriptions */}

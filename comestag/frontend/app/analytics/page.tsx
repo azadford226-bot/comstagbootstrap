@@ -662,7 +662,9 @@ export default function AnalyticsPage() {
                     <span className="font-medium text-gray-900">{totalReactions + totalComments}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Visibility score</span>
+                    <span className="text-gray-600" title="Composite activation metric — not third-party reach data">
+                      Activation score
+                    </span>
                     <span className="font-medium text-gray-900">
                       {Math.min(100, Math.round(profileCompletion * 0.4 + totalPosts * 5 + followerCount * 3 + myRfqs.length * 10))}%
                     </span>
@@ -670,8 +672,9 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="mt-4 pt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500">
-                    Follower growth over time is not recorded in this build — snapshot totals above are live. Historical
-                    follower trends require a time-series API.
+                    Profile view counts per visitor are not aggregated in this build — post &quot;views&quot; above reflect
+                    content metrics where available. Follower growth over time is not recorded — snapshot totals are live.
+                    Historical trends require a time-series API.
                   </p>
                 </div>
               </div>

@@ -62,6 +62,10 @@ public class OrganizationAdapter implements OrganizationPort {
         if (input.profileVisibility() != null) {
             entity.setProfileVisibility(input.profileVisibility());
         }
+        if (input.schedulerUrl() != null) {
+            var u = input.schedulerUrl().trim();
+            entity.setSchedulerUrl(u.isEmpty() ? null : u);
+        }
 
         return repo.saveAndFlush(entity).toDm();
     }

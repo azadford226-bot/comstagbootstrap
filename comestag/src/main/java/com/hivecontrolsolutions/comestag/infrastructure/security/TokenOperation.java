@@ -109,6 +109,21 @@ public class TokenOperation {
         return UUID.fromString(raw.toString());
     }
 
+    /**
+     * Current account id from {@code Authorization: Bearer <access token>} (uses embedded user claims).
+     */
+    public UUID getUserId(String authHeader) {
+        if (authHeader == null || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            throw new BusinessException(TOKEN_INVALID);
+        }
+        String token = authHeader.substring(7).trim();
+        UserClaimsDto user = extractUserClaims(token);
+        if (user == null || user.getId() == null) {
+            throw new BusinessException(TOKEN_INVALID, "Couldn't extract user id");
+        }
+        return user.getId();
+    }
+
     public String extractTokenId(Claims claims) {
         return claims.get(TOKEN_ID_KEY).toString();
     }

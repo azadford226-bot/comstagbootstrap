@@ -30,6 +30,7 @@ public record PublicOrgProfileDro(
         String techStack,
         boolean verified,
         String profileVisibility,
+        String schedulerUrl,
         Instant createdAt
 ) {
 }

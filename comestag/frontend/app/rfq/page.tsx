@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/components/ui/toast"
@@ -34,6 +34,37 @@ const CATEGORIES = [
   'Other',
 ]
 
+const RFQ_FILTER_PRESETS_KEY = 'comestag_rfq_filter_presets_v1'
+
+type RfqFilterPreset = {
+  id: string
+  name: string
+  filter: 'all' | 'mine' | 'available'
+  statusFilter: string
+  searchQuery: string
+  budgetMin: string
+  budgetMax: string
+  deadlineFilter: '' | '7d' | '30d' | '90d'
+}
+
+function loadPresets(): RfqFilterPreset[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(RFQ_FILTER_PRESETS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as RfqFilterPreset[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function savePresets(presets: RfqFilterPreset[]) {
+  try {
+    localStorage.setItem(RFQ_FILTER_PRESETS_KEY, JSON.stringify(presets))
+  } catch { /* ignore */ }
+}
+
 const INDUSTRIES = [
   'Technology',
   'Finance',
@@ -64,6 +95,12 @@ export default function RFQPage() {
   const [rfqSubscriptions, setRfqSubscriptions] = useState<RfqSubscription[]>([])
   const [subKeyword, setSubKeyword] = useState('')
   const [subCategory, setSubCategory] = useState('')
+  const [filterPresets, setFilterPresets] = useState<RfqFilterPreset[]>([])
+  const [presetName, setPresetName] = useState('')
+
+  useEffect(() => {
+    setFilterPresets(loadPresets())
+  }, [])
 
   const [formData, setFormData] = useState({
     title: '',
@@ -190,6 +227,48 @@ export default function RFQPage() {
     if (rfq.status === "OPEN") score += 10;
     return Math.min(99, score);
   };
+
+  const currentFilterSnapshot = useMemo(
+    (): Omit<RfqFilterPreset, 'id' | 'name'> => ({
+      filter,
+      statusFilter,
+      searchQuery,
+      budgetMin,
+      budgetMax,
+      deadlineFilter,
+    }),
+    [filter, statusFilter, searchQuery, budgetMin, budgetMax, deadlineFilter]
+  )
+
+  const applyPreset = (p: RfqFilterPreset) => {
+    setFilter(p.filter)
+    setStatusFilter(p.statusFilter)
+    setSearchQuery(p.searchQuery)
+    setBudgetMin(p.budgetMin)
+    setBudgetMax(p.budgetMax)
+    setDeadlineFilter(p.deadlineFilter)
+    setShowAdvancedFilters(!!(p.budgetMin || p.budgetMax || p.deadlineFilter))
+  }
+
+  const saveCurrentAsPreset = () => {
+    const name = presetName.trim() || `Saved ${new Date().toLocaleString()}`
+    const next: RfqFilterPreset = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+      name,
+      ...currentFilterSnapshot,
+    }
+    const merged = [...filterPresets.filter((x) => x.name !== name), next]
+    setFilterPresets(merged)
+    savePresets(merged)
+    setPresetName('')
+    toast('Filter preset saved', 'success')
+  }
+
+  const removePreset = (id: string) => {
+    const merged = filterPresets.filter((p) => p.id !== id)
+    setFilterPresets(merged)
+    savePresets(merged)
+  }
 
   const filteredRFQs = rfqs.filter(rfq => {
     const q = searchQuery.toLowerCase();
@@ -319,6 +398,55 @@ export default function RFQPage() {
                 <span className="w-2 h-2 bg-primary rounded-full" />
               )}
             </button>
+          </div>
+
+          {/* Saved filter presets (aligned to list filters + schema fields) */}
+          <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center">
+            <span className="text-xs font-medium text-gray-500 shrink-0">Saved views</span>
+            <div className="flex flex-wrap gap-2 flex-1">
+              {filterPresets.length === 0 ? (
+                <span className="text-xs text-gray-400">None yet — set filters and save below.</span>
+              ) : (
+                filterPresets.map((p) => (
+                  <span
+                    key={p.id}
+                    className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200"
+                  >
+                    <button
+                      type="button"
+                      className="hover:underline"
+                      onClick={() => applyPreset(p)}
+                    >
+                      {p.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500"
+                      aria-label={`Remove ${p.name}`}
+                      onClick={() => removePreset(p.id)}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <input
+                type="text"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="Preset name"
+                className="px-2 py-1 border border-gray-200 rounded-md text-xs w-36"
+              />
+              <button
+                type="button"
+                onClick={saveCurrentAsPreset}
+                className="px-2 py-1 text-xs font-medium bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              >
+                Save current filters
+              </button>
+            </div>
           </div>
 
           {/* Advanced Filters Panel */}
@@ -505,9 +633,9 @@ export default function RFQPage() {
                               score >= 60 ? "bg-amber-100 text-amber-700" :
                               "bg-gray-100 text-gray-600"
                             }`}
-                            title="Fit score: industry, skills overlap with your profile tech stack, and deadline — heuristic, not semantic AI."
+                            title="Fit score (heuristic): industry, skills overlap with your profile tech stack, and deadline — not semantic AI."
                           >
-                            Fit {score}%
+                            Fit score (heuristic) {score}%
                           </span>
                         ) : null;
                       })()}

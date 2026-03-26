@@ -248,6 +248,13 @@ export default function OpportunitiesPage() {
           <p className="text-blue-100 text-lg max-w-2xl mx-auto">
             Discover joint ventures, incubation programs, funding rounds, and co-development partnerships.
           </p>
+          <p className="text-blue-200/90 text-sm max-w-xl mx-auto mt-4">
+            Add your scheduling link in{" "}
+            <Link href="/settings#meeting-scheduler" className="underline font-medium text-white hover:text-blue-100">
+              Settings → Meeting scheduler
+            </Link>{" "}
+            so partners can book time when you use Schedule on a card or in Messages.
+          </p>
         </div>
       </div>
 
