@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Plus, Edit2, Trash2, X, Save, XCircle } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import {
   SuccessStory,
   createSuccessStory,
@@ -20,6 +21,7 @@ export const SuccessStoriesSection: React.FC<SuccessStoriesSectionProps> = ({
   stories,
   onUpdate,
 }) => {
+  const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -173,10 +175,10 @@ export const SuccessStoriesSection: React.FC<SuccessStoriesSectionProps> = ({
       if (result.success) {
         onUpdate();
       } else {
-        alert(result.message || "Failed to delete success story");
+        toast(result.message || "Failed to delete success story", "error");
       }
     } catch {
-      alert("An error occurred while deleting");
+      toast("An error occurred while deleting", "error");
     } finally {
       setIsSubmitting(false);
     }

@@ -15,4 +15,10 @@ public interface NotificationCommandPort {
     void markRead(UUID accountId, UUID notificationId, Instant readAt);
 
     int markAllRead(UUID accountId, Instant readAt);
+
+    int archiveNotification(UUID accountId, UUID notificationId, Instant archivedAt);
+
+    int archiveAllNotifications(UUID accountId, Instant archivedAt);
+
+    int deleteNotification(UUID accountId, UUID notificationId);
 }

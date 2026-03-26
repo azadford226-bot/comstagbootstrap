@@ -3,6 +3,7 @@ package com.hivecontrolsolutions.comestag.infrastructure.persistence.repo;
 import com.hivecontrolsolutions.comestag.infrastructure.persistence.entity.FollowEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,4 +13,6 @@ public interface FollowRepository extends JpaRepository<FollowEntity, UUID> {
     void deleteByFollowerIdAndFollowingId(UUID followerId, UUID followingId);
     long countByFollowingId(UUID followingId);
     long countByFollowerId(UUID followerId);
+
+    List<FollowEntity> findByFollowerId(UUID followerId);
 }

@@ -66,7 +66,10 @@ public class SendMessageProcessor {
                 message.getContent(),
                 message.getCreatedAt(),
                 message.isRead(),
-                message.getReadAt()
+                message.getReadAt(),
+                message.isPinned(),
+                message.getPinnedAt(),
+                message.getPinnedBy()
         );
 
         // Emit real-time event to recipient

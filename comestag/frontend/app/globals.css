@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../lib/design-tokens.css";
 
 :root {
   --background: #ffffff;
@@ -58,6 +59,15 @@ body {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in-right {
+    animation: none !important;
+  }
+  .animate-spin {
+    animation: none !important;
   }
 }
 

@@ -95,6 +95,10 @@ public class OrganizationEntity {
     @Column(name = "verified_at")
     private Instant verifiedAt;
 
+    @Column(name = "profile_visibility", length = 20)
+    @Builder.Default
+    private String profileVisibility = "public";
+
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", updatable = false, insertable = false)
     @Generated
@@ -134,6 +138,7 @@ public class OrganizationEntity {
                 .techStack(this.techStack)
                 .verified(this.verified)
                 .verifiedAt(this.verifiedAt)
+                .profileVisibility(this.profileVisibility)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
                 .build();
@@ -163,6 +168,7 @@ public class OrganizationEntity {
                 .techStack(d.getTechStack())
                 .verified(d.isVerified())
                 .verifiedAt(d.getVerifiedAt())
+                .profileVisibility(d.getProfileVisibility())
                 .build();
     }
 }

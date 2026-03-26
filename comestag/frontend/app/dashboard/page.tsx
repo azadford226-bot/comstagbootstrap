@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search, Megaphone } from "lucide-react";
+import { Building2, MapPin, Globe, Calendar, Briefcase, TrendingUp, Users, FileText, ArrowRight, Clock, DollarSign, Search, Megaphone, SlidersHorizontal, X } from "lucide-react";
 import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getPosts, Post } from "@/lib/api/posts";
 import { listRfqs, Rfq } from "@/lib/api/rfq";
@@ -12,6 +12,9 @@ import { authenticatedGet } from "@/lib/api/api-client";
 import { PostsFeed } from "@/components/ui/posts-feed";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { getMediaUrl } from "@/lib/api/media";
+import { getFollowingIds, getBookmarks } from "@/lib/api/social";
+
+const SPONSORED_DISMISS_KEY = "comestag_feed_sponsored_dismissed";
 import Button from "@/components/atoms/button";
 import OnboardingChecklist from "@/components/molecules/onboarding-checklist";
 
@@ -22,14 +25,22 @@ export default function DashboardPage() {
   const [rfqs, setRfqs] = useState<Rfq[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [feedSearch, setFeedSearch] = useState("");
-  const [feedTab, setFeedTab] = useState<"all" | "latest" | "trending">("all");
+  const [feedTab, setFeedTab] = useState<"all" | "latest" | "trending" | "following">("all");
   const [feedIndustry, setFeedIndustry] = useState("");
+  const [followingOrgIds, setFollowingOrgIds] = useState<Set<string>>(new Set());
   const [showChecklist, setShowChecklist] = useState(true);
   const [recommendedPartners, setRecommendedPartners] = useState<
     { id: string; displayName: string; companyType?: string; industry?: string; matchScore: number; profileImageId?: string; verified?: boolean }[]
   >([]);
+  const [sponsoredHidden, setSponsoredHidden] = useState(false);
+  const [feedRegion, setFeedRegion] = useState("");
+  const [feedDrawerOpen, setFeedDrawerOpen] = useState(false);
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    try {
+      setSponsoredHidden(localStorage.getItem(SPONSORED_DISMISS_KEY) === "1");
+    } catch { /* ignore */ }
     loadDashboardData();
   }, []);
 
@@ -63,6 +74,26 @@ export default function DashboardPage() {
           setRecommendedPartners(partnersRes.data);
         }
       } catch { /* non-critical */ }
+
+      try {
+        const followingRes = await getFollowingIds();
+        if (followingRes.success && followingRes.data?.ids?.length) {
+          setFollowingOrgIds(new Set(followingRes.data.ids));
+        } else {
+          setFollowingOrgIds(new Set());
+        }
+      } catch {
+        setFollowingOrgIds(new Set());
+      }
+
+      try {
+        const bm = await getBookmarks("POST", 0, 200);
+        const raw = bm.data as { content?: { targetId: string }[]; items?: { targetId: string }[] } | undefined;
+        const list = raw?.content ?? raw?.items;
+        if (bm.success && list?.length) {
+          setBookmarkedPostIds(new Set(list.map((b) => b.targetId)));
+        }
+      } catch { /* optional */ }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {
@@ -98,8 +129,39 @@ export default function DashboardPage() {
     return diffDays;
   };
 
+  const profileIndustryName = profile?.industry?.name?.toLowerCase() ?? "";
+
+  const feedRelevanceScore = (p: Post): number => {
+    let s = 0;
+    const body = (p.body || "").toLowerCase();
+    const org = (p.organizationName || "").toLowerCase();
+    if (profileIndustryName && (body.includes(profileIndustryName) || org.includes(profileIndustryName))) {
+      s += 40;
+    }
+    s += Math.min(30, (p.reactionsCount ?? 0) * 3);
+    if (bookmarkedPostIds.has(p.id)) s += 18;
+    const ageHours = (Date.now() - new Date(p.createdAt).getTime()) / 36e5;
+    s += Math.max(0, 30 - Math.min(30, ageHours / 24));
+    return s;
+  };
+
   const filteredPosts = posts
     .filter((p) => {
+      if (feedTab === "following") {
+        if (!followingOrgIds.has(p.organizationId)) return false;
+      }
+      if (feedIndustry) {
+        const pAny = p as unknown as Record<string, unknown>;
+        const industry = (pAny.industry as string | undefined)
+          || (pAny.organizationIndustry as string | undefined)
+          || "";
+        if (!industry.toLowerCase().includes(feedIndustry.toLowerCase())) return false;
+      }
+      if (feedRegion.trim()) {
+        const r = feedRegion.toLowerCase().trim();
+        const hay = `${(p.body || "").toLowerCase()} ${(p.organizationName || "").toLowerCase()}`;
+        if (!hay.includes(r)) return false;
+      }
       if (!feedSearch.trim()) return true;
       const q = feedSearch.toLowerCase();
       return (
@@ -111,8 +173,20 @@ export default function DashboardPage() {
       if (feedTab === "trending") {
         return (b.reactionsCount ?? 0) - (a.reactionsCount ?? 0);
       }
+      if (feedTab === "all") {
+        return feedRelevanceScore(b) - feedRelevanceScore(a);
+      }
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+
+  const feedWhyHint =
+    feedTab === "following"
+      ? "Posts from companies you follow."
+      : feedTab === "trending"
+        ? "Sorted by reactions in your network."
+        : feedTab === "all"
+          ? "Ranked by relevance to your industry, engagement, and recency — not chronological only."
+          : "Newest posts first.";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -320,6 +394,7 @@ export default function DashboardPage() {
                   value={feedIndustry}
                   onChange={(e) => setFeedIndustry(e.target.value)}
                   className="px-3 py-2.5 bg-white rounded-lg shadow-sm border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  aria-label="Filter posts by industry keyword"
                 >
                   <option value="">All Industries</option>
                   <option value="technology">Technology</option>
@@ -329,12 +404,55 @@ export default function DashboardPage() {
                   <option value="fintech">Fintech</option>
                   <option value="energy">Energy</option>
                 </select>
+                <button
+                  type="button"
+                  onClick={() => setFeedDrawerOpen(true)}
+                  className="px-3 py-2.5 bg-white rounded-lg shadow-sm border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-1"
+                  aria-expanded={feedDrawerOpen}
+                  aria-controls="feed-filter-drawer"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filters
+                </button>
               </div>
 
+              {feedDrawerOpen && (
+                <div
+                  id="feed-filter-drawer"
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3"
+                  role="region"
+                  aria-label="Additional feed filters"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-800">Region or keyword</span>
+                    <button type="button" className="p-1 rounded hover:bg-gray-100" onClick={() => setFeedDrawerOpen(false)} aria-label="Close filters">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={feedRegion}
+                    onChange={(e) => setFeedRegion(e.target.value)}
+                    placeholder="Match in post text or company name (e.g. Germany, APAC)"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                  <p className="text-xs text-gray-500">
+                    RFQ deadline urgency appears in the Opportunities column. Multi-axis RFQ filters live on the RFQ page.
+                  </p>
+                  <button
+                    type="button"
+                    className="text-sm text-primary"
+                    onClick={() => { setFeedRegion(""); setFeedIndustry(""); }}
+                  >
+                    Clear industry &amp; region
+                  </button>
+                </div>
+              )}
+
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-                    {(["all", "latest", "trending"] as const).map((tab) => (
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-0.5">
+                    {(["all", "latest", "trending", "following"] as const).map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setFeedTab(tab)}
@@ -346,7 +464,11 @@ export default function DashboardPage() {
                       >
                         {tab === "trending" ? (
                           <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />{tab}</span>
-                        ) : tab}
+                        ) : tab === "following" ? (
+                          <span className="flex items-center gap-1"><Users className="w-3 h-3" />Following</span>
+                        ) : (
+                          tab
+                        )}
                       </button>
                     ))}
                   </div>
@@ -358,17 +480,21 @@ export default function DashboardPage() {
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
+                <p className="text-xs text-gray-500 mb-4" title="How this feed is ordered">
+                  Why you&apos;re seeing this: {feedWhyHint}
+                </p>
 
                 {/* Sponsored content slot */}
-                {feedTab === "all" && filteredPosts.length > 0 && (
+                {!sponsoredHidden && feedTab === "all" && filteredPosts.length > 0 && (
                   <div className="mb-4 p-4 rounded-lg border border-dashed border-amber-200 bg-amber-50/50">
                     <div className="flex items-start gap-3">
                       <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
                         <Megaphone className="w-4 h-4 text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Sponsored</span>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Ad</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Sponsored placement</span>
                         </div>
                         <p className="text-sm font-medium text-gray-900 mb-0.5">Boost your company&apos;s visibility</p>
                         <p className="text-xs text-gray-500">Promote your RFQs, opportunities, or company profile to reach more partners.</p>
@@ -379,7 +505,16 @@ export default function DashboardPage() {
                           Learn about promotions <ArrowRight className="w-3 h-3" />
                         </Link>
                       </div>
-                      <button className="text-gray-400 hover:text-gray-600 text-xs flex-shrink-0">
+                      <button
+                        type="button"
+                        className="text-gray-400 hover:text-gray-600 text-xs flex-shrink-0"
+                        onClick={() => {
+                          try {
+                            localStorage.setItem(SPONSORED_DISMISS_KEY, "1");
+                          } catch { /* ignore */ }
+                          setSponsoredHidden(true);
+                        }}
+                      >
                         Hide
                       </button>
                     </div>
@@ -388,6 +523,25 @@ export default function DashboardPage() {
 
                 {filteredPosts.length > 0 ? (
                   <PostsFeed posts={filteredPosts} showFullContent={false} />
+                ) : feedTab === "following" ? (
+                  <div className="text-center py-12 px-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
+                      <Users className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">No posts from followed companies</h3>
+                    <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
+                      {followingOrgIds.size === 0
+                        ? "Follow organizations from their profile to see their updates here."
+                        : "No recent posts from companies you follow. Try All or Latest."}
+                    </p>
+                    <Link
+                      href="/opportunities"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark"
+                    >
+                      Discover companies
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 ) : (
                   <div className="text-center py-12 px-6">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
@@ -545,15 +699,28 @@ export default function DashboardPage() {
 
               {/* Trending in Your Network */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-sm font-semibold text-primary-dark flex items-center gap-2 mb-4">
+                <h2 className="text-sm font-semibold text-primary-dark flex items-center gap-2 mb-1">
                   <TrendingUp className="w-4 h-4 text-primary" />
-                  Trending in Your Network
+                  Trending in your industry
                 </h2>
+                <p className="text-[11px] text-gray-400 mb-4 leading-snug">
+                  Method: posts with most reactions in your feed; when your profile lists an industry, matches are highlighted first in the list below.
+                </p>
                 {posts.length > 0 ? (
                   <div className="space-y-3">
                     {posts
                       .slice()
-                      .sort((a, b) => (b.reactionsCount || 0) - (a.reactionsCount || 0))
+                      .sort((a, b) => {
+                        const score = (p: Post) => {
+                          let s = (p.reactionsCount || 0) * 10;
+                          if (profileIndustryName) {
+                            const t = `${(p.body || "").toLowerCase()} ${(p.organizationName || "").toLowerCase()}`;
+                            if (t.includes(profileIndustryName)) s += 50;
+                          }
+                          return s;
+                        };
+                        return score(b) - score(a);
+                      })
                       .slice(0, 3)
                       .map((post, idx) => (
                         <div
@@ -592,10 +759,13 @@ export default function DashboardPage() {
 
               {/* Recommended Partners */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-sm font-semibold text-primary-dark flex items-center gap-2 mb-4">
+                <h2 className="text-sm font-semibold text-primary-dark flex items-center gap-2 mb-1">
                   <Users className="w-4 h-4 text-primary" />
-                  Recommended Partners
+                  Recommended partners
                 </h2>
+                <p className="text-[11px] text-gray-400 mb-4 leading-snug">
+                  Fit scores are heuristic (industry overlap, activity) — not semantic AI or embeddings.
+                </p>
                 {recommendedPartners.length > 0 ? (
                   <div className="space-y-3">
                     {recommendedPartners.map((partner) => (
@@ -613,8 +783,11 @@ export default function DashboardPage() {
                             {partner.industry || "Technology"} &middot; {(partner.companyType || "").replace("_", " ") || "Company"}
                           </div>
                         </div>
-                        <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0">
-                          {partner.matchScore}%
+                        <span
+                          className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0"
+                          title="Fit score: heuristic based on industry overlap and profile signals (not semantic AI)."
+                        >
+                          Fit {partner.matchScore}%
                         </span>
                       </Link>
                     ))}

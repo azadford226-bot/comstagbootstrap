@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Processor
@@ -24,6 +26,7 @@ public class AdminOrganizationProcessor {
     private final ListOrganizationsUseCase listOrganizationsUseCase;
     private final ListPendingOrganizationsUseCase listPendingOrganizationsUseCase;
     private final ApproveOrganizationUseCase approveOrganizationUseCase;
+    private final com.hivecontrolsolutions.comestag.infrastructure.persistence.repo.OrganizationRepository organizationRepository;
     
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
@@ -52,5 +55,22 @@ public class AdminOrganizationProcessor {
     public ResponseEntity<Void> approveOrganization(@PathVariable UUID orgId) {
         approveOrganizationUseCase.execute(orgId);
         return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{orgId}/verify")
+    @Operation(summary = "Verify an organization",
+            description = "Marks an organization as verified with a badge.")
+    public ResponseEntity<Map<String, Object>> verifyOrganization(@PathVariable UUID orgId) {
+        organizationRepository.verify(orgId, Instant.now());
+        return ResponseEntity.ok(Map.of("verified", true, "orgId", orgId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{orgId}/unverify")
+    @Operation(summary = "Remove verification from an organization")
+    public ResponseEntity<Map<String, Object>> unverifyOrganization(@PathVariable UUID orgId) {
+        organizationRepository.unverify(orgId);
+        return ResponseEntity.ok(Map.of("verified", false, "orgId", orgId));
     }
 }

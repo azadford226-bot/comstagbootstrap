@@ -17,5 +17,6 @@ public record UpdateOrgProfileInput(
         String country,
         String state,
         String city,
-        String techStack) {
+        String techStack,
+        String profileVisibility) {
 }

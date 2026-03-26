@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useToast } from "@/components/ui/toast"
 import {
   ArrowLeft, DollarSign, Clock, Users, CheckCircle, XCircle,
-  Award, Loader2, AlertCircle, FileText, Star, LayoutGrid, Table2
+  Award, Loader2, AlertCircle, FileText, Star, LayoutGrid, Table2, Printer
 } from 'lucide-react'
 import {
   getRfq, listProposals, awardRfq,
@@ -37,6 +38,7 @@ function formatDate(dateStr: string) {
 
 export default function RfqProposalsPage() {
   const params = useParams()
+  const { toast } = useToast()
   const rfqId = params.id as string
 
   const [rfq, setRfq] = useState<Rfq | null>(null)
@@ -94,10 +96,10 @@ export default function RfqProposalsPage() {
         setAwardSuccess(true)
         await fetchData()
       } else {
-        alert(result.message || 'Failed to award RFQ')
+        toast(result.message || 'Failed to award RFQ', "error")
       }
     } catch {
-      alert('Network error. Please try again.')
+      toast('Network error. Please try again.', "error")
     }
     setAwarding(null)
   }
@@ -173,29 +175,43 @@ export default function RfqProposalsPage() {
           )}
         </div>
 
-        {/* View Toggle */}
-        {proposals.length > 1 && (
-          <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-0.5 w-fit">
+        {/* View Toggle + export */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          {proposals.length > 1 && (
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === 'cards' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Cards
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('compare')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === 'compare' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Table2 className="w-3.5 h-3.5" />
+                Compare
+              </button>
+            </div>
+          )}
+          {proposals.length > 0 && (
             <button
-              onClick={() => setViewMode('cards')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                viewMode === 'cards' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Cards
+              <Printer className="w-3.5 h-3.5" />
+              Print / Save as PDF
             </button>
-            <button
-              onClick={() => setViewMode('compare')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                viewMode === 'compare' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Table2 className="w-3.5 h-3.5" />
-              Compare
-            </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Proposals */}
         {proposals.length === 0 ? (

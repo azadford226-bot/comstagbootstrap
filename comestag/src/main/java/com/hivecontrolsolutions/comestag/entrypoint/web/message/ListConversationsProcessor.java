@@ -64,6 +64,8 @@ public class ListConversationsProcessor {
                             conv.getLastMessageTime(),
                             null, // Last message sender would need to be fetched separately
                             unreadCount,
+                            conv.getContextType(),
+                            conv.getContextId(),
                             conv.getCreatedAt(),
                             conv.getUpdatedAt()
                     );

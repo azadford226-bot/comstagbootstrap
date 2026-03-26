@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
 import { Plus, Edit2, Trash2, X, Save, Upload } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import {
   Certificate,
   createCertificate,
@@ -21,6 +22,7 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
   certificates,
   onUpdate,
 }) => {
+  const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -176,10 +178,10 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
       if (result.success) {
         onUpdate();
       } else {
-        alert(result.message || "Failed to delete certificate");
+        toast(result.message || "Failed to delete certificate", "error");
       }
     } catch {
-      alert("An error occurred while deleting");
+      toast("An error occurred while deleting", "error");
     } finally {
       setIsSubmitting(false);
     }

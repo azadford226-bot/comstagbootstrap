@@ -19,6 +19,7 @@ public interface RfqPort {
                  String budgetCurrency,
                  java.time.Instant deadline,
                  String requirements,
+                 String skillsTags,
                  RfqDm.RfqVisibility visibility);
     
     Page<RfqDm> pageByOrganizationId(UUID organizationId, int page, int size);

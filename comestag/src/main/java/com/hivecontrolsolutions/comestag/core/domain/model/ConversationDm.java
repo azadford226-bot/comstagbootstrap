@@ -14,6 +14,8 @@ public class ConversationDm {
     private UUID participant2Id;
     private UUID lastMessageId;
     private Instant lastMessageTime;
+    private String contextType;
+    private String contextId;
     private Instant createdAt;
     private Instant updatedAt;
 }

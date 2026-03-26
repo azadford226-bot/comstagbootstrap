@@ -4,6 +4,7 @@ import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, X, Save, Upload, Heart, MessageCircle, Send as SendIcon, Bookmark, Share2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import { getMediaUrl } from "@/lib/api/media";
 import { Post, formatPostDate, getPostExcerpt } from "@/lib/utils/posts";
 import {
@@ -32,6 +33,7 @@ export const PostsFeed: React.FC<PostsFeedProps> = ({
   enableCRUD = false,
   onUpdate,
 }) => {
+  const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -170,10 +172,10 @@ export const PostsFeed: React.FC<PostsFeedProps> = ({
       if (result.success) {
         onUpdate?.();
       } else {
-        alert(result.message || "Failed to delete post");
+        toast(result.message || "Failed to delete post", "error");
       }
     } catch {
-      alert("An error occurred while deleting");
+      toast("An error occurred while deleting", "error");
     } finally {
       setIsSubmitting(false);
     }

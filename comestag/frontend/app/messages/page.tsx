@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/components/ui/toast";
 import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2, Pin, FileText } from "lucide-react";
 import Image from "next/image";
 import { uploadPostMedia } from "@/lib/api/media";
@@ -13,10 +14,22 @@ import {
   sendMessage,
   markConversationAsRead,
   connectMessageStreamAuthenticated,
+  findConversationByContext,
+  createConversationWithContext,
+  pinMessage,
+  unpinMessage,
   type Conversation,
   type Message,
 } from "@/lib/api/messages";
+import { getProfile, isOrganizationProfile } from "@/lib/api/profile";
+import { getRfq } from "@/lib/api/rfq";
 import { mockApiResponse, mockConversations, mockMessages } from "@/lib/dev-mock-api";
+
+async function getRfqOwnerForThread(rfqId: string): Promise<string | null> {
+  const res = await getRfq(rfqId);
+  if (res.success && res.data) return res.data.organizationId;
+  return null;
+}
 import { isDevMode } from "@/lib/dev-auth";
 import { logger } from "@/lib/logger";
 
@@ -30,9 +43,11 @@ export default function MessagesPageWrapper() {
 
 function MessagesPage() {
   const { user } = useAuth(true);
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const rfqThread = searchParams.get("rfq");
   const rfqSubject = searchParams.get("subject");
+  const ctxParam = searchParams.get("ctx");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,14 +62,49 @@ function MessagesPage() {
   const [messageSearch, setMessageSearch] = useState("");
   const [showMessageSearch, setShowMessageSearch] = useState(false);
   const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
+  const [myAccountId, setMyAccountId] = useState<string | null>(null);
+  const [meetingSchedulerUrl, setMeetingSchedulerUrl] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageStreamAbortController = useRef<AbortController | null>(null);
 
-  // Load conversations on mount
   useEffect(() => {
-    loadConversations();
+    try {
+      setMeetingSchedulerUrl(localStorage.getItem("meeting_scheduler_url") || "");
+    } catch { /* ignore */ }
+    getProfile().then((res) => {
+      if (res.success && res.data && isOrganizationProfile(res.data)) {
+        setMyAccountId(res.data.id);
+      } else if (res.success && res.data && "id" in res.data) {
+        setMyAccountId((res.data as { id: string }).id);
+      }
+    }).catch(() => {});
   }, []);
+
+  // Auto-open organization thread for RFQ (context id = rfqId:yourOrgId for multi-bidder safety)
+  useEffect(() => {
+    if (!rfqThread || isDevMode()) return;
+    if (!ctxParam && !myAccountId) return;
+    const contextId = ctxParam || `${rfqThread}:${myAccountId}`;
+    loadConversations().then(() => {
+      findConversationByContext("RFQ", contextId).then((result) => {
+        if (result.success && result.data) {
+          setSelectedConversation(result.data);
+          return;
+        }
+        if (myAccountId) {
+          getRfqOwnerForThread(rfqThread).then((ownerId) => {
+            if (!ownerId || ownerId === myAccountId) return;
+            createConversationWithContext(ownerId, "RFQ", contextId).then((created) => {
+              if (created.success && created.data) setSelectedConversation(created.data);
+            });
+          });
+        }
+      }).catch(() => {
+        logger.debug("No existing conversation for RFQ context", { rfqThread, contextId });
+      });
+    });
+  }, [rfqThread, ctxParam, myAccountId]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -191,6 +241,9 @@ function MessagesPage() {
 
       if (result.success && result.data) {
         setMessages(result.data);
+        setPinnedMessageIds(
+          new Set(result.data.filter((m) => m.pinned).map((m) => m.id))
+        );
       }
     } catch (error) {
       logger.error("Error loading messages", error);
@@ -209,7 +262,7 @@ function MessagesPage() {
     setIsSending(true);
 
     // Optimistically add message to UI
-    const currentUserId = user?.email || "dev@test.com";
+    const currentUserId = myAccountId || user?.email || "dev@test.com";
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       conversationId: selectedConversation.id,
@@ -261,13 +314,13 @@ function MessagesPage() {
       } else {
         // Remove temp message on error
         setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
-        alert(result.message || "Failed to send message");
+        toast(result.message || "Failed to send message", "error");
       }
     } catch (error) {
       logger.error("Error sending message", error);
       // Remove temp message on error
       setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
-      alert("Failed to send message. Please try again.");
+      toast("Failed to send message. Please try again.", "error");
     } finally {
       setIsSending(false);
     }
@@ -328,7 +381,7 @@ function MessagesPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Messages</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Connect and communicate with other organizations
+              Organization threads — company-to-company, tied to RFQs and deals when applicable
             </p>
           </div>
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -461,14 +514,19 @@ function MessagesPage() {
                     <h2 className="font-semibold text-gray-800">
                       {selectedConversation.otherUserName}
                     </h2>
-                    <span title="Secure connection"><Shield className="w-3.5 h-3.5 text-blue-400" /></span>
+                    <span
+                      title="TLS encryption in transit between your browser and our servers — not end-to-end encryption."
+                      className="inline-flex"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-blue-400" aria-hidden />
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
-                    Available &middot;{" "}
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" aria-hidden />
+                    Organization thread &middot;{" "}
                     {selectedConversation.otherUserType === "ORGANIZATION"
-                      ? "Organization"
-                      : "Consumer"}
+                      ? "Partner organization"
+                      : "Contact"}
                   </div>
                 </div>
               </div>
@@ -559,11 +617,12 @@ function MessagesPage() {
                 </div>
               ) : (
                 messages.map((message, index) => {
-                  const currentUserId = user?.email || "dev@test.com";
-                  const isOwnMessage = 
-                    message.senderId === currentUserId || 
+                  const currentUserId = myAccountId || user?.email || "";
+                  const isOwnMessage =
+                    (myAccountId && message.senderId === myAccountId) ||
+                    (!myAccountId && message.senderId === currentUserId) ||
                     message.senderId === "dev@test.com" ||
-                    (isDevMode() && message.senderName === user?.name && message.senderName === "Test Organization");
+                    (isDevMode() && message.senderName === user?.name);
                   const showDateSeparator =
                     index === 0 ||
                     new Date(message.timestamp).toDateString() !==
@@ -620,14 +679,22 @@ function MessagesPage() {
                             </p>
                           </div>
                           <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              setPinnedMessageIds((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(message.id)) next.delete(message.id);
-                                else next.add(message.id);
-                                return next;
-                              });
+                              const isPinned = pinnedMessageIds.has(message.id);
+                              const res = isPinned
+                                ? await unpinMessage(message.id)
+                                : await pinMessage(message.id);
+                              if (res.success) {
+                                setPinnedMessageIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (isPinned) next.delete(message.id);
+                                  else next.add(message.id);
+                                  return next;
+                                });
+                              } else {
+                                toast(res.message || "Could not update pin", "error");
+                              }
                             }}
                             className={`absolute -top-2 ${isOwnMessage ? '-left-6' : '-right-6'} opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-200 ${
                               pinnedMessageIds.has(message.id) ? 'text-amber-500 opacity-100' : 'text-gray-400'
@@ -804,6 +871,16 @@ function MessagesPage() {
                   ))}
                 </div>
               </div>
+              {meetingSchedulerUrl ? (
+                <a
+                  href={meetingSchedulerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center px-4 py-2.5 bg-slate-800 text-white rounded-lg font-medium text-sm hover:bg-slate-900"
+                >
+                  Open scheduling page (Calendly / Bookings)
+                </a>
+              ) : null}
               <button
                 onClick={async () => {
                   if (meetingDate && selectedConversation) {
@@ -817,10 +894,10 @@ function MessagesPage() {
                 disabled={!meetingDate}
                 className="w-full px-4 py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark disabled:opacity-50 transition-colors"
               >
-                Send Meeting Invite
+                Send meeting note in thread
               </button>
               <p className="text-xs text-gray-400 text-center">
-                A meeting link will be generated and sent in the conversation
+                Add your Calendly or Microsoft Bookings URL in Settings for one-click scheduling.
               </p>
             </div>
           </div>

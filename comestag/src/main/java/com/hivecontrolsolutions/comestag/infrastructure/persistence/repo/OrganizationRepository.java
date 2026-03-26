@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,5 +42,13 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
 
     @Query("SELECT o FROM OrganizationEntity o WHERE o.approved = true AND o.id <> :excludeId ORDER BY o.views DESC")
     List<OrganizationEntity> findRecommendedFallback(@Param("excludeId") UUID excludeId, org.springframework.data.domain.Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE OrganizationEntity o SET o.verified = true, o.verifiedAt = :verifiedAt WHERE o.id = :id")
+    void verify(@Param("id") UUID id, @Param("verifiedAt") Instant verifiedAt);
+
+    @Modifying
+    @Query("UPDATE OrganizationEntity o SET o.verified = false, o.verifiedAt = null WHERE o.id = :id")
+    void unverify(@Param("id") UUID id);
 
 }

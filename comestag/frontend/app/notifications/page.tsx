@@ -82,6 +82,23 @@ export default function NotificationsPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [category, setCategory] = useState<"all" | "rfq" | "message" | "social" | "system">("all");
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("notification_archived_ids");
+      if (raw) setArchivedIds(new Set(JSON.parse(raw) as string[]));
+    } catch { /* ignore */ }
+  }, []);
+
+  function notifCategory(type: string): "rfq" | "message" | "social" | "system" {
+    if (type.startsWith("RFQ")) return "rfq";
+    if (type.startsWith("MESSAGE")) return "message";
+    if (type.startsWith("POST") || type === "FOLLOW") return "social";
+    return "system";
+  }
 
   const fetchPage = useCallback(async (p: number) => {
     setLoading(true);
@@ -133,13 +150,20 @@ export default function NotificationsPage() {
     return msg || TYPE_LABELS[n.type] || n.type;
   };
 
-  const filtered =
-    filter === "unread"
-      ? notifications.filter((n) => !n.readAt)
-      : notifications;
+  const persistArchived = (next: Set<string>) => {
+    setArchivedIds(next);
+    try {
+      localStorage.setItem("notification_archived_ids", JSON.stringify([...next]));
+    } catch { /* ignore */ }
+  };
+
+  const filtered = notifications
+    .filter((n) => !archivedIds.has(n.notificationId))
+    .filter((n) => category === "all" || notifCategory(n.type) === category)
+    .filter((n) => (filter === "unread" ? !n.readAt : true));
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
@@ -149,9 +173,34 @@ export default function NotificationsPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-0.5">
+            {(
+              [
+                ["all", "All"],
+                ["rfq", "RFQ"],
+                ["message", "Messages"],
+                ["social", "Social"],
+                ["system", "System"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setCategory(key)}
+                className={`px-2.5 py-1.5 text-xs sm:text-sm rounded-md transition-colors ${
+                  category === key
+                    ? "bg-white text-gray-900 shadow-sm font-medium"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="flex bg-gray-100 rounded-lg p-0.5">
             <button
+              type="button"
               onClick={() => setFilter("all")}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 filter === "all"
@@ -159,9 +208,10 @@ export default function NotificationsPage() {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              All
+              All activity
             </button>
             <button
+              type="button"
               onClick={() => setFilter("unread")}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 filter === "unread"
@@ -172,14 +222,31 @@ export default function NotificationsPage() {
               Unread
             </button>
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Mark all read
-            </button>
-          )}
+          <div className="flex flex-wrap gap-2 items-center">
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Mark all read
+              </button>
+            )}
+            {selectedIds.size > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new Set(archivedIds);
+                  selectedIds.forEach((id) => next.add(id));
+                  persistArchived(next);
+                  setSelectedIds(new Set());
+                }}
+                className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+              >
+                Archive selected ({selectedIds.size})
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -224,6 +291,20 @@ export default function NotificationsPage() {
                 !n.readAt ? "bg-blue-50/30" : "hover:bg-gray-50"
               }`}
             >
+              <input
+                type="checkbox"
+                className="mt-3 rounded border-gray-300"
+                checked={selectedIds.has(n.notificationId)}
+                onChange={(e) => {
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (e.target.checked) next.add(n.notificationId);
+                    else next.delete(n.notificationId);
+                    return next;
+                  });
+                }}
+                aria-label={`Select notification ${n.notificationId}`}
+              />
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getIconBg(n.type)}`}
               >
@@ -244,12 +325,24 @@ export default function NotificationsPage() {
               <div className="flex items-center gap-2 shrink-0">
                 {!n.readAt && (
                   <button
+                    type="button"
                     onClick={() => handleMarkRead(n.notificationId)}
                     className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
                   >
                     Mark read
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = new Set(archivedIds);
+                    next.add(n.notificationId);
+                    persistArchived(next);
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-800 whitespace-nowrap"
+                >
+                  Archive
+                </button>
               </div>
             </div>
           ))

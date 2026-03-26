@@ -13,6 +13,7 @@ import java.util.UUID;
 public record PublicOrgProfileDro(
         UUID id,
         String displayName,
+        String companyType,
         IndustryDm industry,
         LocalDate established,
         String website,
@@ -26,6 +27,9 @@ public record PublicOrgProfileDro(
         String city,
         UUID profileImageId,
         UUID profileCoverId,
+        String techStack,
+        boolean verified,
+        String profileVisibility,
         Instant createdAt
 ) {
 }

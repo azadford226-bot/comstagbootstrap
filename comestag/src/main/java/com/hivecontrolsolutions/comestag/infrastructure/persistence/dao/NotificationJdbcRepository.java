@@ -129,6 +129,7 @@ public class NotificationJdbcRepository {
             SELECT count(*)
             FROM notification_recipients r
             WHERE r.recipient_account_id = :accountId
+              AND (r.archived = false OR r.archived IS NULL)
             """;
         long total = jdbc.queryForObject(countSql, Map.of("accountId", accountId), Long.class);
 
@@ -145,6 +146,7 @@ public class NotificationJdbcRepository {
             FROM notification_recipients r
             JOIN notifications n ON n.id = r.notification_id
             WHERE r.recipient_account_id = :accountId
+              AND (r.archived = false OR r.archived IS NULL)
             ORDER BY n.created_at DESC, n.id DESC
             LIMIT :limit OFFSET :offset
             """;
@@ -165,6 +167,7 @@ public class NotificationJdbcRepository {
             FROM notification_recipients
             WHERE recipient_account_id = :accountId
               AND read_at IS NULL
+              AND (archived = false OR archived IS NULL)
             """;
         return jdbc.queryForObject(sql, Map.of("accountId", accountId), Long.class);
     }
@@ -194,6 +197,46 @@ public class NotificationJdbcRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("accountId", accountId)
                 .addValue("readAt", Timestamp.from(readAt));
+        return jdbc.update(sql, params);
+    }
+
+    public int archiveNotification(UUID accountId, UUID notificationId, Instant archivedAt) {
+        String sql = """
+            UPDATE notification_recipients
+            SET archived = true, archived_at = :archivedAt
+            WHERE recipient_account_id = :accountId
+              AND notification_id = :notificationId
+              AND archived = false
+            """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("accountId", accountId)
+                .addValue("notificationId", notificationId)
+                .addValue("archivedAt", Timestamp.from(archivedAt));
+        return jdbc.update(sql, params);
+    }
+
+    public int archiveAllNotifications(UUID accountId, Instant archivedAt) {
+        String sql = """
+            UPDATE notification_recipients
+            SET archived = true, archived_at = :archivedAt
+            WHERE recipient_account_id = :accountId
+              AND archived = false
+            """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("accountId", accountId)
+                .addValue("archivedAt", Timestamp.from(archivedAt));
+        return jdbc.update(sql, params);
+    }
+
+    public int deleteNotification(UUID accountId, UUID notificationId) {
+        String sql = """
+            DELETE FROM notification_recipients
+            WHERE recipient_account_id = :accountId
+              AND notification_id = :notificationId
+            """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("accountId", accountId)
+                .addValue("notificationId", notificationId);
         return jdbc.update(sql, params);
     }
 

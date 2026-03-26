@@ -24,6 +24,8 @@ import Button from "@/components/atoms/button";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { followUser, unfollowUser, getFollowStatus, getFollowCounts, getOrgReviews, createReview, type Review, type ReviewsData } from "@/lib/api/social";
+import { authenticatedGet } from "@/lib/api/api-client";
+import Link from "next/link";
 
 export default function PublicOrganizationProfile() {
   const params = useParams();
@@ -49,6 +51,7 @@ export default function PublicOrganizationProfile() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [hoveredCert, setHoveredCert] = useState<Certificate | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [similarCompanies, setSimilarCompanies] = useState<Array<{ id: string; displayName: string; industry?: string; matchScore?: number }>>([]);
 
   useEffect(() => {
     if (_orgId) {
@@ -127,6 +130,16 @@ export default function PublicOrganizationProfile() {
         }
       } catch {
         // Reviews are non-critical
+      }
+
+      try {
+        const partnersRes = await authenticatedGet<Array<{ id: string; displayName: string; industry?: string; matchScore?: number }>>(`/v1/partners/recommended?limit=5`);
+        if (partnersRes.success && partnersRes.data) {
+          const filtered = (partnersRes.data as Array<{ id: string; displayName: string; industry?: string; matchScore?: number }>).filter((p) => p.id !== _orgId);
+          setSimilarCompanies(filtered.slice(0, 4));
+        }
+      } catch {
+        // Similar companies are non-critical
       }
     } catch (error) {
       logger.error("Failed to load public profile", error);
@@ -237,11 +250,36 @@ export default function PublicOrganizationProfile() {
               <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
                 {profile.displayName}
                 {profile.verified && (
-                  <span title="Verified company" className="text-blue-500">
-                    <BadgeCheck className="w-6 h-6" />
+                  <span title="Admin-verified organization — identity reviewed by platform operators." className="text-blue-500">
+                    <BadgeCheck className="w-6 h-6" aria-label="Admin verified" />
                   </span>
                 )}
               </h1>
+              <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Trust signals">
+                <span
+                  className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700"
+                  title="Business email and signup checks completed."
+                  role="listitem"
+                >
+                  Account verified
+                </span>
+                {profile.verified && (
+                  <span
+                    className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-800"
+                    title="Platform staff confirmed this organization."
+                    role="listitem"
+                  >
+                    Admin verified
+                  </span>
+                )}
+                <span
+                  className="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-800"
+                  title="Upload certificates in your profile; domain DNS verification is in Settings."
+                  role="listitem"
+                >
+                  Domain &amp; certs — self-serve
+                </span>
+              </div>
 
               <div className="flex flex-wrap gap-4 text-gray-600 mb-4">
                 {profile.city && profile.country && (
@@ -808,25 +846,39 @@ export default function PublicOrganizationProfile() {
               </div>
             )}
 
-            {/* Similar Companies - placeholder for discovery */}
+            {/* Similar Companies */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Similar Companies</h2>
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center shrink-0">
-                      <Building2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <Skeleton className="h-4 w-28 mb-1" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-400 mt-3 text-center">
-                Partner recommendations coming soon
-              </p>
+              {similarCompanies.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No recommendations available yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {similarCompanies.map((company) => (
+                    <Link
+                      key={company.id}
+                      href={`/organization/${company.id}`}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center shrink-0">
+                        <span className="text-primary font-bold text-sm">
+                          {company.displayName?.[0]?.toUpperCase() || "?"}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{company.displayName}</p>
+                        {company.industry && (
+                          <p className="text-xs text-gray-500 truncate">{company.industry}</p>
+                        )}
+                      </div>
+                      {company.matchScore && (
+                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                          {company.matchScore}%
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Floating Certificate Detail Card */}

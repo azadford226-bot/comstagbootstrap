@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Trash2, Edit3, Plus, ExternalLink } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -29,6 +30,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   onUpdate,
 }) => {
   const router = useRouter();
+  const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const sortedEvents = sortByDateDesc(events);
   const upcomingEvents = sortedEvents.filter((e) => isFutureDate(e.startAt));
@@ -47,11 +49,11 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
       if (result.success) {
         onUpdate(); // Refresh the events list
       } else {
-        alert(`Failed to delete event: ${result.message}`);
+        toast(`Failed to delete event: ${result.message}`, "error");
       }
     } catch (error) {
       console.error("Error deleting event:", error);
-      alert("Failed to delete event. Please try again.");
+      toast("Failed to delete event. Please try again.", "error");
     } finally {
       setIsDeleting(null);
     }

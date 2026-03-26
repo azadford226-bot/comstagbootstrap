@@ -1,0 +1,13 @@
+/**
+ * Comestag design tokens — import after globals / tailwind base.
+ * Use var(--token-name) in custom CSS; prefer Tailwind @theme in globals where mapped.
+ */
+:root {
+  --cx-radius-sm: 0.375rem;
+  --cx-radius-md: 0.5rem;
+  --cx-radius-lg: 0.75rem;
+  --cx-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --cx-transition-fast: 150ms ease;
+  --cx-focus-ring: 0 0 0 3px rgb(32 52 101 / 0.25);
+  --cx-space-section: 1.5rem;
+}

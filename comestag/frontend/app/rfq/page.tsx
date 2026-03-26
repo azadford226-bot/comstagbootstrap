@@ -3,14 +3,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useToast } from "@/components/ui/toast"
 import {
   FileText, Plus, ArrowLeft, Search, Clock, DollarSign,
   Users, CheckCircle, XCircle, Eye, Send, Building2, BadgeCheck,
-  Calendar, Tag, Loader2, X, ChevronRight, Bell, BellOff
+  Calendar, Tag, Loader2, X, ChevronRight, Bell
 } from 'lucide-react'
 import { listRfqs, createRfq, type Rfq, type CreateRfqRequest } from '@/lib/api/rfq'
+import {
+  listRfqSubscriptions,
+  createRfqSubscription,
+  deleteRfqSubscription,
+  type RfqSubscription,
+} from '@/lib/api/rfq-subscriptions'
 import { RfqCardSkeleton } from '@/components/ui/skeleton'
-import { Upload, Paperclip, Sparkles, SlidersHorizontal } from 'lucide-react'
+import { Upload, Paperclip, SlidersHorizontal } from 'lucide-react'
 import { uploadPostMedia } from '@/lib/api/media'
 import { getProfile, isOrganizationProfile, OrganizationProfile } from '@/lib/api/profile'
 
@@ -39,6 +46,7 @@ const INDUSTRIES = [
 
 export default function RFQPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [rfqs, setRfqs] = useState<Rfq[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [userProfile, setUserProfile] = useState<OrganizationProfile | null>(null)
@@ -51,8 +59,10 @@ export default function RFQPage() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [alertEnabled, setAlertEnabled] = useState(false)
   const [alertToast, setAlertToast] = useState('')
+  const [rfqSubscriptions, setRfqSubscriptions] = useState<RfqSubscription[]>([])
+  const [subKeyword, setSubKeyword] = useState('')
+  const [subCategory, setSubCategory] = useState('')
 
   const [formData, setFormData] = useState({
     title: '',
@@ -68,6 +78,8 @@ export default function RFQPage() {
   })
   const [rfqMediaIds, setRfqMediaIds] = useState<string[]>([])
   const [uploadingRfqFiles, setUploadingRfqFiles] = useState(false)
+  const [skillTags, setSkillTags] = useState<string[]>([])
+  const [skillInput, setSkillInput] = useState('')
 
   const fetchRFQs = useCallback(async () => {
     setIsLoading(true)
@@ -97,6 +109,9 @@ export default function RFQPage() {
         setUserProfile(res.data);
       }
     }).catch(() => {});
+    listRfqSubscriptions().then((res) => {
+      if (res.success && Array.isArray(res.data)) setRfqSubscriptions(res.data)
+    }).catch(() => {})
   }, [fetchRFQs])
 
   const handleCreate = async () => {
@@ -116,6 +131,7 @@ export default function RFQPage() {
         visibility: formData.visibility,
         ndaRequired: formData.ndaRequired || undefined,
         mediaIds: rfqMediaIds.length > 0 ? rfqMediaIds : undefined,
+        skillsTags: skillTags.length > 0 ? skillTags.join(', ') : undefined,
       }
 
       const result = await createRfq(request)
@@ -135,14 +151,16 @@ export default function RFQPage() {
           ndaRequired: false,
         })
         setRfqMediaIds([])
+        setSkillTags([])
+        setSkillInput('')
         await fetchRFQs()
       } else {
         console.error('Error creating RFQ:', result.message)
-        alert(result.message || 'Failed to create RFQ')
+        toast(result.message || 'Failed to create RFQ', "error")
       }
     } catch (error) {
       console.error('Error creating RFQ:', error)
-      alert('Failed to create RFQ')
+      toast('Failed to create RFQ', "error")
     }
     setIsCreating(false)
   }
@@ -155,6 +173,14 @@ export default function RFQPage() {
       const cat = rfq.category.toLowerCase();
       if (ind.includes(cat) || cat.includes(ind)) score += 25;
     }
+    const tech = (userProfile?.techStack || '').toLowerCase();
+    const skills = (rfq.skillsTags || '').toLowerCase();
+    if (tech && skills) {
+      const tTags = tech.split(',').map((s) => s.trim()).filter(Boolean);
+      const rTags = skills.split(',').map((s) => s.trim()).filter(Boolean);
+      const overlap = tTags.filter((t) => rTags.some((r) => r.includes(t) || t.includes(r))).length;
+      score += Math.min(20, overlap * 7);
+    }
     if (rfq.deadline) {
       const daysLeft = Math.max(0, (new Date(rfq.deadline).getTime() - Date.now()) / 86400000);
       if (daysLeft > 0 && daysLeft < 14) score += 15;
@@ -165,9 +191,12 @@ export default function RFQPage() {
   };
 
   const filteredRFQs = rfqs.filter(rfq => {
+    const q = searchQuery.toLowerCase();
+    const skills = (rfq.skillsTags || '').toLowerCase();
     const matchesSearch = !searchQuery ||
-      rfq.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rfq.description.toLowerCase().includes(searchQuery.toLowerCase());
+      rfq.title.toLowerCase().includes(q) ||
+      rfq.description.toLowerCase().includes(q) ||
+      skills.includes(q);
     if (!matchesSearch) return false;
 
     if (budgetMin && rfq.budget != null && rfq.budget < parseFloat(budgetMin)) return false;
@@ -283,32 +312,13 @@ export default function RFQPage() {
               <option value="AWARDED">Awarded</option>
             </select>
 
-            {/* Alert subscription */}
-            <button
-              onClick={() => {
-                const next = !alertEnabled
-                setAlertEnabled(next)
-                setAlertToast(
-                  next
-                    ? 'You will be notified when new RFQs match your filters.'
-                    : 'RFQ alerts disabled.'
-                )
-                setTimeout(() => setAlertToast(''), 3000)
-              }}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors shrink-0 ${
-                alertEnabled
-                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title={alertEnabled ? 'Disable RFQ alerts' : 'Get notified on new RFQs'}
+            <span
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 shrink-0"
+              title="Manage keyword/category alerts in Filters panel"
             >
-              {alertEnabled ? (
-                <BellOff className="w-4 h-4" />
-              ) : (
-                <Bell className="w-4 h-4" />
-              )}
-              {alertEnabled ? 'Alerts On' : 'Set Alert'}
-            </button>
+              <Bell className="w-4 h-4 text-blue-500" />
+              {rfqSubscriptions.length} alert{rfqSubscriptions.length === 1 ? '' : 's'}
+            </span>
 
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
@@ -367,7 +377,75 @@ export default function RFQPage() {
                   onClick={() => { setBudgetMin(''); setBudgetMax(''); setDeadlineFilter(''); }}
                   className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  Clear filters
+                  Clear all
+                </button>
+              </div>
+            </div>
+          )}
+          {showAdvancedFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <p className="text-xs font-medium text-gray-600 mb-2">Subscribe to new RFQs (keyword / category)</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {rfqSubscriptions.map((s) => (
+                  <span
+                    key={s.id}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-800 text-xs rounded-md"
+                  >
+                    {[s.keyword, s.category].filter(Boolean).join(' · ') || 'Alert'}
+                    <button
+                      type="button"
+                      className="hover:text-red-600"
+                      onClick={async () => {
+                        const res = await deleteRfqSubscription(s.id)
+                        if (res.success) {
+                          setRfqSubscriptions((prev) => prev.filter((x) => x.id !== s.id))
+                          toast('Subscription removed', 'success')
+                        } else toast(res.message || 'Failed', 'error')
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 items-end">
+                <input
+                  type="text"
+                  value={subKeyword}
+                  onChange={(e) => setSubKeyword(e.target.value)}
+                  placeholder="Keyword (e.g. Kubernetes)"
+                  className="flex-1 min-w-[140px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                />
+                <select
+                  value={subCategory}
+                  onChange={(e) => setSubCategory(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">Any category</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const kw = subKeyword.trim() || null
+                    const cat = subCategory || null
+                    if (!kw && !cat) {
+                      toast('Enter a keyword or pick a category', 'error')
+                      return
+                    }
+                    const res = await createRfqSubscription({ keyword: kw, category: cat })
+                    if (res.success && res.data) {
+                      setRfqSubscriptions((prev) => [...prev, res.data!])
+                      setSubKeyword('')
+                      setSubCategory('')
+                      toast('Subscription saved', 'success')
+                    } else toast(res.message || 'Failed to subscribe', 'error')
+                  }}
+                  className="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
+                >
+                  Add alert
                 </button>
               </div>
             </div>
@@ -438,19 +516,28 @@ export default function RFQPage() {
                       {!rfq.isOwner && rfq.status === "OPEN" && (() => {
                         const score = computeMatchScore(rfq);
                         return score >= 60 ? (
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                            score >= 80 ? "bg-green-100 text-green-700" :
-                            score >= 60 ? "bg-amber-100 text-amber-700" :
-                            "bg-gray-100 text-gray-600"
-                          }`}>
-                            <Sparkles className="w-3 h-3" />
-                            {score}% match
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              score >= 80 ? "bg-green-100 text-green-700" :
+                              score >= 60 ? "bg-amber-100 text-amber-700" :
+                              "bg-gray-100 text-gray-600"
+                            }`}
+                            title="Fit score: industry, skills overlap with your profile tech stack, and deadline — heuristic, not semantic AI."
+                          >
+                            Fit {score}%
                           </span>
                         ) : null;
                       })()}
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{rfq.title}</h3>
                     <p className="text-gray-600 text-sm line-clamp-2 mb-4">{rfq.description}</p>
+                    {rfq.skillsTags && (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {rfq.skillsTags.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 8).map((tag) => (
+                          <span key={tag} className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{tag}</span>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
@@ -516,6 +603,47 @@ export default function RFQPage() {
                   rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   placeholder="Describe your project requirements..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Skills &amp; technologies
+                </label>
+                <p className="text-xs text-gray-500 mb-2">Add tags suppliers can match against (press Enter).</p>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {skillTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => setSkillTags((prev) => prev.filter((t) => t !== tag))}
+                        className="hover:text-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const t = skillInput.trim()
+                      if (t && !skillTags.includes(t)) {
+                        setSkillTags((prev) => [...prev, t])
+                        setSkillInput('')
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  placeholder="e.g. React, ISO 9001, SAP…"
                 />
               </div>
 

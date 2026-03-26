@@ -11,5 +11,8 @@ public record MessageResponse(
         String content,
         Instant timestamp,
         boolean read,
-        Instant readAt
+        Instant readAt,
+        boolean pinned,
+        Instant pinnedAt,
+        UUID pinnedBy
 ) {}

@@ -1,6 +1,6 @@
 package com.hivecontrolsolutions.comestag.core.application.usecase.rfq;
 
-import com.hivecontrolsolutions.comestag.base.core.usecase.UsecaseWithoutOutput;
+import com.hivecontrolsolutions.comestag.base.core.usecase.Usecase;
 import com.hivecontrolsolutions.comestag.base.stereotype.UseCase;
 import com.hivecontrolsolutions.comestag.core.application.entity.input.CreateRfqInput;
 import com.hivecontrolsolutions.comestag.core.domain.model.MediaDm;
@@ -12,11 +12,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @UseCase
 @RequiredArgsConstructor
-public class CreateRfqUseCase implements UsecaseWithoutOutput<CreateRfqInput> {
+public class CreateRfqUseCase implements Usecase<CreateRfqInput, UUID> {
     
     private final RfqPort rfqPort;
     private final MediaPort mediaPort;
@@ -24,7 +25,7 @@ public class CreateRfqUseCase implements UsecaseWithoutOutput<CreateRfqInput> {
     
     @Transactional
     @Override
-    public void execute(CreateRfqInput input) {
+    public UUID execute(CreateRfqInput input) {
         var rfq = rfqPort.create(
                 input.organizationId(),
                 input.title(),
@@ -35,6 +36,7 @@ public class CreateRfqUseCase implements UsecaseWithoutOutput<CreateRfqInput> {
                 input.budgetCurrency(),
                 input.deadline(),
                 input.requirements(),
+                input.skillsTags(),
                 input.visibility()
         );
         
@@ -57,6 +59,7 @@ public class CreateRfqUseCase implements UsecaseWithoutOutput<CreateRfqInput> {
                 rfqMediaPort.create(rfq.getId(), existedMediaIds);
             }
         }
+        return rfq.getId();
     }
 }
 

@@ -38,6 +38,16 @@ public class MessageEntity {
     @Column(name = "read_at")
     private Instant readAt;
 
+    @Column(name = "pinned", nullable = false)
+    @Builder.Default
+    private boolean pinned = false;
+
+    @Column(name = "pinned_at")
+    private Instant pinnedAt;
+
+    @Column(name = "pinned_by")
+    private UUID pinnedBy;
+
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
@@ -54,6 +64,9 @@ public class MessageEntity {
                 .content(content)
                 .read(read)
                 .readAt(readAt)
+                .pinned(pinned)
+                .pinnedAt(pinnedAt)
+                .pinnedBy(pinnedBy)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();

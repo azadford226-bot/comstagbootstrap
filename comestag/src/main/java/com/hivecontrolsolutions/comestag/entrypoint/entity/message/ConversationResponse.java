@@ -12,6 +12,8 @@ public record ConversationResponse(
         Instant lastMessageTime,
         UUID lastMessageSenderId,
         long unreadCount,
+        String contextType,
+        String contextId,
         Instant createdAt,
         Instant updatedAt
 ) {}

@@ -14,6 +14,9 @@ export interface Message {
   timestamp: string;
   read: boolean;
   readAt?: string;
+  pinned?: boolean;
+  pinnedAt?: string;
+  pinnedBy?: string;
 }
 
 export interface Conversation {
@@ -26,6 +29,8 @@ export interface Conversation {
   lastMessageTime?: string;
   lastMessageSenderId?: string;
   unreadCount: number;
+  contextType?: string;
+  contextId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +70,10 @@ const MESSAGE_ENDPOINTS = {
   SEND: "/v1/messages/send",
   MARK_READ: (conversationId: string) => `/v1/messages/conversations/${conversationId}/read`,
   STREAM: "/v1/messages/stream",
+  BY_CONTEXT: "/v1/conversations/by-context",
+  WITH_CONTEXT: "/v1/conversations/with-context",
+  PIN: (messageId: string) => `/v1/messages/${messageId}/pin`,
+  UNPIN: (messageId: string) => `/v1/messages/${messageId}/unpin`,
 } as const;
 
 // Backend returns PageResult format
@@ -163,9 +172,16 @@ export async function getMessages(
     const endpoint = `${MESSAGE_ENDPOINTS.MESSAGES(conversationId)}${queryParams.toString() ? `?${queryParams}` : ""}`;
     const result = await authenticatedGet<PageResult<Message>>(endpoint);
     if (result.success && result.data) {
+      const items = (result.data.items || []).map((mRaw) => {
+        const m = mRaw as Message & { pinned?: boolean };
+        return {
+          ...m,
+          pinned: Boolean(m.pinned),
+        };
+      });
       return {
         success: true,
-        data: result.data.items,
+        data: items,
       };
     }
     return {
@@ -211,6 +227,7 @@ export async function sendMessage(
           timestamp: result.data.timestamp,
           read: result.data.read,
           readAt: result.data.readAt,
+          pinned: Boolean(result.data.pinned),
         },
       };
     }
@@ -276,6 +293,66 @@ export async function markConversationAsRead(
       message: error instanceof Error ? error.message : "Failed to mark conversation as read",
     };
   }
+}
+
+/**
+ * Find a conversation by context (e.g. contextType=RFQ, contextId=rfqId)
+ */
+export async function findConversationByContext(
+  contextType: string,
+  contextId: string
+): Promise<{
+  success: boolean;
+  data?: Conversation;
+  message?: string;
+}> {
+  try {
+    logger.info("Finding conversation by context", { contextType, contextId });
+    const params = new URLSearchParams({ contextType, contextId });
+    return authenticatedGet<Conversation>(`${MESSAGE_ENDPOINTS.BY_CONTEXT}?${params}`);
+  } catch (error) {
+    logger.error("Error finding conversation by context", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to find conversation",
+    };
+  }
+}
+
+/**
+ * Create a conversation with context (returns existing if one already exists for the context)
+ */
+export async function createConversationWithContext(
+  recipientId: string,
+  contextType: string,
+  contextId: string
+): Promise<{
+  success: boolean;
+  data?: Conversation;
+  message?: string;
+}> {
+  try {
+    logger.info("Creating conversation with context", { recipientId, contextType, contextId });
+    return authenticatedPost<Conversation>(MESSAGE_ENDPOINTS.WITH_CONTEXT, {
+      recipientId,
+      contextType,
+      contextId,
+    });
+  } catch (error) {
+    logger.error("Error creating conversation with context", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to create conversation",
+    };
+  }
+}
+
+export async function pinMessage(messageId: string) {
+  return authenticatedPut(MESSAGE_ENDPOINTS.PIN(messageId));
+}
+
+export async function unpinMessage(messageId: string) {
+  return authenticatedPut(MESSAGE_ENDPOINTS.UNPIN(messageId));
 }
 
 /**
@@ -370,6 +447,7 @@ export function connectMessageStreamAuthenticated(
                       timestamp: messageData.timestamp,
                       read: messageData.read || false,
                       readAt: messageData.readAt,
+                      pinned: Boolean(messageData.pinned),
                     };
                     onMessage(message, message.conversationId);
                   }

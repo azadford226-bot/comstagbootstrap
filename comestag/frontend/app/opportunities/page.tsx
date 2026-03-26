@@ -34,7 +34,7 @@ import {
   type Opportunity,
   type CreateOpportunityRequest,
 } from "@/lib/api/opportunities";
-import { bookmarkItem, unbookmarkItem } from "@/lib/api/social";
+import { bookmarkItem, unbookmarkItem, getBookmarks } from "@/lib/api/social";
 
 type OpportunityType = "all" | "jv" | "incubation" | "funding" | "codev";
 
@@ -119,9 +119,15 @@ export default function OpportunitiesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await listOpportunities(activeTab);
+      const [res, bookmarksRes] = await Promise.all([
+        listOpportunities(activeTab),
+        getBookmarks("OPPORTUNITY"),
+      ]);
       if (res.success && res.data) {
         setOpportunities(res.data.content);
+      }
+      if (bookmarksRes.success && bookmarksRes.data) {
+        setSavedIds(new Set(bookmarksRes.data.content.map((b) => b.targetId)));
       }
     } catch { /* ignore */ }
     setLoading(false);
@@ -201,7 +207,7 @@ export default function OpportunitiesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
       <div className="bg-gradient-to-b from-primary-dark via-[#3f64c4] to-primary-dark py-10 px-4">
-        <div className="max-w-6xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             Opportunities Hub
           </h1>
@@ -211,7 +217,7 @@ export default function OpportunitiesPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Search + Create */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">

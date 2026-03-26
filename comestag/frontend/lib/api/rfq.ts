@@ -20,6 +20,7 @@ export interface Rfq {
   ndaRequired: boolean;
   hasSubmitted: boolean;
   isOwner: boolean;
+  skillsTags?: string | null;
 }
 
 export interface RfqProposal {
@@ -56,6 +57,7 @@ export interface CreateRfqRequest {
   ndaRequired?: boolean;
   invitedOrganizationIds?: string[];
   mediaIds?: string[];
+  skillsTags?: string;
 }
 
 export interface SubmitProposalRequest {
@@ -113,11 +115,12 @@ export async function getRfq(id: string): Promise<{ success: boolean; data?: Rfq
  */
 export async function createRfq(
   data: CreateRfqRequest
-): Promise<{ success: boolean; message?: string }> {
-  const response = await authenticatedPost("/v1/rfq", data);
+): Promise<{ success: boolean; message?: string; id?: string }> {
+  const response = await authenticatedPost<{ id: string }>("/v1/rfq", data);
   return {
     success: response.success,
     message: response.message,
+    id: response.data?.id,
   };
 }
 

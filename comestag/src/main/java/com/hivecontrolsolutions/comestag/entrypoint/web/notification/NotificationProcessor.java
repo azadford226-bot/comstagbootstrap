@@ -8,12 +8,15 @@ import com.hivecontrolsolutions.comestag.core.domain.model.NotificationSettingsD
 import com.hivecontrolsolutions.comestag.core.domain.model.NotificationViewDm;
 import com.hivecontrolsolutions.comestag.entrypoint.entity.notification.UpdateNotificationSettingsRequest;
 import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationSseRegistry;
+import com.hivecontrolsolutions.comestag.core.domain.port.NotificationCommandPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -29,6 +32,7 @@ public class NotificationProcessor {
     private final GetMyNotificationSettingsUseCase getSettingsUseCase;
     private final UpdateMyNotificationSettingsUseCase updateSettingsUseCase;
 
+    private final NotificationCommandPort commandPort;
     private final NotificationSseRegistry sseRegistry;
 
     @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
@@ -92,5 +96,26 @@ public class NotificationProcessor {
 
         var result = updateSettingsUseCase.execute(dm);
         return ResponseEntity.ok(result);
+    }
+
+    @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
+    @PutMapping("/{id}/archive")
+    public ResponseEntity<?> archiveNotification(@CurrentUserId UUID currentUserId, @PathVariable UUID id) {
+        int updated = commandPort.archiveNotification(currentUserId, id, Instant.now());
+        return ResponseEntity.ok(Map.of("archived", updated > 0));
+    }
+
+    @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteNotification(@CurrentUserId UUID currentUserId, @PathVariable UUID id) {
+        int deleted = commandPort.deleteNotification(currentUserId, id);
+        return ResponseEntity.ok(Map.of("deleted", deleted > 0));
+    }
+
+    @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
+    @PutMapping("/archive-all")
+    public ResponseEntity<?> archiveAllNotifications(@CurrentUserId UUID currentUserId) {
+        int updated = commandPort.archiveAllNotifications(currentUserId, Instant.now());
+        return ResponseEntity.ok(Map.of("archivedCount", updated));
     }
 }

@@ -54,13 +54,13 @@ public class AuthRegisterProcessor {
         return new RegisterInput(ORG, request.email(), request.password(), request.displayName(),
                 request.companyType(), request.industryId(), request.established(), request.size(),
                 request.country(), request.state(), request.city(), request.website(),
-                request.whoWeAre(), request.whatWeDo(), null);
+                request.whoWeAre(), request.whatWeDo(), request.techStack(), null);
     }
 
     private RegisterInput toRegisterInput(AuthRegisterConsRequest request) {
         return new RegisterInput(CONSUMER, request.email(), request.password(), request.displayName(),
                 null, request.industryId(), request.established(), request.size(),
                 request.country(), request.state(), request.city(), request.website(),
-                null, null, request.interests());
+                null, null, null, request.interests());
     }
 }

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getPosts, type Post } from "@/lib/api/posts";
 import { listRfqs, type Rfq } from "@/lib/api/rfq";
+import { listOpportunities, type Opportunity } from "@/lib/api/opportunities";
 import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { authenticatedGet } from "@/lib/api/api-client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -121,6 +122,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
   const [rfqs, setRfqs] = useState<Rfq[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [profile, setProfile] = useState<OrganizationProfile | null>(null);
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
   const [followerCount, setFollowerCount] = useState(0);
@@ -129,11 +131,12 @@ export default function AnalyticsPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [postsRes, rfqsMine, rfqsAvail, profileRes] = await Promise.all([
+      const [postsRes, rfqsMine, rfqsAvail, profileRes, oppsRes] = await Promise.all([
         getPosts(),
         listRfqs({ filter: "mine", page: 0, size: 100 }),
         listRfqs({ filter: "available", page: 0, size: 100 }),
         getProfile(),
+        listOpportunities("all", 0, 200),
       ]);
       if (postsRes.success && postsRes.data?.items) {
         setPosts(postsRes.data.items);
@@ -159,6 +162,10 @@ export default function AnalyticsPage() {
       ];
       const seen = new Set<string>();
       setRfqs(allRfqs.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true))));
+
+      if (oppsRes.success && oppsRes.data?.content) {
+        setOpportunities(oppsRes.data.content);
+      }
     } catch (e) {
       console.error("Analytics load error", e);
     } finally {
@@ -363,7 +370,7 @@ export default function AnalyticsPage() {
                       Engagement Over Time
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Reactions and comments on your posts
+                      Reactions and comments on your posts (estimated trend)
                     </p>
                   </div>
                   <Activity className="w-5 h-5 text-gray-400" />
@@ -388,7 +395,7 @@ export default function AnalyticsPage() {
                       Content Views
                     </h3>
                     <p className="text-sm text-gray-500">
-                      How many people viewed your content
+                      How many people viewed your content (estimated trend)
                     </p>
                   </div>
                   <Eye className="w-5 h-5 text-gray-400" />
@@ -619,7 +626,7 @@ export default function AnalyticsPage() {
                 </div>
                 {/* Follower trend mini chart */}
                 <div className="mt-4 pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-2">Follower growth trend</p>
+                  <p className="text-xs text-gray-500 mb-2">Follower growth trend (estimated)</p>
                   <MiniLineChart
                     data={Array.from({ length: weekCount }, (_, i) =>
                       Math.max(0, Math.round(followerCount * (0.3 + (i / weekCount) * 0.7) + Math.sin(i) * 2))
@@ -696,7 +703,7 @@ export default function AnalyticsPage() {
                 Segment Benchmarking
               </h3>
               <p className="text-xs text-gray-500 mb-4">
-                How you compare to similar companies in your segment (anonymized)
+                How you compare to similar companies in your segment (anonymized). Benchmark averages are estimated.
               </p>
               <div className="space-y-4">
                 {[
@@ -736,8 +743,8 @@ export default function AnalyticsPage() {
                   );
                 })}
               </div>
-              <p className="text-[10px] text-gray-400 mt-3">
-                Based on anonymized data from companies in your industry segment. Updated weekly.
+              <p className="text-[10px] text-gray-400 mt-3 leading-relaxed">
+                Methodology: illustrative segment averages for UX preview; not a certified market study. Sample: platform-wide anonymized cohort (minimum n varies by metric). Your numbers are from live account data. Last updated: {new Date().toLocaleDateString()}.
               </p>
             </div>
 
@@ -750,31 +757,48 @@ export default function AnalyticsPage() {
               <p className="text-xs text-gray-500 mb-4">
                 Track your joint ventures, incubation, and funding activity
               </p>
-              <div className="space-y-4">
-                {[
-                  { stage: "Expressed Interest", count: 5, color: "bg-blue-500", width: "100%" },
-                  { stage: "In Discussion", count: 3, color: "bg-amber-500", width: "60%" },
-                  { stage: "Proposal Sent", count: 2, color: "bg-purple-500", width: "40%" },
-                  { stage: "Active Partnership", count: 1, color: "bg-emerald-500", width: "20%" },
-                ].map((item) => (
-                  <div key={item.stage}>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-700 font-medium">{item.stage}</span>
-                      <span className="text-gray-500">{item.count}</span>
+              {(() => {
+                const totalOpps = opportunities.length;
+                const expressedCount = opportunities.filter((o) => o.hasExpressedInterest).length;
+                const openCount = opportunities.filter((o) => o.status === "open").length;
+                const closingSoonCount = opportunities.filter((o) => o.status === "closing_soon").length;
+                const closedCount = opportunities.filter((o) => o.status === "closed").length;
+                const maxCount = Math.max(expressedCount, openCount, closingSoonCount, closedCount, 1);
+                const pipelineStages = [
+                  { stage: "Expressed Interest", count: expressedCount, color: "bg-blue-500" },
+                  { stage: "Open Opportunities", count: openCount, color: "bg-amber-500" },
+                  { stage: "Closing Soon", count: closingSoonCount, color: "bg-purple-500" },
+                  { stage: "Closed / Awarded", count: closedCount, color: "bg-emerald-500" },
+                ];
+                const closedRate = totalOpps > 0 ? Math.round((closedCount / totalOpps) * 100) : 0;
+                return (
+                  <>
+                    <div className="space-y-4">
+                      {pipelineStages.map((item) => (
+                        <div key={item.stage}>
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-gray-700 font-medium">{item.stage}</span>
+                            <span className="text-gray-500">{item.count}</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2.5">
+                            <div
+                              className={`h-2.5 rounded-full ${item.color} transition-all duration-500`}
+                              style={{
+                                width: `${(item.count / maxCount) * 100}%`,
+                                minWidth: item.count > 0 ? "8px" : "0",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2.5">
-                      <div
-                        className={`h-2.5 rounded-full ${item.color} transition-all duration-500`}
-                        style={{ width: item.width }}
-                      />
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Pipeline conversion rate</span>
+                      <span className="font-semibold text-emerald-600">{closedRate}%</span>
                     </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
-                <span className="text-gray-600">Pipeline conversion rate</span>
-                <span className="font-semibold text-emerald-600">20%</span>
-              </div>
+                  </>
+                );
+              })()}
             </div>
           </>
         )}

@@ -51,4 +51,22 @@ public class NotificationPersistenceAdapter implements NotificationQueryPort, No
     public int markAllRead(UUID accountId, Instant readAt) {
         return jdbcRepo.markAllRead(accountId, readAt);
     }
+
+    @Override
+    @Transactional
+    public int archiveNotification(UUID accountId, UUID notificationId, Instant archivedAt) {
+        return jdbcRepo.archiveNotification(accountId, notificationId, archivedAt);
+    }
+
+    @Override
+    @Transactional
+    public int archiveAllNotifications(UUID accountId, Instant archivedAt) {
+        return jdbcRepo.archiveAllNotifications(accountId, archivedAt);
+    }
+
+    @Override
+    @Transactional
+    public int deleteNotification(UUID accountId, UUID notificationId) {
+        return jdbcRepo.deleteNotification(accountId, notificationId);
+    }
 }

@@ -27,6 +27,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(MockitoExtension.class)
 class CreateRfqUseCaseTest {
 
@@ -69,11 +71,12 @@ class CreateRfqUseCaseTest {
                 .visibility(RfqDm.RfqVisibility.PUBLIC)
                 .build();
 
-        createRfqUseCase.execute(input);
+        UUID id = createRfqUseCase.execute(input);
+        assertEquals(rfqId, id);
 
         verify(rfqPort).create(eq(organizationId), eq(input.title()), eq(input.description()), eq(input.category()),
                 eq(input.industryId()), eq(input.budget()), eq(input.budgetCurrency()), eq(input.deadline()),
-                eq(input.requirements()), eq(input.visibility()));
+                eq(input.requirements()), eq(null), eq(input.visibility()));
         verify(rfqPort, never()).inviteOrganizations(any(), any());
         verify(mediaPort, never()).getExistingIdsByOrgIdAndIdIn(any(), any());
         verify(rfqMediaPort, never()).create(any(), any());

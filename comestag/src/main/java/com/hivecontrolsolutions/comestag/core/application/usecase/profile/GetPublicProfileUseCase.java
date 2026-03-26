@@ -14,6 +14,8 @@ import com.hivecontrolsolutions.comestag.core.domain.port.AccountPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.ConsumerPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.OrganizationPort;
 import lombok.RequiredArgsConstructor;
+
+import static com.hivecontrolsolutions.comestag.base.core.error.entity.enums.InternalStatusError.PERMISSION_DENIED;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -38,6 +40,11 @@ public class GetPublicProfileUseCase implements Usecase<GetPublicProfileInput, O
             case ORG -> {
                 var org = organizationPort.getById(targetUserId)
                         .orElseThrow(() -> new BusinessException(InternalStatusError.ACCOUNT_NOT_EXIST));
+                if (!currentUserId.equals(targetUserId)
+                        && org.getProfileVisibility() != null
+                        && "private".equalsIgnoreCase(org.getProfileVisibility())) {
+                    throw new BusinessException(PERMISSION_DENIED, "This company profile is private");
+                }
                 if (!currentUserId.equals(targetUserId)) {
                     organizationPort.increaseViewCount(targetUserId);
                 }
@@ -59,6 +66,7 @@ public class GetPublicProfileUseCase implements Usecase<GetPublicProfileInput, O
         return PublicOrgProfileDro.builder()
                 .id(organizationDm.getId())
                 .displayName(organizationDm.getDisplayName())
+                .companyType(organizationDm.getCompanyType())
                 .industry(organizationDm.getIndustry())
                 .profileImageId(organizationDm.getProfileImageId())
                 .profileCoverId(organizationDm.getProfileCoverId())
@@ -73,6 +81,9 @@ public class GetPublicProfileUseCase implements Usecase<GetPublicProfileInput, O
                 .reviewsCount(organizationDm.getReviewsCount())
                 .whatWeDo(organizationDm.getWhatWeDo())
                 .whoWeAre(organizationDm.getWhoWeAre())
+                .techStack(organizationDm.getTechStack())
+                .verified(organizationDm.isVerified())
+                .profileVisibility(organizationDm.getProfileVisibility())
                 .build();
     }
 

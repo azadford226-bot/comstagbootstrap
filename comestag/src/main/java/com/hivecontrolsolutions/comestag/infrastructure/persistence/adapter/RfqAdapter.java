@@ -48,6 +48,7 @@ public class RfqAdapter implements RfqPort {
                        String budgetCurrency,
                        Instant deadline,
                        String requirements,
+                       String skillsTags,
                        RfqDm.RfqVisibility visibility) {
         var entity = RfqEntity.builder()
                 .organizationId(organizationId)
@@ -59,6 +60,7 @@ public class RfqAdapter implements RfqPort {
                 .budgetCurrency(budgetCurrency != null ? budgetCurrency : "USD")
                 .deadline(deadline)
                 .requirements(requirements)
+                .skillsTags(skillsTags)
                 .visibility(RfqEntity.RfqVisibility.valueOf(visibility.name()))
                 .status(RfqEntity.RfqStatus.OPEN)
                 .build();

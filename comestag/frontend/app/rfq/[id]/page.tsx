@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getRfq, type Rfq } from '@/lib/api/rfq'
+import { getProfile, isOrganizationProfile } from '@/lib/api/profile'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
   OPEN: { label: 'Open', color: 'bg-green-100 text-green-800 border-green-200', icon: Globe },
@@ -56,6 +57,19 @@ export default function RfqDetailPage() {
   const [rfq, setRfq] = useState<Rfq | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [myOrgId, setMyOrgId] = useState<string | null>(null)
+
+  useEffect(() => {
+    getProfile()
+      .then((res) => {
+        if (res.success && res.data && isOrganizationProfile(res.data)) {
+          setMyOrgId(res.data.id)
+        } else if (res.success && res.data && 'id' in res.data) {
+          setMyOrgId((res.data as { id: string }).id)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!rfqId) return
@@ -195,7 +209,7 @@ export default function RfqDetailPage() {
                         {i + 1}
                       </div>
                       <span className={`text-[11px] mt-1 font-medium ${isActive ? 'text-blue-700' : 'text-gray-400'}`}>
-                        {step === 'OPEN' ? 'Open' : step === 'AWARDED' ? 'Awarded' : 'Closed'}
+                        {{ OPEN: 'Open', REVIEW: 'In Review', AWARDED: 'Awarded', CLOSED: 'Closed' }[step] || step}
                       </span>
                     </div>
                     {i < STATUS_STEPS.length - 1 && (
@@ -313,11 +327,15 @@ export default function RfqDetailPage() {
                 {/* Thread-based discussion link */}
                 {rfq.status === 'OPEN' && (
                   <Link
-                    href={`/messages?rfq=${rfq.id}&subject=${encodeURIComponent(`RFQ: ${rfq.title}`)}`}
+                    href={
+                      myOrgId && !rfq.isOwner
+                        ? `/messages?rfq=${rfq.id}&ctx=${encodeURIComponent(`${rfq.id}:${myOrgId}`)}&subject=${encodeURIComponent(`RFQ: ${rfq.title}`)}`
+                        : `/messages?rfq=${rfq.id}&subject=${encodeURIComponent(`RFQ: ${rfq.title}`)}`
+                    }
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors"
                   >
                     <MessageCircle className="h-4 w-4" />
-                    Start RFQ Discussion
+                    Open organization thread
                   </Link>
                 )}
               </div>

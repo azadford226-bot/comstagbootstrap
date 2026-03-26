@@ -78,6 +78,7 @@ export default function EditProfilePage() {
             ? profile.techStack.split(",").map((t: string) => t.trim()).filter(Boolean)
             : []
         );
+        setProfileVisibility((profile.profileVisibility === "private" ? "private" : "public") as "public" | "private");
       }
     } catch (error) {
       logger.error("Failed to load profile", error);
@@ -159,6 +160,7 @@ export default function EditProfilePage() {
       const result = await updateOrganizationProfile({
         ...formData,
         techStack: techTags.join(","),
+        profileVisibility,
       });
       if (!result.success) {
         setError(result.message || "Failed to update profile");

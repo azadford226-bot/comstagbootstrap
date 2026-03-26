@@ -1,14 +1,15 @@
 package com.hivecontrolsolutions.comestag.infrastructure.config;
 
+import com.hivecontrolsolutions.comestag.infrastructure.security.OAuth2AuthenticationSuccessHandler;
 import com.hivecontrolsolutions.comestag.infrastructure.security.filter.CorsFilter;
 import com.hivecontrolsolutions.comestag.infrastructure.security.filter.JwtAuthFilter;
 import com.hivecontrolsolutions.comestag.infrastructure.security.filter.RateLimitFilter;
 import com.hivecontrolsolutions.comestag.infrastructure.security.filter.RefreshTokenFilter;
-import com.hivecontrolsolutions.comestag.infrastructure.config.SecurityHeadersConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -36,6 +37,7 @@ public class SecurityConfig {
     private final RateLimitFilter rateLimitFilter;
     private final CorsConfig corsConfig;
     private final SecurityHeadersConfig securityHeadersConfig;
+    private final OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
 
     @Profile({"local", "stag"})
     @Bean
@@ -75,7 +77,23 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS);
     }
 
+    /**
+     * OAuth2 authorization code flow needs a session during the redirect; keep it separate from the stateless API chain.
+     */
     @Bean
+    @Order(1)
+    SecurityFilterChain oauth2Chain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/oauth2/**", "/login/oauth2/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(reg -> reg.anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2.successHandler(oauth2AuthenticationSuccessHandler));
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     SecurityFilterChain chain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Plus, Edit2, Trash2, X, Save } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import {
   Capability,
   createCapability,
@@ -18,6 +19,7 @@ export const CapabilitiesSection: React.FC<CapabilitiesSectionProps> = ({
   capabilities,
   onUpdate,
 }) => {
+  const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -93,10 +95,10 @@ export const CapabilitiesSection: React.FC<CapabilitiesSectionProps> = ({
       if (result.success) {
         onUpdate();
       } else {
-        alert(result.message || "Failed to delete capability");
+        toast(result.message || "Failed to delete capability", "error");
       }
     } catch {
-      alert("An error occurred while deleting");
+      toast("An error occurred while deleting", "error");
     } finally {
       setIsSubmitting(false);
     }

@@ -24,6 +24,10 @@ export async function getFollowCounts(targetId: string) {
   );
 }
 
+export async function getFollowingIds() {
+  return authenticatedGet<{ ids: string[] }>("/v1/follow/following/ids");
+}
+
 export async function bookmarkItem(targetType: string, targetId: string) {
   return authenticatedPost(`/v1/bookmarks/${targetType}/${targetId}`);
 }

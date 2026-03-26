@@ -23,6 +23,7 @@ export default function SignupPage() {
     industryId: number;
     companySize: string;
     establishmentDate: string;
+    techStack: string;
     organizationWebsite: string;
     country: string;
     state: string;
@@ -45,6 +46,7 @@ export default function SignupPage() {
     industryId: 0,
     companySize: "",
     establishmentDate: "",
+    techStack: "",
     // Step 2: Organization Extended Details
     organizationWebsite: "",
     country: "",
@@ -200,6 +202,9 @@ export default function SignupPage() {
       website: formData.organizationWebsite,
       whoWeAre: formData.whoWeAre,
       whatWeDo: formData.whatWeDo,
+      techStack: formData.techStack?.trim()
+        ? formData.techStack.split(",").map((s) => s.trim()).filter(Boolean).join(", ")
+        : undefined,
     };
 
     logger.info("Sending organization registration data", {

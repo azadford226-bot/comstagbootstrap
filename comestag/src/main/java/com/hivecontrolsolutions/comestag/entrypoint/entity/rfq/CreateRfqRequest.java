@@ -17,6 +17,7 @@ public record CreateRfqRequest(
         String budgetCurrency,
         Instant deadline,
         String requirements,
+        String skillsTags,
         @NotNull String visibility, // "PUBLIC", "INVITE_ONLY", "PRIVATE"
         List<UUID> invitedOrganizationIds,
         List<UUID> mediaIds

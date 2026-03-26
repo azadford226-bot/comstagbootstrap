@@ -53,6 +53,9 @@ public class RfqEntity {
     @Column(columnDefinition = "TEXT")
     private String requirements;
     
+    @Column(name = "skills_tags", columnDefinition = "TEXT")
+    private String skillsTags;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default
@@ -94,6 +97,7 @@ public class RfqEntity {
                 .budgetCurrency(this.budgetCurrency)
                 .deadline(this.deadline)
                 .requirements(this.requirements)
+                .skillsTags(this.skillsTags)
                 .status(RfqDm.RfqStatus.valueOf(this.status.name()))
                 .visibility(RfqDm.RfqVisibility.valueOf(this.visibility.name()))
                 .awardedToId(this.awardedToId)

@@ -1,8 +1,11 @@
+"use client";
+
 import React from "react";
 import FormInput from "@/components/atoms/form_input";
 import CompanySizeSelect from "@/components/atoms/company_size_select";
 import IndustrySelect from "@/components/atoms/industry_select";
 import CountryCitySelect from "@/components/molecules/country_city_select";
+import { CAPABILITY_TAGS } from "@/lib/capability-tags";
 
 // Step 1: Organization Details
 export function Step1({
@@ -78,6 +81,49 @@ export function Step1({
           onChange={onChange}
           max={new Date().toISOString().split('T')[0]}
         />
+
+        <FormInput
+          label="Tech Stack & Capabilities"
+          placeholder="e.g. React, Java, AWS, Docker (comma-separated)"
+          name="techStack"
+          value={formData.techStack as string}
+          onChange={onChange}
+        />
+        <div>
+          <p className="text-sm font-medium text-text-dark mb-2">Curated capability tags</p>
+          <p className="text-xs text-gray-500 mb-2">Pick standard tags for better matching; you can still type custom skills above.</p>
+          <div className="flex flex-wrap gap-2">
+            {CAPABILITY_TAGS.map((t) => {
+              const current = ((formData.techStack as string) || "")
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const active = current.includes(t.label);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    const set = new Set(current);
+                    if (active) set.delete(t.label);
+                    else set.add(t.label);
+                    const value = [...set].join(", ");
+                    onChange({
+                      target: { name: "techStack", value },
+                    } as React.ChangeEvent<HTMLInputElement>);
+                  }}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    active
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-primary/40"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

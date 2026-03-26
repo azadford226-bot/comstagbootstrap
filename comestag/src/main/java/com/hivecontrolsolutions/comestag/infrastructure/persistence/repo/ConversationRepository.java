@@ -40,4 +40,7 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
     
     @Query("SELECT c FROM ConversationEntity c ORDER BY c.lastMessageTime DESC NULLS LAST, c.updatedAt DESC")
     Page<ConversationEntity> findAll(Pageable pageable);
+
+    @Query("SELECT c FROM ConversationEntity c WHERE c.contextType = :contextType AND c.contextId = :contextId")
+    Optional<ConversationEntity> findByContext(@Param("contextType") String contextType, @Param("contextId") String contextId);
 }

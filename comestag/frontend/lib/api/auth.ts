@@ -36,6 +36,8 @@ export interface OrganizationRegistrationRequest {
   website: string;
   whoWeAre: string;
   whatWeDo: string;
+  /** Comma-separated skills / tech stack — persisted on the organization profile */
+  techStack?: string;
 }
 
 export interface ConsumerRegistrationRequest {

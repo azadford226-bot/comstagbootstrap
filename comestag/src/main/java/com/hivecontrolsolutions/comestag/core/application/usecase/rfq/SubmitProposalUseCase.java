@@ -5,6 +5,7 @@ import com.hivecontrolsolutions.comestag.base.core.usecase.UsecaseWithoutOutput;
 import com.hivecontrolsolutions.comestag.base.stereotype.UseCase;
 import com.hivecontrolsolutions.comestag.core.application.entity.input.SubmitProposalInput;
 import com.hivecontrolsolutions.comestag.core.domain.model.RfqDm;
+import com.hivecontrolsolutions.comestag.core.domain.port.ConversationPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqProposalPort;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class SubmitProposalUseCase implements UsecaseWithoutOutput<SubmitProposa
     
     private final RfqPort rfqPort;
     private final RfqProposalPort proposalPort;
+    private final ConversationPort conversationPort;
     
     @Transactional
     @Override
@@ -53,6 +55,17 @@ public class SubmitProposalUseCase implements UsecaseWithoutOutput<SubmitProposa
                 input.currency(),
                 input.deliveryTime()
         );
+
+        // Organization thread for this RFQ + bidder pair (context id unique per counterparty)
+        if (!rfq.getOrganizationId().equals(input.organizationId())) {
+            String contextId = input.rfqId().toString() + ":" + input.organizationId();
+            conversationPort.findByContext("RFQ", contextId)
+                    .orElseGet(() -> conversationPort.createWithContext(
+                            rfq.getOrganizationId(),
+                            input.organizationId(),
+                            "RFQ",
+                            contextId));
+        }
     }
 }
 

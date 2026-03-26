@@ -45,7 +45,10 @@ public record AuthRegisterOrgRequest(
 
         @NotBlank(message = "Invalid password")
         @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
-        String password
+        String password,
+
+        @Size(max = 2000, message = "tech stack is too long")
+        String techStack
 
 ) {
 }

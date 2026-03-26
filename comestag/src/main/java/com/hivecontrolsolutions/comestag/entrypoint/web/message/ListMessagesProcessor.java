@@ -55,7 +55,10 @@ public class ListMessagesProcessor {
                             msg.getContent(),
                             msg.getCreatedAt(),
                             msg.isRead(),
-                            msg.getReadAt()
+                            msg.getReadAt(),
+                            msg.isPinned(),
+                            msg.getPinnedAt(),
+                            msg.getPinnedBy()
                     );
                 })
                 .collect(Collectors.toList());

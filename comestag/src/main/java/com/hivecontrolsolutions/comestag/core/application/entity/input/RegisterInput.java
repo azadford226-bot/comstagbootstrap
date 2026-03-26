@@ -9,6 +9,6 @@ public record RegisterInput(AccountType type, String email, String password,
                             String displayName, String companyType, Long industryId,
                             LocalDate established, String size, String country,
                             String state, String city, String website,
-                            String whoWeAre, String whatWeDo,
+                            String whoWeAre, String whatWeDo, String techStack,
                             Set<Long> interests) {
 }

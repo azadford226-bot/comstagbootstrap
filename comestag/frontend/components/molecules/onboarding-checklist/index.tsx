@@ -99,7 +99,7 @@ export default function OnboardingChecklist({
         icon: <MessageCircle className="w-4 h-4" />,
       },
     ];
-  }, [profile, postsCount]);
+  }, [profile, postsCount, rfqCount, messageCount]);
 
   const completed = items.filter((i) => i.done).length;
   const total = items.length;

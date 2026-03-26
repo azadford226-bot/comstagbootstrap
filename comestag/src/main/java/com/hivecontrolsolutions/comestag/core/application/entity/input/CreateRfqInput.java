@@ -19,6 +19,7 @@ public record CreateRfqInput(
         String budgetCurrency,
         Instant deadline,
         String requirements,
+        String skillsTags,
         RfqDm.RfqVisibility visibility,
         List<UUID> invitedOrganizationIds,
         List<UUID> mediaIds

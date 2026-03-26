@@ -47,7 +47,8 @@ public class UpdateOrgProfileProcessor {
                 request.country(),
                 request.state(),
                 request.city(),
-                request.techStack()
+                request.techStack(),
+                request.profileVisibility()
         );
     }
 }

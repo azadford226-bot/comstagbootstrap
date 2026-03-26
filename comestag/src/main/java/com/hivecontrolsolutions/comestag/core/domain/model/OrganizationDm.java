@@ -47,6 +47,9 @@ public class OrganizationDm {
     private boolean verified;
     private Instant verifiedAt;
 
+    @Builder.Default
+    private String profileVisibility = "public";
+
     private Instant createdAt;
     private Instant updatedAt;
 

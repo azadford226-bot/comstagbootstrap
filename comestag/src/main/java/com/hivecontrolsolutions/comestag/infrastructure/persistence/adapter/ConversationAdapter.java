@@ -34,9 +34,31 @@ public class ConversationAdapter implements ConversationPort {
     }
 
     @Override
+    @Transactional
+    public ConversationDm createWithContext(UUID participant1Id, UUID participant2Id, String contextType, String contextId) {
+        UUID p1 = participant1Id.compareTo(participant2Id) < 0 ? participant1Id : participant2Id;
+        UUID p2 = participant1Id.compareTo(participant2Id) < 0 ? participant2Id : participant1Id;
+
+        var entity = ConversationEntity.builder()
+                .participant1Id(p1)
+                .participant2Id(p2)
+                .contextType(contextType)
+                .contextId(contextId)
+                .build();
+        return repo.save(entity).toDm();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<ConversationDm> findByParticipants(UUID userId1, UUID userId2) {
         return repo.findByParticipants(userId1, userId2)
+                .map(ConversationEntity::toDm);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ConversationDm> findByContext(String contextType, String contextId) {
+        return repo.findByContext(contextType, contextId)
                 .map(ConversationEntity::toDm);
     }
 

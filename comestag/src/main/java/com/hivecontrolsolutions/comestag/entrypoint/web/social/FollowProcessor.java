@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,6 +19,13 @@ import java.util.UUID;
 public class FollowProcessor {
 
     private final FollowPort followPort;
+
+    @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
+    @GetMapping("/following/ids")
+    @Operation(summary = "List organization IDs the current user follows")
+    public ResponseEntity<Map<String, List<UUID>>> listFollowingIds(@CurrentUserId UUID currentUserId) {
+        return ResponseEntity.ok(Map.of("ids", followPort.listFollowingIds(currentUserId)));
+    }
 
     @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
     @PostMapping("/{targetId}")

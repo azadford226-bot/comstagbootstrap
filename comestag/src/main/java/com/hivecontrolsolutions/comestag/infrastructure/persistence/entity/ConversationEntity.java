@@ -34,6 +34,12 @@ public class ConversationEntity {
     @Column(name = "last_message_time")
     private Instant lastMessageTime;
 
+    @Column(name = "context_type", length = 50)
+    private String contextType;
+
+    @Column(name = "context_id")
+    private String contextId;
+
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
@@ -49,6 +55,8 @@ public class ConversationEntity {
                 .participant2Id(participant2Id)
                 .lastMessageId(lastMessageId)
                 .lastMessageTime(lastMessageTime)
+                .contextType(contextType)
+                .contextId(contextId)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();

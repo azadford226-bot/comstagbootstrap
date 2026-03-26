@@ -59,6 +59,9 @@ public class OrganizationAdapter implements OrganizationPort {
         entity.setState(input.state());
         entity.setCity(input.city());
         entity.setTechStack(input.techStack());
+        if (input.profileVisibility() != null) {
+            entity.setProfileVisibility(input.profileVisibility());
+        }
 
         return repo.saveAndFlush(entity).toDm();
     }

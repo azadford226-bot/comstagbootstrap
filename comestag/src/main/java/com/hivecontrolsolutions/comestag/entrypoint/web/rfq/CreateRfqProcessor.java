@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.CREATED;
@@ -32,7 +33,7 @@ public class CreateRfqProcessor {
             description = "Create a new Request for Quotation. Organization must be authenticated and active.")
     public ResponseEntity<?> createRfq(@CurrentUserId UUID currentUserId,
                                        @Valid @RequestBody CreateRfqRequest request) {
-        useCase.execute(CreateRfqInput.builder()
+        UUID id = useCase.execute(CreateRfqInput.builder()
                 .organizationId(currentUserId)
                 .title(request.title())
                 .description(request.description())
@@ -42,11 +43,12 @@ public class CreateRfqProcessor {
                 .budgetCurrency(request.budgetCurrency())
                 .deadline(request.deadline())
                 .requirements(request.requirements())
+                .skillsTags(request.skillsTags())
                 .visibility(RfqDm.RfqVisibility.valueOf(request.visibility()))
                 .invitedOrganizationIds(request.invitedOrganizationIds())
                 .mediaIds(request.mediaIds())
                 .build());
-        return ResponseEntity.status(CREATED).build();
+        return ResponseEntity.status(CREATED).body(Map.of("id", id.toString()));
     }
 }
 

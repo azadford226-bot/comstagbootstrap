@@ -7,6 +7,7 @@ import com.hivecontrolsolutions.comestag.infrastructure.persistence.repo.FollowR
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -44,5 +45,12 @@ public class FollowAdapter implements FollowPort {
     @Override
     public long countFollowing(UUID accountId) {
         return repo.countByFollowerId(accountId);
+    }
+
+    @Override
+    public List<UUID> listFollowingIds(UUID followerId) {
+        return repo.findByFollowerId(followerId).stream()
+                .map(FollowEntity::getFollowingId)
+                .toList();
     }
 }

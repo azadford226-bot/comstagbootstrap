@@ -25,4 +25,10 @@ public class NotificationRecipientEntity {
     private String dedupeKey;
     private Instant readAt;
     private Instant createdAt;
+
+    @Column(name = "archived")
+    private Boolean archived = false;
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
 }

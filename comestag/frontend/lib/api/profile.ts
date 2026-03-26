@@ -30,6 +30,7 @@ export interface OrganizationProfile extends UserProfile {
   companyType?: string;
   verified?: boolean;
   techStack?: string;
+  profileVisibility?: string;
   industryId?: number;
   industry?: { id: number; name: string };
   size: string;
@@ -58,6 +59,7 @@ export interface UpdateOrganizationProfileRequest {
   displayName?: string;
   companyType?: string;
   techStack?: string;
+  profileVisibility?: string;
   industryId?: number;
   size?: string;
   country?: string;

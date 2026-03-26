@@ -8,8 +8,12 @@ import java.util.UUID;
 
 public interface ConversationPort {
     ConversationDm create(UUID participant1Id, UUID participant2Id);
+
+    ConversationDm createWithContext(UUID participant1Id, UUID participant2Id, String contextType, String contextId);
     
     Optional<ConversationDm> findByParticipants(UUID userId1, UUID userId2);
+
+    Optional<ConversationDm> findByContext(String contextType, String contextId);
     
     Optional<ConversationDm> findById(UUID id);
     

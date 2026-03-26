@@ -81,6 +81,7 @@ class AuthRegisterUseCaseTest {
                 "https://example.com",
                 "Who we are",
                 "What we do",
+                "Java, AWS",
                 Set.of()
         );
     }
@@ -155,6 +156,7 @@ class AuthRegisterUseCaseTest {
                 "Ontario",
                 "Toronto",
                 "https://consumer.example.com",
+                null,
                 null,
                 null,
                 Set.of(1L, 2L)

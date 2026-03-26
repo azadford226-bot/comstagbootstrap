@@ -91,6 +91,7 @@ public class AuthRegisterUseCase implements UsecaseWithoutOutput<RegisterInput> 
                 .website(in.website())
                 .whoWeAre(in.whoWeAre())
                 .whatWeDo(in.whatWeDo())
+                .techStack(in.techStack())
                 .size(in.size())
                 .country(in.country())
                 .state(in.state())

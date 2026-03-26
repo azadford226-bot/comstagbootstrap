@@ -15,6 +15,9 @@ public class MessageDm {
     private String content;
     private boolean read;
     private Instant readAt;
+    private boolean pinned;
+    private Instant pinnedAt;
+    private UUID pinnedBy;
     private Instant createdAt;
     private Instant updatedAt;
 }

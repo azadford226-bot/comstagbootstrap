@@ -21,6 +21,7 @@ public class RfqDm {
     String budgetCurrency;
     Instant deadline;
     String requirements;
+    String skillsTags;
     RfqStatus status;
     RfqVisibility visibility;
     UUID awardedToId;
