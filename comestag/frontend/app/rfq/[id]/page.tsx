@@ -6,19 +6,12 @@ import Link from 'next/link'
 import {
   ArrowLeft, DollarSign, Clock, Users, Send, Eye,
   CheckCircle, Building2, Calendar, Tag,
-  AlertCircle, Globe, Lock, FileText, Shield, MessageCircle
+  AlertCircle, Lock, FileText, Shield, MessageCircle
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getRfq, type Rfq } from '@/lib/api/rfq'
 import { getProfile, isOrganizationProfile } from '@/lib/api/profile'
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  OPEN: { label: 'Open', color: 'bg-green-100 text-green-800 border-green-200', icon: Globe },
-  REVIEW: { label: 'In Review', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: Eye },
-  AWARDED: { label: 'Awarded', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: CheckCircle },
-  CLOSED: { label: 'Closed', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Lock },
-  CANCELLED: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle },
-}
+import { RFQ_STATUS_CONFIG } from '@/components/rfq/rfq-status-badge'
 
 const STATUS_STEPS = ['OPEN', 'REVIEW', 'AWARDED', 'CLOSED']
 
@@ -137,7 +130,7 @@ export default function RfqDetailPage() {
     )
   }
 
-  const statusCfg = STATUS_CONFIG[rfq.status] || STATUS_CONFIG.OPEN
+  const statusCfg = RFQ_STATUS_CONFIG[rfq.status] || RFQ_STATUS_CONFIG.OPEN
   const StatusIcon = statusCfg.icon
   const remaining = timeRemaining(rfq.deadline)
   const currentStepIndex = STATUS_STEPS.indexOf(rfq.status === 'CANCELLED' ? 'CLOSED' : rfq.status)
@@ -157,7 +150,7 @@ export default function RfqDetailPage() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusCfg.color}`}>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusCfg.className}`}>
                     <StatusIcon className="h-3.5 w-3.5" />
                     {statusCfg.label}
                   </span>

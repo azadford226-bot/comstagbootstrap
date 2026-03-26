@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import StepsForm, { StepConfig } from "@/components/organisms/steps_form";
+import {
+  Step1,
+  Step2,
+  Step3,
+} from "@/components/organisms/signup-provider-steps";
+import { registerOrganization, type CompanyType } from "@/lib/api/auth";
+import { logger } from "@/lib/logger";
+
+const VALID_COMPANY_TYPES: CompanyType[] = [
+  "ENTERPRISE",
+  "VENDOR",
+  "STARTUP",
+  "INVESTOR",
+  "SERVICE_PROVIDER",
+];
+
+function parseCompanyTypeParam(raw: string | null): CompanyType | null {
+  if (!raw) return null;
+  const decoded = decodeURIComponent(raw.trim());
+  return VALID_COMPANY_TYPES.includes(decoded as CompanyType)
+    ? (decoded as CompanyType)
+    : null;
+}
+
+export default function SignupFormContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const companyTypeFromUrl = useMemo(
+    () => parseCompanyTypeParam(searchParams.get("companyType")),
+    [searchParams]
+  );
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState<{
+    organizationName: string;
+    companyType: string;
+    industryId: number;
+    companySize: string;
+    establishmentDate: string;
+    techStack: string;
+    organizationWebsite: string;
+    country: string;
+    state: string;
+    city: string;
+    whoWeAre: string;
+    whatWeDo: string;
+    organizationEmail: string;
+    confirmEmail: string;
+    firstName: string;
+    lastName: string;
+    jobTitle: string;
+    workEmail: string;
+    password: string;
+    confirmPassword: string;
+    agreeToTerms: boolean;
+  }>({
+    organizationName: "",
+    companyType: "",
+    industryId: 0,
+    companySize: "",
+    establishmentDate: "",
+    techStack: "",
+    organizationWebsite: "",
+    country: "",
+    state: "",
+    city: "",
+    whoWeAre: "",
+    whatWeDo: "",
+    organizationEmail: "",
+    confirmEmail: "",
+    firstName: "",
+    lastName: "",
+    jobTitle: "",
+    workEmail: "",
+    password: "",
+    confirmPassword: "",
+    agreeToTerms: false,
+  });
+
+  useEffect(() => {
+    if (companyTypeFromUrl) {
+      setFormData((prev) =>
+        prev.companyType === companyTypeFromUrl
+          ? prev
+          : { ...prev, companyType: companyTypeFromUrl }
+      );
+    }
+  }, [companyTypeFromUrl]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const validateStep1 = (): boolean => {
+    const requiredFields = [
+      { field: "organizationName", label: "Organization Name" },
+      { field: "companyType", label: "Company Type" },
+      { field: "companySize", label: "Company Size" },
+    ];
+
+    if (!formData.industryId || formData.industryId === 0) {
+      setError("Industry is required");
+      return false;
+    }
+
+    for (const { field, label } of requiredFields) {
+      if (!formData[field as keyof typeof formData]) {
+        setError(`${label} is required`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const validateStep2 = (): boolean => {
+    const requiredFields = [
+      { field: "organizationWebsite", label: "Organization Website" },
+      { field: "country", label: "Country" },
+      { field: "city", label: "City" },
+      { field: "whoWeAre", label: "Who we are" },
+      { field: "whatWeDo", label: "What we do" },
+    ];
+
+    for (const { field, label } of requiredFields) {
+      if (!formData[field as keyof typeof formData]) {
+        setError(`${label} is required`);
+        return false;
+      }
+    }
+
+    if (
+      formData.organizationWebsite &&
+      !formData.organizationWebsite.toLowerCase().startsWith("https://")
+    ) {
+      setError("Website URL must start with https://");
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateStep3 = (): boolean => {
+    const requiredFields = [
+      { field: "organizationEmail", label: "Organization Email" },
+      { field: "confirmEmail", label: "Confirm Email" },
+      { field: "password", label: "Password" },
+      { field: "confirmPassword", label: "Confirm Password" },
+    ];
+
+    for (const { field, label } of requiredFields) {
+      if (!formData[field as keyof typeof formData]) {
+        setError(`${label} is required`);
+        return false;
+      }
+    }
+
+    if (formData.organizationEmail !== formData.confirmEmail) {
+      setError("Email addresses do not match");
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return false;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleStepChange = async (currentStep: number) => {
+    setError(null);
+    setLoadingMessage("");
+
+    if (currentStep === 1 && !validateStep1()) {
+      return false;
+    }
+    if (currentStep === 2 && !validateStep2()) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleComplete = async () => {
+    if (!validateStep3()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingMessage("Registering your organization...");
+    setError(null);
+
+    const registrationData = {
+      email: formData.organizationEmail,
+      password: formData.password,
+      displayName: formData.organizationName,
+      companyType: (formData.companyType || undefined) as CompanyType | undefined,
+      industryId: formData.industryId,
+      country: formData.country,
+      state: formData.state,
+      city: formData.city,
+      size: formData.companySize,
+      established: formData.establishmentDate,
+      website: formData.organizationWebsite,
+      whoWeAre: formData.whoWeAre,
+      whatWeDo: formData.whatWeDo,
+      techStack: formData.techStack?.trim()
+        ? formData.techStack.split(",").map((s) => s.trim()).filter(Boolean).join(", ")
+        : undefined,
+    };
+
+    logger.info("Sending organization registration data", {
+      email: registrationData.email,
+    });
+
+    try {
+      const result = await registerOrganization(registrationData);
+
+      logger.info("Organization registration result", {
+        success: result.success,
+      });
+
+      if (!result.success) {
+        setError(result.message || "Registration failed");
+        logger.error("Organization registration failed", result.message);
+        setIsLoading(false);
+        return;
+      }
+
+      setLoadingMessage("Registration successful! Redirecting...");
+      setIsLoading(false);
+
+      router.push("/signup/under-review");
+    } catch (err) {
+      logger.error("Registration error", err);
+      setError("An unexpected error occurred during registration");
+      setIsLoading(false);
+    }
+  };
+
+  const steps: StepConfig[] = [
+    {
+      component: (
+        <Step1
+          formData={formData}
+          onChange={handleInputChange}
+          companyTypePreset={companyTypeFromUrl}
+        />
+      ),
+    },
+    {
+      component: <Step2 formData={formData} onChange={handleInputChange} />,
+    },
+    {
+      component: <Step3 formData={formData} onChange={handleInputChange} />,
+    },
+  ];
+
+  const heroSection = (
+    <div className="bg-linear-to-b from-primary-dark via-[#3f64c4] to-primary-dark min-h-[200px] md:h-[257px] flex flex-col items-center justify-center gap-4 md:gap-[27px] px-4 sm:px-8 md:px-20 lg:px-[303px] py-8 md:py-[47px]">
+      <h1 className="text-2xl sm:text-3xl md:text-[40px] font-semibold text-white text-center">
+        Welcome to ComStag
+      </h1>
+      <p className="text-3xl sm:text-4xl md:text-[48px] text-white text-center font-['Hubballi']">
+        Connect. Collaborate. Succeed.
+      </p>
+    </div>
+  );
+
+  const headerSection = (
+    <div className="text-center mb-12 md:mb-[94px]">
+      <h2 className="text-xl md:text-[24px] font-semibold text-primary-dark mb-2">
+        Create Your Account
+      </h2>
+      <p className="text-lg md:text-[20px] font-light text-primary-dark">
+        Join our community and start making a difference
+      </p>
+    </div>
+  );
+
+  return (
+    <>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-primary-dark font-medium">{loadingMessage}</p>
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50 max-w-md">
+          <div className="flex items-start">
+            <div className="flex-1">
+              <p className="font-medium">Error</p>
+              <p className="text-sm">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="ml-4 text-red-700 hover:text-red-900"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      <StepsForm
+        steps={steps}
+        heroSection={heroSection}
+        headerSection={headerSection}
+        onStepChange={handleStepChange}
+        onComplete={handleComplete}
+      />
+    </>
+  );
+}

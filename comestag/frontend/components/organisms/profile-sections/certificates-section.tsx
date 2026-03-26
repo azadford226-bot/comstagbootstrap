@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { AuthenticatedImage } from "@/components/atoms/authenticated-image";
-import { Plus, Edit2, Trash2, X, Save, Upload } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Save, Upload, BadgeCheck } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import {
   Certificate,
@@ -352,6 +352,11 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
         </form>
       )}
 
+      <p className="text-xs text-gray-500 mb-3">
+        Uploads are reviewed by administrators when flagged. A{" "}
+        <span className="font-medium text-gray-700">platform-verified</span> badge appears after approval.
+      </p>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {certificates.length === 0 ? (
           <div className="col-span-2 sm:col-span-3 lg:col-span-4">
@@ -372,6 +377,15 @@ export const CertificatesSection: React.FC<CertificatesSectionProps> = ({
             >
               {(cert.image?.id || cert.imageId) && (
                 <div className="relative aspect-square bg-gray-100 rounded-lg mb-2 overflow-hidden">
+                  {cert.verified && (
+                    <span
+                      className="absolute top-1 right-1 z-10 inline-flex items-center gap-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 shadow"
+                      title="Verified by ComStag"
+                    >
+                      <BadgeCheck className="w-3 h-3" aria-hidden />
+                      Verified
+                    </span>
+                  )}
                   <AuthenticatedImage
                     src={getMediaUrl(cert.image?.id || cert.imageId || "")}
                     alt={cert.title}

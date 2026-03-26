@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/components/ui/toast";
-import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2, Pin, FileText } from "lucide-react";
+import { Send, Search, MoreVertical, Phone, Video, Plus, Paperclip, Shield, Image as ImageIcon, Calendar, X, Loader2, Pin, FileText, Briefcase } from "lucide-react";
 import Image from "next/image";
 import { uploadPostMedia } from "@/lib/api/media";
 import { getMediaUrl } from "@/lib/api/media";
@@ -23,10 +23,18 @@ import {
 } from "@/lib/api/messages";
 import { getProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getRfq } from "@/lib/api/rfq";
+import { getOpportunity } from "@/lib/api/opportunities";
+import { sendPresenceHeartbeat, sendTypingIndicator } from "@/lib/api/presence";
 import { mockApiResponse, mockConversations, mockMessages } from "@/lib/dev-mock-api";
 
 async function getRfqOwnerForThread(rfqId: string): Promise<string | null> {
   const res = await getRfq(rfqId);
+  if (res.success && res.data) return res.data.organizationId;
+  return null;
+}
+
+async function getOpportunityOwnerForThread(opportunityId: string): Promise<string | null> {
+  const res = await getOpportunity(opportunityId);
   if (res.success && res.data) return res.data.organizationId;
   return null;
 }
@@ -47,7 +55,10 @@ function MessagesPage() {
   const searchParams = useSearchParams();
   const rfqThread = searchParams.get("rfq");
   const rfqSubject = searchParams.get("subject");
+  const opportunityThread = searchParams.get("opportunity");
+  const opportunitySubject = searchParams.get("subject");
   const ctxParam = searchParams.get("ctx");
+  const openSchedulerParam = searchParams.get("openScheduler");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -63,10 +74,12 @@ function MessagesPage() {
   const [showMessageSearch, setShowMessageSearch] = useState(false);
   const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
   const [myAccountId, setMyAccountId] = useState<string | null>(null);
+  const [myOrgDisplayName, setMyOrgDisplayName] = useState<string | null>(null);
   const [meetingSchedulerUrl, setMeetingSchedulerUrl] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageStreamAbortController = useRef<AbortController | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     try {
@@ -75,11 +88,20 @@ function MessagesPage() {
     getProfile().then((res) => {
       if (res.success && res.data && isOrganizationProfile(res.data)) {
         setMyAccountId(res.data.id);
+        setMyOrgDisplayName(res.data.displayName || null);
       } else if (res.success && res.data && "id" in res.data) {
         setMyAccountId((res.data as { id: string }).id);
+        const d = res.data as { displayName?: string };
+        setMyOrgDisplayName(d.displayName || null);
       }
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (openSchedulerParam === "1" || openSchedulerParam === "true") {
+      setShowScheduler(true);
+    }
+  }, [openSchedulerParam]);
 
   // Auto-open organization thread for RFQ (context id = rfqId:yourOrgId for multi-bidder safety)
   useEffect(() => {
@@ -105,6 +127,39 @@ function MessagesPage() {
       });
     });
   }, [rfqThread, ctxParam, myAccountId]);
+
+  useEffect(() => {
+    if (!opportunityThread || isDevMode()) return;
+    if (!ctxParam && !myAccountId) return;
+    const contextId = ctxParam || `${opportunityThread}:${myAccountId}`;
+    loadConversations().then(() => {
+      findConversationByContext("OPPORTUNITY", contextId).then((result) => {
+        if (result.success && result.data) {
+          setSelectedConversation(result.data);
+          return;
+        }
+        if (myAccountId) {
+          getOpportunityOwnerForThread(opportunityThread).then((ownerId) => {
+            if (!ownerId || ownerId === myAccountId) return;
+            createConversationWithContext(ownerId, "OPPORTUNITY", contextId).then((created) => {
+              if (created.success && created.data) setSelectedConversation(created.data);
+            });
+          });
+        }
+      }).catch(() => {
+        logger.debug("No existing conversation for opportunity context", { opportunityThread, contextId });
+      });
+    });
+  }, [opportunityThread, ctxParam, myAccountId]);
+
+  useEffect(() => {
+    if (!selectedConversation || isDevMode()) return;
+    sendPresenceHeartbeat();
+    const id = setInterval(() => {
+      sendPresenceHeartbeat();
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [selectedConversation?.id]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -259,6 +314,9 @@ function MessagesPage() {
 
     const messageContent = content;
     setNewMessage("");
+    if (selectedConversation && !isDevMode()) {
+      sendTypingIndicator(selectedConversation.id, false).catch(() => {});
+    }
     setIsSending(true);
 
     // Optimistically add message to UI
@@ -521,12 +579,22 @@ function MessagesPage() {
                       <Shield className="w-3.5 h-3.5 text-blue-400" aria-hidden />
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" aria-hidden />
-                    Organization thread &middot;{" "}
-                    {selectedConversation.otherUserType === "ORGANIZATION"
-                      ? "Partner organization"
-                      : "Contact"}
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full flex-shrink-0" aria-hidden />
+                    {myOrgDisplayName && (
+                      <>
+                        <span className="truncate max-w-[min(140px,40vw)] font-medium text-gray-600">{myOrgDisplayName}</span>
+                        <span className="text-gray-400" aria-hidden>⟷</span>
+                      </>
+                    )}
+                    <span className="truncate max-w-[min(160px,45vw)] font-medium text-gray-700">{selectedConversation.otherUserName}</span>
+                    <span className="text-gray-300">·</span>
+                    <span>
+                      {selectedConversation.contextType === "RFQ" && "RFQ context"}
+                      {selectedConversation.contextType === "OPPORTUNITY" && "Opportunity context"}
+                      {!selectedConversation.contextType &&
+                        (selectedConversation.otherUserType === "ORGANIZATION" ? "Org thread" : "Direct")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -567,6 +635,14 @@ function MessagesPage() {
                 <span className="text-blue-700 font-medium">Thread:</span>
                 <span className="text-blue-600 truncate">{decodeURIComponent(rfqSubject)}</span>
                 <a href={`/rfq/${rfqThread}`} className="ml-auto text-xs text-blue-500 hover:underline flex-shrink-0">View RFQ</a>
+              </div>
+            )}
+            {opportunityThread && opportunitySubject && (
+              <div className="px-4 py-2.5 bg-teal-50 border-b border-teal-100 flex items-center gap-2 text-sm">
+                <Briefcase className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                <span className="text-teal-800 font-medium">Opportunity:</span>
+                <span className="text-teal-700 truncate">{decodeURIComponent(opportunitySubject)}</span>
+                <a href="/opportunities" className="ml-auto text-xs text-teal-600 hover:underline flex-shrink-0">Opportunities hub</a>
               </div>
             )}
 
@@ -785,7 +861,16 @@ function MessagesPage() {
                 <input
                   type="text"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setNewMessage(v);
+                    if (!selectedConversation || isDevMode()) return;
+                    sendTypingIndicator(selectedConversation.id, v.length > 0).catch(() => {});
+                    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                    typingTimeoutRef.current = setTimeout(() => {
+                      sendTypingIndicator(selectedConversation.id, false).catch(() => {});
+                    }, 2000);
+                  }}
                   placeholder="Type a message..."
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
                   disabled={isSending}

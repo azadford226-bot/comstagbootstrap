@@ -3,6 +3,7 @@
 import Button from "@/components/atoms/button";
 import Logo from "../logo";
 import NotificationBell from "../notification-bell";
+import ProfileCompletionBar from "../profile-completion-bar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -118,6 +119,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-3 h-[35px]">
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
+                {userType === "ORGANIZATION" && <ProfileCompletionBar />}
                 <NotificationBell />
                 <div className="relative">
                 <button

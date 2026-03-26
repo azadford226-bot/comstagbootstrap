@@ -35,9 +35,10 @@ public class OAuth2LoginProcessor {
         return ResponseEntity.ok(Map.of(
                 "providers", List.of(
                         Map.of("id", "google", "name", "Google", "enabled", true),
-                        Map.of("id", "microsoft", "name", "Microsoft", "enabled", true),
-                        Map.of("id", "linkedin", "name", "LinkedIn", "enabled", true),
-                        Map.of("id", "github", "name", "GitHub", "enabled", true)
+                        Map.of("id", "github", "name", "GitHub", "enabled", true),
+                        /* Not registered in application.properties yet */
+                        Map.of("id", "microsoft", "name", "Microsoft", "enabled", false),
+                        Map.of("id", "linkedin", "name", "LinkedIn", "enabled", false)
                 )
         ));
     }

@@ -23,6 +23,8 @@ interface PostsFeedProps {
   className?: string;
   enableCRUD?: boolean; // Enable create/edit/delete operations
   onUpdate?: () => void; // Callback after CRUD operations
+  /** Optional per-post relevance (0–100) for discovery feeds */
+  relevanceByPostId?: Record<string, number>;
 }
 
 export const PostsFeed: React.FC<PostsFeedProps> = ({
@@ -32,6 +34,7 @@ export const PostsFeed: React.FC<PostsFeedProps> = ({
   className = "",
   enableCRUD = false,
   onUpdate,
+  relevanceByPostId,
 }) => {
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
@@ -330,6 +333,7 @@ export const PostsFeed: React.FC<PostsFeedProps> = ({
               onDelete={() => handleDelete(post.id)}
               isSubmitting={isSubmitting}
               isEditing={editingId !== null}
+              relevanceScore={relevanceByPostId?.[post.id]}
             />
           ))}
         </div>
@@ -347,6 +351,7 @@ interface PostCardProps {
   onDelete?: () => void;
   isSubmitting?: boolean;
   isEditing?: boolean;
+  relevanceScore?: number;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -358,6 +363,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onDelete,
   isSubmitting = false,
   isEditing = false,
+  relevanceScore,
 }) => {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.reactionsCount || 0);
@@ -420,6 +426,14 @@ export const PostCard: React.FC<PostCardProps> = ({
           <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-700">
             Post
           </span>
+          {relevanceScore !== undefined && (
+            <span
+              className="px-2 py-1 text-xs font-medium rounded bg-sky-50 text-sky-800 border border-sky-100"
+              title="Heuristic match score from your industry fit, engagement signals, bookmarks, and recency — not a prediction of outcomes."
+            >
+              Match {relevanceScore}
+            </span>
+          )}
           <span className="text-xs text-gray-500">{formatPostDate(post)}</span>
         </div>
         {enableCRUD && onEdit && onDelete && (

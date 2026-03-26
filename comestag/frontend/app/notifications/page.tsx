@@ -10,18 +10,7 @@ import {
   type NotificationView,
   type PageResult,
 } from "@/lib/api/notifications";
-
-const TYPE_LABELS: Record<string, string> = {
-  RFQ_NEW: "New RFQ posted",
-  RFQ_BID: "New bid on your RFQ",
-  RFQ_AWARDED: "RFQ awarded",
-  RFQ_CLOSED: "RFQ closed",
-  MESSAGE_NEW: "New message",
-  POST_LIKE: "Liked your post",
-  POST_COMMENT: "Commented on your post",
-  FOLLOW: "Started following your company",
-  SYSTEM: "System notification",
-};
+import { notificationLabel, notificationCategory } from "@/lib/notification-labels";
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -36,6 +25,12 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 function getIcon(type: string) {
+  if (type.startsWith("OPPORTUNITY"))
+    return (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    );
   if (type.startsWith("RFQ"))
     return (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,6 +63,7 @@ function getIcon(type: string) {
 }
 
 function getIconBg(type: string) {
+  if (type.startsWith("OPPORTUNITY")) return "bg-teal-100 text-teal-600";
   if (type.startsWith("RFQ")) return "bg-blue-100 text-blue-600";
   if (type.startsWith("MESSAGE")) return "bg-green-100 text-green-600";
   if (type.startsWith("POST")) return "bg-purple-100 text-purple-600";
@@ -82,7 +78,9 @@ export default function NotificationsPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread">("all");
-  const [category, setCategory] = useState<"all" | "rfq" | "message" | "social" | "system">("all");
+  const [category, setCategory] = useState<
+    "all" | "rfq" | "message" | "social" | "system" | "opportunity"
+  >("all");
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -92,13 +90,6 @@ export default function NotificationsPage() {
       if (raw) setArchivedIds(new Set(JSON.parse(raw) as string[]));
     } catch { /* ignore */ }
   }, []);
-
-  function notifCategory(type: string): "rfq" | "message" | "social" | "system" {
-    if (type.startsWith("RFQ")) return "rfq";
-    if (type.startsWith("MESSAGE")) return "message";
-    if (type.startsWith("POST") || type === "FOLLOW") return "social";
-    return "system";
-  }
 
   const fetchPage = useCallback(async (p: number) => {
     setLoading(true);
@@ -147,7 +138,7 @@ export default function NotificationsPage() {
 
   const displayLabel = (n: NotificationView) => {
     const msg = typeof n.payload?.message === "string" ? n.payload.message : null;
-    return msg || TYPE_LABELS[n.type] || n.type;
+    return msg || notificationLabel(n.type);
   };
 
   const persistArchived = (next: Set<string>) => {
@@ -159,7 +150,7 @@ export default function NotificationsPage() {
 
   const filtered = notifications
     .filter((n) => !archivedIds.has(n.notificationId))
-    .filter((n) => category === "all" || notifCategory(n.type) === category)
+    .filter((n) => category === "all" || notificationCategory(n.type) === category)
     .filter((n) => (filter === "unread" ? !n.readAt : true));
 
   return (
@@ -179,6 +170,7 @@ export default function NotificationsPage() {
               [
                 ["all", "All"],
                 ["rfq", "RFQ"],
+                ["opportunity", "Opportunities"],
                 ["message", "Messages"],
                 ["social", "Social"],
                 ["system", "System"],

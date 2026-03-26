@@ -8,18 +8,7 @@ import {
   markAllNotificationsRead,
   type NotificationView,
 } from "@/lib/api/notifications";
-
-const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
-  RFQ_NEW: "New RFQ",
-  RFQ_BID: "New bid on your RFQ",
-  RFQ_AWARDED: "RFQ awarded",
-  RFQ_CLOSED: "RFQ closed",
-  MESSAGE_NEW: "New message",
-  POST_LIKE: "Liked your post",
-  POST_COMMENT: "Commented on your post",
-  FOLLOW: "Started following you",
-  SYSTEM: "System notification",
-};
+import { notificationLabel } from "@/lib/notification-labels";
 
 function formatTimeAgo(dateStr: string): string {
   const now = Date.now();
@@ -114,7 +103,7 @@ export default function NotificationBell() {
   const displayLabel = (n: NotificationView) => {
     const payloadMsg =
       typeof n.payload?.message === "string" ? n.payload.message : null;
-    return payloadMsg || NOTIFICATION_TYPE_LABELS[n.type] || n.type;
+    return payloadMsg || notificationLabel(n.type) || n.type;
   };
 
   return (

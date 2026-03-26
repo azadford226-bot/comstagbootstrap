@@ -431,6 +431,9 @@ export default function PublicOrganizationProfile() {
                   {showReviewForm ? "Cancel" : "Write a Review"}
                 </button>
               </div>
+              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                Reviews are for partners who have engaged with this organization on the platform (for example through an RFQ, opportunity, or project). This keeps feedback tied to real collaboration, not drive-by ratings.
+              </p>
 
               {/* Rating Summary */}
               <div className="flex items-center gap-4 mb-4 p-4 bg-amber-50 rounded-lg">

@@ -16,11 +16,14 @@ import {
   deleteRfqSubscription,
   type RfqSubscription,
 } from "@/lib/api/rfq-subscriptions";
-import { showLocalTestNotification, isPushSupported } from "@/lib/push-notifications";
+import { showLocalTestNotification, isPushSupported, registerPushSubscription, unregisterPushSubscription } from "@/lib/push-notifications";
+import { pushSubscriptionToPayload, savePushSubscriptionToServer, removePushSubscriptionFromServer } from "@/lib/api/push";
+import { useToast } from "@/components/ui/toast";
 import { Mail, Lock, Save, AlertCircle, CheckCircle, Bell, Smartphone, Loader2, Globe, Trash2, Link2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuth(true);
+  const { toast } = useToast();
   const [emailData, setEmailData] = useState({ newEmail: "", verificationCode: "" });
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
@@ -108,6 +111,50 @@ export default function SettingsPage() {
       if (res.success) {
         setNotifSaved(true);
         setTimeout(() => setNotifSaved(false), 3000);
+
+        if (typeof window !== "undefined" && isPushSupported()) {
+          const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
+          if (notifPrefs.pushEnabled) {
+            if (!vapid) {
+              toast("Push is enabled in preferences, but NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set — browser subscription was skipped.", "error");
+            } else {
+              try {
+                const perm =
+                  typeof Notification !== "undefined"
+                    ? await Notification.requestPermission()
+                    : "denied";
+                if (perm !== "granted") {
+                  toast("Notification permission denied — push may not deliver on this device.", "error");
+                } else {
+                  const sub = await registerPushSubscription();
+                  if (sub) {
+                    const saveRes = await savePushSubscriptionToServer(pushSubscriptionToPayload(sub));
+                    if (!saveRes.success) {
+                      toast(saveRes.message || "Could not save push subscription on the server.", "error");
+                    } else {
+                      toast("Push subscription saved for this device.", "success");
+                    }
+                  } else {
+                    toast("Could not create a browser push subscription.", "error");
+                  }
+                }
+              } catch (e) {
+                toast(e instanceof Error ? e.message : "Push setup failed.", "error");
+              }
+            }
+          } else {
+            try {
+              const reg = await navigator.serviceWorker.ready;
+              const sub = await reg.pushManager.getSubscription();
+              if (sub) {
+                await removePushSubscriptionFromServer(sub.endpoint);
+                await unregisterPushSubscription();
+              }
+            } catch {
+              /* non-fatal */
+            }
+          }
+        }
       }
     } catch { /* ignore */ }
     setNotifSaving(false);
@@ -396,7 +443,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Domain verification & scheduling */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div id="domain-verification" className="bg-white rounded-xl shadow-md p-6 scroll-mt-24">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Globe className="w-5 h-5 text-white" />

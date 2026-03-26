@@ -34,6 +34,7 @@ import {
   type Opportunity,
   type CreateOpportunityRequest,
 } from "@/lib/api/opportunities";
+import { useToast } from "@/components/ui/toast";
 import { bookmarkItem, unbookmarkItem, getBookmarks } from "@/lib/api/social";
 
 type OpportunityType = "all" | "jv" | "incubation" | "funding" | "codev";
@@ -93,6 +94,7 @@ function formatDate(dateStr: string | null) {
 }
 
 export default function OpportunitiesPage() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<OpportunityType>("all");
   const [search, setSearch] = useState("");
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -186,8 +188,40 @@ export default function OpportunitiesPage() {
     } catch { /* ignore */ }
   };
 
+  const validateCreateForm = (): string | null => {
+    if (!formData.title?.trim() || !formData.description?.trim()) {
+      return "Title and description are required.";
+    }
+    const t = formData.type;
+    if (t === "funding") {
+      if (!formData.funding?.trim() && !formData.stage?.trim()) {
+        return "For funding rounds, add a funding target or stage (e.g. Series A).";
+      }
+    }
+    if (t === "jv") {
+      if (!formData.equity?.trim() && !formData.funding?.trim()) {
+        return "For joint ventures, describe equity split or investment terms.";
+      }
+    }
+    if (t === "incubation") {
+      if (!formData.cohortDetails?.trim()) {
+        return "For incubation, add cohort or program details.";
+      }
+    }
+    if (t === "codev") {
+      if (!formData.cohortDetails?.trim() && !formData.milestones?.trim()) {
+        return "For co-development, add pilot details or milestones.";
+      }
+    }
+    return null;
+  };
+
   const handleCreate = async () => {
-    if (!formData.title || !formData.description) return;
+    const err = validateCreateForm();
+    if (err) {
+      toast(err, "error");
+      return;
+    }
     setCreating(true);
     try {
       const res = await createOpportunity({
@@ -394,7 +428,7 @@ export default function OpportunitiesPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-3 border-t border-gray-100">
+                  <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
                     <button
                       onClick={() => handleExpressInterest(op)}
                       className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -407,11 +441,19 @@ export default function OpportunitiesPage() {
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                     <Link
-                      href={`/messages?rfq=${op.id}&subject=${encodeURIComponent(op.title)}`}
+                      href={`/messages?opportunity=${op.id}&subject=${encodeURIComponent(op.title)}`}
                       className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
                       Discuss
+                    </Link>
+                    <Link
+                      href={`/messages?opportunity=${op.id}&subject=${encodeURIComponent(op.title)}&openScheduler=1`}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/15 transition-colors"
+                      title="Open thread and meeting scheduler"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      Schedule
                     </Link>
                   </div>
                 </div>
@@ -588,7 +630,7 @@ export default function OpportunitiesPage() {
               </button>
               <button
                 onClick={handleCreate}
-                disabled={creating || !formData.title || !formData.description}
+                disabled={creating || !!validateCreateForm()}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors text-sm font-medium"
               >
                 {creating && <Loader2 className="w-4 h-4 animate-spin" />}

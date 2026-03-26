@@ -34,7 +34,7 @@ export default function SignupSelectPage() {
         <div className="max-w-[900px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Supplier/Organization Card */}
           <div
-            onClick={() => router.push("/signup")}
+            onClick={() => router.push("/signup/organization-type")}
             className="border-2 border-light-gray rounded-lg p-8 hover:border-primary transition-colors cursor-pointer"
           >
             <div className="text-center">
@@ -54,11 +54,11 @@ export default function SignupSelectPage() {
                 </svg>
               </div>
               <h3 className="text-2xl font-semibold text-primary-dark mb-4">
-                Supplier / Organization
+                Business / Organization
               </h3>
               <p className="text-text-body mb-6">
-                Register your business to showcase your products and services,
-                connect with buyers, and grow your commercial network.
+                Register your company (enterprise, vendor, startup, investor, or services).
+                You&apos;ll pick your role on the next step, then complete your profile.
               </p>
               <ul className="text-left text-text-body mb-8 space-y-2">
                 <li className="flex items-start">
@@ -80,11 +80,11 @@ export default function SignupSelectPage() {
               </ul>
               <Button
                 type="primary"
-                onClick={() => router.push("/signup")}
+                onClick={() => router.push("/signup/organization-type")}
                 buttonType="button"
                 fullWidth
               >
-                Register as Supplier
+                Continue as organization
               </Button>
             </div>
           </div>

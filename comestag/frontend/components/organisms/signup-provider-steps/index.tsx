@@ -1,16 +1,27 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import FormInput from "@/components/atoms/form_input";
+import type { CompanyType } from "@/lib/api/auth";
 import CompanySizeSelect from "@/components/atoms/company_size_select";
 import IndustrySelect from "@/components/atoms/industry_select";
 import CountryCitySelect from "@/components/molecules/country_city_select";
 import { CAPABILITY_TAGS } from "@/lib/capability-tags";
 
+const COMPANY_TYPE_LABEL: Record<CompanyType, string> = {
+  ENTERPRISE: "Enterprise / Corporation",
+  VENDOR: "Software vendor / Supplier",
+  STARTUP: "Startup",
+  INVESTOR: "Investor / VC / Accelerator",
+  SERVICE_PROVIDER: "Service provider / Consultancy",
+};
+
 // Step 1: Organization Details
 export function Step1({
   formData,
   onChange,
+  companyTypePreset,
 }: {
   formData: Record<string, string | boolean | number>;
   onChange: (
@@ -18,6 +29,8 @@ export function Step1({
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => void;
+  /** Set when user chose a role on /signup/organization-type */
+  companyTypePreset?: CompanyType | null;
 }) {
   return (
     <div className="max-w-[646px] mx-auto">
@@ -42,20 +55,42 @@ export function Step1({
           <label className="block text-[16px] font-medium text-text-dark mb-2">
             Company Type <span className="text-red-500">*</span>
           </label>
-          <select
-            name="companyType"
-            value={formData.companyType as string}
-            onChange={onChange}
-            required
-            className="w-full px-4 py-3 border border-[#e3e3e3] rounded-[10px] text-[16px] text-text-dark focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          >
-            <option value="">Select your company type</option>
-            <option value="ENTERPRISE">Enterprise / Corporation</option>
-            <option value="VENDOR">Software Vendor / Supplier</option>
-            <option value="STARTUP">Startup</option>
-            <option value="INVESTOR">Investor / VC / Accelerator</option>
-            <option value="SERVICE_PROVIDER">Service Provider / Consultancy</option>
-          </select>
+          {companyTypePreset ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2 px-4 py-3 border border-primary/30 rounded-[10px] bg-primary/5">
+                <span className="text-[16px] font-medium text-text-dark">
+                  {COMPANY_TYPE_LABEL[companyTypePreset]}
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary bg-white px-2 py-0.5 rounded border border-primary/20">
+                  Selected
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                This matches the organization role you chose.{" "}
+                <Link
+                  href="/signup/organization-type"
+                  className="text-primary font-medium hover:underline"
+                >
+                  Change organization role
+                </Link>
+              </p>
+            </div>
+          ) : (
+            <select
+              name="companyType"
+              value={formData.companyType as string}
+              onChange={onChange}
+              required
+              className="w-full px-4 py-3 border border-[#e3e3e3] rounded-[10px] text-[16px] text-text-dark focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            >
+              <option value="">Select your company type</option>
+              <option value="ENTERPRISE">Enterprise / Corporation</option>
+              <option value="VENDOR">Software Vendor / Supplier</option>
+              <option value="STARTUP">Startup</option>
+              <option value="INVESTOR">Investor / VC / Accelerator</option>
+              <option value="SERVICE_PROVIDER">Service Provider / Consultancy</option>
+            </select>
+          )}
         </div>
 
         <IndustrySelect

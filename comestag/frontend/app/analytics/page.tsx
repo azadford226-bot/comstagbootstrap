@@ -22,6 +22,7 @@ import { getPosts, type Post } from "@/lib/api/posts";
 import { listRfqs, type Rfq } from "@/lib/api/rfq";
 import { listOpportunities, type Opportunity } from "@/lib/api/opportunities";
 import { getProfile, OrganizationProfile, isOrganizationProfile } from "@/lib/api/profile";
+import { organizationProfileCompletionPercent } from "@/lib/profile-completion";
 import { authenticatedGet } from "@/lib/api/api-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserPlus, CheckCircle } from "lucide-react";
@@ -29,22 +30,55 @@ import { UserPlus, CheckCircle } from "lucide-react";
 interface MetricCard {
   label: string;
   value: string | number;
-  change: number;
+  /** Period-over-period trend; omit when not backed by analytics API */
+  trendPercent?: number | null;
   icon: React.ReactNode;
   color: string;
 }
 
-function generateWeekLabels(weeks: number): string[] {
+function rangeDays(tr: "7d" | "30d" | "90d"): number {
+  return tr === "7d" ? 7 : tr === "30d" ? 30 : 90;
+}
+
+function bucketCountForRange(tr: "7d" | "30d" | "90d"): number {
+  return tr === "7d" ? 7 : tr === "30d" ? 8 : 12;
+}
+
+/** End-of-bucket date labels (aligned to selected period) */
+function buildBucketLabels(bucketCount: number, days: number): string[] {
+  const now = Date.now();
+  const span = days * 86400000;
   const labels: string[] = [];
-  const now = new Date();
-  for (let i = weeks - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i * 7);
+  for (let i = 0; i < bucketCount; i++) {
+    const t = now - span + ((i + 1) / bucketCount) * span;
     labels.push(
-      d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     );
   }
   return labels;
+}
+
+/** Distribute items into time buckets by `createdAt` within the rolling window */
+function bucketByCreatedAt<T extends { createdAt: string }>(
+  items: T[],
+  bucketCount: number,
+  days: number,
+  valueFn: (item: T) => number
+): number[] {
+  const now = Date.now();
+  const span = days * 86400000;
+  const start = now - span;
+  const buckets = Array.from({ length: bucketCount }, () => 0);
+  for (const item of items) {
+    const t = new Date(item.createdAt).getTime();
+    if (Number.isNaN(t) || t < start || t > now) continue;
+    const idx = Math.min(
+      bucketCount - 1,
+      Math.floor(((t - start) / span) * bucketCount)
+    );
+    buckets[idx] += valueFn(item);
+  }
+  return buckets;
 }
 
 function MiniBarChart({
@@ -116,6 +150,10 @@ function MiniLineChart({
     </svg>
   );
 }
+
+const showBenchmarkSegmentAvg =
+  typeof process.env.NEXT_PUBLIC_SHOW_BENCHMARK_AVG !== "undefined" &&
+  process.env.NEXT_PUBLIC_SHOW_BENCHMARK_AVG === "true";
 
 export default function AnalyticsPage() {
   const { user } = useAuth(true);
@@ -201,8 +239,8 @@ export default function AnalyticsPage() {
         !!profile.companyType,
       ]
     : [];
-  const profileCompletion = profileFields.length
-    ? Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100)
+  const profileCompletion = profile
+    ? organizationProfileCompletionPercent(profile)
     : 0;
 
   const conversionRate =
@@ -214,59 +252,59 @@ export default function AnalyticsPage() {
     {
       label: "Total Posts",
       value: totalPosts,
-      change: 12,
+      trendPercent: null,
       icon: <FileText className="w-5 h-5" />,
       color: "bg-blue-500",
     },
     {
       label: "Post Engagement",
       value: totalReactions + totalComments,
-      change: 8,
+      trendPercent: null,
       icon: <Heart className="w-5 h-5" />,
       color: "bg-pink-500",
     },
     {
       label: "Content Views",
       value: totalViews || "N/A",
-      change: 15,
+      trendPercent: null,
       icon: <Eye className="w-5 h-5" />,
       color: "bg-purple-500",
     },
     {
       label: "RFQs Posted",
       value: myRfqs.length,
-      change: -3,
+      trendPercent: null,
       icon: <Briefcase className="w-5 h-5" />,
       color: "bg-amber-500",
     },
     {
       label: "Proposals Received",
       value: totalProposals,
-      change: 22,
+      trendPercent: null,
       icon: <Users className="w-5 h-5" />,
       color: "bg-green-500",
     },
     {
       label: "RFQ Conversion",
       value: `${conversionRate}%`,
-      change: 5,
+      trendPercent: null,
       icon: <Target className="w-5 h-5" />,
       color: "bg-indigo-500",
     },
   ];
 
-  const weekCount = timeRange === "7d" ? 7 : timeRange === "30d" ? 8 : 12;
-  const weekLabels = generateWeekLabels(weekCount);
+  const days = rangeDays(timeRange);
+  const bucketCount = bucketCountForRange(timeRange);
+  const bucketLabels = buildBucketLabels(bucketCount, days);
 
-  const engagementData = Array.from({ length: weekCount }, (_, i) =>
-    Math.max(1, Math.round((totalReactions + totalComments) / weekCount + (Math.sin(i) * 3)))
+  const engagementData = bucketByCreatedAt(
+    posts,
+    bucketCount,
+    days,
+    (p) => (p.reactionsCount || 0) + (p.commentsCount || 0)
   );
-  const viewsData = Array.from({ length: weekCount }, (_, i) =>
-    Math.max(1, Math.round((totalViews || 20) / weekCount + (Math.cos(i) * 5)))
-  );
-  const rfqData = Array.from({ length: weekCount }, (_, i) =>
-    Math.max(0, Math.round(myRfqs.length / weekCount + (i % 3 === 0 ? 1 : 0)))
-  );
+  const viewsData = bucketByCreatedAt(posts, bucketCount, days, (p) => p.views || 0);
+  const rfqData = bucketByCreatedAt(myRfqs, bucketCount, days, () => 1);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -339,18 +377,24 @@ export default function AnalyticsPage() {
                     >
                       {m.icon}
                     </div>
-                    <span
-                      className={`flex items-center text-xs font-medium ${
-                        m.change >= 0 ? "text-green-600" : "text-red-500"
-                      }`}
-                    >
-                      {m.change >= 0 ? (
-                        <ArrowUpRight className="w-3 h-3" />
-                      ) : (
-                        <ArrowDownRight className="w-3 h-3" />
-                      )}
-                      {Math.abs(m.change)}%
-                    </span>
+                    {m.trendPercent != null ? (
+                      <span
+                        className={`flex items-center text-xs font-medium ${
+                          m.trendPercent >= 0 ? "text-green-600" : "text-red-500"
+                        }`}
+                      >
+                        {m.trendPercent >= 0 ? (
+                          <ArrowUpRight className="w-3 h-3" />
+                        ) : (
+                          <ArrowDownRight className="w-3 h-3" />
+                        )}
+                        {Math.abs(m.trendPercent)}%
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-gray-400" title="Trend vs prior period requires time-series analytics">
+                        —
+                      </span>
+                    )}
                   </div>
                   <div className="text-2xl font-bold text-gray-900">
                     {m.value}
@@ -370,7 +414,7 @@ export default function AnalyticsPage() {
                       Engagement Over Time
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Reactions and comments on your posts (estimated trend)
+                      Reactions and comments on posts published in each period ({timeRange === "7d" ? "7 days" : timeRange === "30d" ? "30 days" : "90 days"})
                     </p>
                   </div>
                   <Activity className="w-5 h-5 text-gray-400" />
@@ -381,7 +425,7 @@ export default function AnalyticsPage() {
                   height={160}
                 />
                 <div className="flex justify-between mt-2 text-[10px] text-gray-400">
-                  {weekLabels.filter((_, i) => i % Math.ceil(weekLabels.length / 6) === 0).map((l) => (
+                  {bucketLabels.filter((_, i) => i % Math.ceil(bucketLabels.length / 6) === 0).map((l) => (
                     <span key={l}>{l}</span>
                   ))}
                 </div>
@@ -395,14 +439,14 @@ export default function AnalyticsPage() {
                       Content Views
                     </h3>
                     <p className="text-sm text-gray-500">
-                      How many people viewed your content (estimated trend)
+                      Sum of post views on content published in each period
                     </p>
                   </div>
                   <Eye className="w-5 h-5 text-gray-400" />
                 </div>
                 <MiniBarChart data={viewsData} color="#8b5cf6" height={160} />
                 <div className="flex justify-between mt-2 text-[10px] text-gray-400">
-                  {weekLabels.filter((_, i) => i % Math.ceil(weekLabels.length / 6) === 0).map((l) => (
+                  {bucketLabels.filter((_, i) => i % Math.ceil(bucketLabels.length / 6) === 0).map((l) => (
                     <span key={l}>{l}</span>
                   ))}
                 </div>
@@ -624,16 +668,11 @@ export default function AnalyticsPage() {
                     </span>
                   </div>
                 </div>
-                {/* Follower trend mini chart */}
                 <div className="mt-4 pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-2">Follower growth trend (estimated)</p>
-                  <MiniLineChart
-                    data={Array.from({ length: weekCount }, (_, i) =>
-                      Math.max(0, Math.round(followerCount * (0.3 + (i / weekCount) * 0.7) + Math.sin(i) * 2))
-                    )}
-                    color="#3b82f6"
-                    height={60}
-                  />
+                  <p className="text-xs text-gray-500">
+                    Follower growth over time is not recorded in this build — snapshot totals above are live. Historical
+                    follower trends require a time-series API.
+                  </p>
                 </div>
               </div>
             </div>
@@ -700,10 +739,12 @@ export default function AnalyticsPage() {
             <div className="bg-white rounded-xl border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-indigo-500" />
-                Segment Benchmarking
+                {showBenchmarkSegmentAvg ? "Segment Benchmarking" : "Your metrics snapshot"}
               </h3>
               <p className="text-xs text-gray-500 mb-4">
-                How you compare to similar companies in your segment (anonymized). Benchmark averages are estimated.
+                {showBenchmarkSegmentAvg
+                  ? "How you compare to similar companies in your segment (anonymized). Benchmark averages are estimated."
+                  : "Your account metrics only. Enable segment benchmark comparisons by setting NEXT_PUBLIC_SHOW_BENCHMARK_AVG=true when cohort averages are validated for your deployment."}
               </p>
               <div className="space-y-4">
                 {[
@@ -712,39 +753,47 @@ export default function AnalyticsPage() {
                   { metric: "Profile completeness", you: profileCompletion, avg: 68, unit: "%" },
                   { metric: "Posting frequency", you: totalPosts, avg: 12, unit: "posts/quarter" },
                 ].map((item) => {
-                  const youPct = item.avg > 0 ? Math.min(100, (item.you / (item.avg * 2)) * 100) : 0;
+                  const youPct = showBenchmarkSegmentAvg && item.avg > 0
+                    ? Math.min(100, (item.you / (item.avg * 2)) * 100)
+                    : Math.min(100, item.you * 10);
                   const avgPct = 50;
-                  const aboveAvg = item.you > item.avg;
+                  const aboveAvg = showBenchmarkSegmentAvg && item.you > item.avg;
                   return (
                     <div key={item.metric}>
                       <div className="flex items-center justify-between text-sm mb-1.5">
                         <span className="font-medium text-gray-700">{item.metric}</span>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className={`font-semibold ${aboveAvg ? "text-green-600" : "text-amber-600"}`}>
+                          <span className={`font-semibold ${showBenchmarkSegmentAvg ? (aboveAvg ? "text-green-600" : "text-amber-600") : "text-primary"}`}>
                             You: {item.you} {item.unit}
                           </span>
-                          <span className="text-gray-400">
-                            Avg: {item.avg} {item.unit}
-                          </span>
+                          {showBenchmarkSegmentAvg && (
+                            <span className="text-gray-400">
+                              Avg: {item.avg} {item.unit}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`absolute inset-y-0 left-0 rounded-full ${aboveAvg ? "bg-green-400" : "bg-amber-400"}`}
+                          className={`absolute inset-y-0 left-0 rounded-full ${showBenchmarkSegmentAvg ? (aboveAvg ? "bg-green-400" : "bg-amber-400") : "bg-indigo-400"}`}
                           style={{ width: `${youPct}%` }}
                         />
-                        <div
-                          className="absolute top-0 bottom-0 w-0.5 bg-gray-500"
-                          style={{ left: `${avgPct}%` }}
-                          title="Segment average"
-                        />
+                        {showBenchmarkSegmentAvg && (
+                          <div
+                            className="absolute top-0 bottom-0 w-0.5 bg-gray-500"
+                            style={{ left: `${avgPct}%` }}
+                            title="Segment average"
+                          />
+                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
               <p className="text-[10px] text-gray-400 mt-3 leading-relaxed">
-                Methodology: illustrative segment averages for UX preview; not a certified market study. Sample: platform-wide anonymized cohort (minimum n varies by metric). Your numbers are from live account data. Last updated: {new Date().toLocaleDateString()}.
+                {showBenchmarkSegmentAvg
+                  ? `Methodology: illustrative segment averages for UX preview; not a certified market study. Sample: platform-wide anonymized cohort (minimum n varies by metric). Your numbers are from live account data. Last updated: ${new Date().toLocaleDateString()}.`
+                  : "Your numbers are from live account data. Segment averages are hidden until explicitly enabled for this environment."}
               </p>
             </div>
 

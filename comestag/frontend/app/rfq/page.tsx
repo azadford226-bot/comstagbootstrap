@@ -20,6 +20,7 @@ import { RfqCardSkeleton } from '@/components/ui/skeleton'
 import { Upload, Paperclip, SlidersHorizontal } from 'lucide-react'
 import { uploadPostMedia } from '@/lib/api/media'
 import { getProfile, isOrganizationProfile, OrganizationProfile } from '@/lib/api/profile'
+import { RfqStatusBadge } from '@/components/rfq/rfq-status-badge'
 
 const CATEGORIES = [
   'Software Development',
@@ -212,22 +213,6 @@ export default function RFQPage() {
 
     return true;
   })
-
-  const STATUS_CONFIG: Record<string, { style: string; label: string; step: number }> = {
-    OPEN: { style: 'bg-green-100 text-green-800', label: 'Open', step: 1 },
-    REVIEW: { style: 'bg-amber-100 text-amber-800', label: 'In Review', step: 2 },
-    AWARDED: { style: 'bg-blue-100 text-blue-800', label: 'Awarded', step: 3 },
-    CLOSED: { style: 'bg-gray-100 text-gray-800', label: 'Closed', step: 4 },
-    CANCELLED: { style: 'bg-red-100 text-red-800', label: 'Cancelled', step: 0 },
-  };
-
-  const getStatusBadge = (status: string) => {
-    return STATUS_CONFIG[status]?.style || 'bg-gray-100 text-gray-800';
-  }
-
-  const getStatusLabel = (status: string) => {
-    return STATUS_CONFIG[status]?.label || status;
-  }
 
   const formatCurrency = (amount: number | null, currency: string) => {
     if (!amount) return 'Budget not specified'
@@ -495,9 +480,7 @@ export default function RFQPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(rfq.status)}`}>
-                        {getStatusLabel(rfq.status)}
-                      </span>
+                      <RfqStatusBadge status={rfq.status} />
                       {rfq.category && (
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
                           {rfq.category}

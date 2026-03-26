@@ -15,8 +15,13 @@ import { getMediaUrl } from "@/lib/api/media";
 import { getFollowingIds, getBookmarks } from "@/lib/api/social";
 
 const SPONSORED_DISMISS_KEY = "comestag_feed_sponsored_dismissed";
+const DISMISSED_PARTNERS_KEY = "comestag_dismissed_recommended_partners";
+const showFeedSponsoredSlot =
+  typeof process.env.NEXT_PUBLIC_FEED_SHOW_SPONSORED === "undefined" ||
+  process.env.NEXT_PUBLIC_FEED_SHOW_SPONSORED === "true";
 import Button from "@/components/atoms/button";
 import OnboardingChecklist from "@/components/molecules/onboarding-checklist";
+import DomainVerificationBanner from "@/components/molecules/domain-verification-banner";
 
 export default function DashboardPage() {
   const { user } = useAuth(true);
@@ -33,6 +38,8 @@ export default function DashboardPage() {
     { id: string; displayName: string; companyType?: string; industry?: string; matchScore: number; profileImageId?: string; verified?: boolean }[]
   >([]);
   const [sponsoredHidden, setSponsoredHidden] = useState(false);
+  const [dismissedPartnerIds, setDismissedPartnerIds] = useState<Set<string>>(new Set());
+  const [rfqUrgency, setRfqUrgency] = useState<"all" | "7d" | "3d" | "overdue">("all");
   const [feedRegion, setFeedRegion] = useState("");
   const [feedDrawerOpen, setFeedDrawerOpen] = useState(false);
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
@@ -40,6 +47,11 @@ export default function DashboardPage() {
   useEffect(() => {
     try {
       setSponsoredHidden(localStorage.getItem(SPONSORED_DISMISS_KEY) === "1");
+      const raw = localStorage.getItem(DISMISSED_PARTNERS_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        if (Array.isArray(arr)) setDismissedPartnerIds(new Set(arr));
+      }
     } catch { /* ignore */ }
     loadDashboardData();
   }, []);
@@ -129,6 +141,28 @@ export default function DashboardPage() {
     return diffDays;
   };
 
+  const dismissPartner = (id: string) => {
+    setDismissedPartnerIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      try {
+        localStorage.setItem(DISMISSED_PARTNERS_KEY, JSON.stringify([...next]));
+      } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const rfqMatchesUrgency = (deadline: string | null | undefined) => {
+    if (rfqUrgency === "all" || !deadline) return true;
+    const days = getDaysUntilDeadline(deadline);
+    if (rfqUrgency === "overdue") return days < 0;
+    if (rfqUrgency === "3d") return days >= 0 && days <= 3;
+    if (rfqUrgency === "7d") return days >= 0 && days <= 7;
+    return true;
+  };
+
+  const visibleRfqs = rfqs.filter((r) => rfqMatchesUrgency(r.deadline));
+
   const profileIndustryName = profile?.industry?.name?.toLowerCase() ?? "";
 
   const feedRelevanceScore = (p: Post): number => {
@@ -215,6 +249,8 @@ export default function DashboardPage() {
         {isLoading ? (
           <DashboardSkeleton />
         ) : (
+          <div className="space-y-6">
+            <DomainVerificationBanner />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column - Company Profile Card */}
             <div className="lg:col-span-3 space-y-6">
@@ -485,7 +521,7 @@ export default function DashboardPage() {
                 </p>
 
                 {/* Sponsored content slot */}
-                {!sponsoredHidden && feedTab === "all" && filteredPosts.length > 0 && (
+                {showFeedSponsoredSlot && !sponsoredHidden && feedTab === "all" && filteredPosts.length > 0 && (
                   <div className="mb-4 p-4 rounded-lg border border-dashed border-amber-200 bg-amber-50/50">
                     <div className="flex items-start gap-3">
                       <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
@@ -522,7 +558,20 @@ export default function DashboardPage() {
                 )}
 
                 {filteredPosts.length > 0 ? (
-                  <PostsFeed posts={filteredPosts} showFullContent={false} />
+                  <PostsFeed
+                    posts={filteredPosts}
+                    showFullContent={false}
+                    relevanceByPostId={
+                      feedTab === "all"
+                        ? Object.fromEntries(
+                            filteredPosts.map((p) => [
+                              p.id,
+                              Math.round(Math.min(100, feedRelevanceScore(p))),
+                            ])
+                          )
+                        : undefined
+                    }
+                  />
                 ) : feedTab === "following" ? (
                   <div className="text-center py-12 px-6">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
@@ -605,7 +654,7 @@ export default function DashboardPage() {
               )}
 
               <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-primary-dark flex items-center gap-2">
                     <Briefcase className="w-5 h-5" />
                     Opportunities
@@ -618,10 +667,26 @@ export default function DashboardPage() {
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
+                <div className="mb-4">
+                  <label htmlFor="rfq-urgency-filter" className="sr-only">
+                    Filter RFQs by deadline urgency
+                  </label>
+                  <select
+                    id="rfq-urgency-filter"
+                    value={rfqUrgency}
+                    onChange={(e) => setRfqUrgency(e.target.value as typeof rfqUrgency)}
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 text-gray-700"
+                  >
+                    <option value="all">All deadlines</option>
+                    <option value="7d">Due within 7 days</option>
+                    <option value="3d">Due within 3 days</option>
+                    <option value="overdue">Past deadline</option>
+                  </select>
+                </div>
 
-                {rfqs.length > 0 ? (
+                {visibleRfqs.length > 0 ? (
                   <div className="space-y-4">
-                    {rfqs.map((rfq) => {
+                    {visibleRfqs.map((rfq) => {
                       const daysLeft = getDaysUntilDeadline(rfq.deadline || "");
                       return (
                         <Link
@@ -679,6 +744,17 @@ export default function DashboardPage() {
                         </Link>
                       );
                     })}
+                  </div>
+                ) : rfqs.length > 0 ? (
+                  <div className="text-center py-6 px-3">
+                    <p className="text-sm text-gray-600 mb-1">No RFQs match this urgency filter.</p>
+                    <button
+                      type="button"
+                      className="text-xs text-primary font-medium hover:underline"
+                      onClick={() => setRfqUrgency("all")}
+                    >
+                      Show all deadlines
+                    </button>
                   </div>
                 ) : (
                   <div className="text-center py-8 px-4">
@@ -766,30 +842,42 @@ export default function DashboardPage() {
                 <p className="text-[11px] text-gray-400 mb-4 leading-snug">
                   Fit scores are heuristic (industry overlap, activity) — not semantic AI or embeddings.
                 </p>
-                {recommendedPartners.length > 0 ? (
+                {recommendedPartners.filter((p) => !dismissedPartnerIds.has(p.id)).length > 0 ? (
                   <div className="space-y-3">
-                    {recommendedPartners.map((partner) => (
-                      <Link
-                        key={partner.id}
-                        href={`/organization/${partner.id}`}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/20 hover:bg-blue-50/30 transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{partner.displayName}</div>
-                          <div className="text-xs text-gray-500">
-                            {partner.industry || "Technology"} &middot; {(partner.companyType || "").replace("_", " ") || "Company"}
-                          </div>
-                        </div>
-                        <span
-                          className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0"
-                          title="Fit score: heuristic based on industry overlap and profile signals (not semantic AI)."
+                    {recommendedPartners
+                      .filter((p) => !dismissedPartnerIds.has(p.id))
+                      .map((partner) => (
+                      <div key={partner.id} className="flex items-center gap-2">
+                        <Link
+                          href={`/organization/${partner.id}`}
+                          className="flex flex-1 items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-primary/20 hover:bg-blue-50/30 transition-colors min-w-0"
                         >
-                          Fit {partner.matchScore}%
-                        </span>
-                      </Link>
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">{partner.displayName}</div>
+                            <div className="text-xs text-gray-500">
+                              {partner.industry || "Technology"} &middot; {(partner.companyType || "").replace("_", " ") || "Company"}
+                            </div>
+                          </div>
+                          <span
+                            className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0"
+                            title="Fit score: heuristic based on industry overlap and profile signals (not semantic AI)."
+                          >
+                            Fit {partner.matchScore}%
+                          </span>
+                        </Link>
+                        <button
+                          type="button"
+                          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 flex-shrink-0"
+                          title="Not relevant — hide this suggestion"
+                          aria-label={`Dismiss ${partner.displayName} from recommendations`}
+                          onClick={() => dismissPartner(partner.id)}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -817,6 +905,7 @@ export default function DashboardPage() {
                 <ArrowRight className="w-4 h-4 text-gray-400 ml-auto" />
               </Link>
             </div>
+          </div>
           </div>
         )}
       </div>
