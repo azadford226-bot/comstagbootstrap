@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/atoms/button";
 import FormInput from "@/components/atoms/form_input";
 import { login, verifyLoginCode } from "@/lib/api/auth";
+import { apiUrl } from "@/lib/api/api-client";
 import {
   setAccessToken,
   setRefreshToken,
@@ -168,7 +169,7 @@ export default function AdminLoginPage() {
       
       // Fetch profile to get actual display name
       try {
-        const profileResponse = await fetch("/v1/profile", {
+        const profileResponse = await fetch(apiUrl("v1/profile"), {
           headers: {
             Authorization: `Bearer ${result.data.accessToken}`,
           },

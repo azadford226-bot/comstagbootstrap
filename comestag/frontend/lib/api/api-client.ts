@@ -21,6 +21,17 @@ export function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL || "";
 }
 
+/**
+ * Path to a backend route on the same origin (e.g. "v1/profile" → "/api/proxy/v1/profile" when proxied).
+ * Use for fetch() from the browser so Vercel hits the Next proxy, not a non-existent Next page.
+ */
+export function apiUrl(path: string): string {
+  const trimmed = path.replace(/^\//, "");
+  const base = getApiBaseUrl().replace(/\/$/, "");
+  if (!base) return `/${trimmed}`;
+  return `${base}/${trimmed}`;
+}
+
 // Track if we're currently refreshing to avoid multiple refresh attempts
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;

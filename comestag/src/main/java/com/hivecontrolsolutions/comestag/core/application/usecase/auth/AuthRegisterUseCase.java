@@ -45,7 +45,7 @@ public class AuthRegisterUseCase implements UsecaseWithoutOutput<RegisterInput> 
     @Transactional
     @Override
     public void execute(RegisterInput in) {
-        validateOrgEmail(in.email());
+        validateEmailForRegistration(in);
         checkEmailsExist(in.email());
         var accountDm = addAccount(in);
         if (in.type() == ORG) {
@@ -59,9 +59,16 @@ public class AuthRegisterUseCase implements UsecaseWithoutOutput<RegisterInput> 
 
     }
 
-    private void validateOrgEmail(String email) {
-        orgEmailGuard.isIndividualEmail(email);
-        orgEmailGuard.hasMxRecords(email);
+    /**
+     * Blocked free-mail domains ({@code email-check.blocked-domains}) apply only to organization
+     * registration so vendors use company email. Consumers may use Gmail etc.
+     * MX validation runs for all account types.
+     */
+    private void validateEmailForRegistration(RegisterInput in) {
+        if (in.type() == ORG) {
+            orgEmailGuard.isIndividualEmail(in.email());
+        }
+        orgEmailGuard.hasMxRecords(in.email());
     }
 
     private void checkEmailsExist(String email) {

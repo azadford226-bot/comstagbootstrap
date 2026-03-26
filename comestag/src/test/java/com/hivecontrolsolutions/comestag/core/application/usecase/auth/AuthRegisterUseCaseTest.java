@@ -97,7 +97,8 @@ class AuthRegisterUseCaseTest {
                 .id(userId)
                 .email("test@company.com")
                 .build());
-        when(otpService.getCodeHash(anyString(), anyString())).thenReturn("hashedCode");
+        when(otpService.generateCode()).thenReturn("123456");
+        when(otpService.getCodeHash(any(), anyString())).thenReturn("hashedCode");
         doNothing().when(emailNotification).sendVerificationMail(anyString(), anyString(), anyString());
         when(verificationCodePort.getByUserId(userId)).thenReturn(
                 com.hivecontrolsolutions.comestag.core.domain.model.VerificationCodeDm.builder().userId(userId).build()
@@ -169,7 +170,8 @@ class AuthRegisterUseCaseTest {
                 .id(userId)
                 .email("consumer@example.com")
                 .build());
-        when(otpService.getCodeHash(anyString(), anyString())).thenReturn("hashedCode");
+        when(otpService.generateCode()).thenReturn("123456");
+        when(otpService.getCodeHash(any(), anyString())).thenReturn("hashedCode");
         doNothing().when(emailNotification).sendVerificationMail(anyString(), anyString(), anyString());
         when(verificationCodePort.getByUserId(userId)).thenReturn(
                 com.hivecontrolsolutions.comestag.core.domain.model.VerificationCodeDm.builder().userId(userId).build()
@@ -178,7 +180,8 @@ class AuthRegisterUseCaseTest {
         // Act
         assertDoesNotThrow(() -> authRegisterUseCase.execute(consumerInput));
 
-        // Assert
+        // Assert — consumer sign-up must not apply org-only blocked-domain rules (e.g. Gmail)
+        verify(orgEmailGuard, never()).isIndividualEmail(anyString());
         verify(accountPort).getByEmail("consumer@example.com");
         verify(orgEmailGuard).hasMxRecords("consumer@example.com");
         verify(accountPort).save(any(AccountDm.class));

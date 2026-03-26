@@ -14,6 +14,7 @@ import {
   getUserType,
   setUserType,
 } from "@/lib/secure-storage";
+import { apiUrl } from "@/lib/api/api-client";
 
 interface User {
   email: string;
@@ -45,7 +46,7 @@ export function useAuth(requireAuth = true) {
       // If userType is missing, fetch it from profile
       if (!userType && accessToken) {
         try {
-          const profileResponse = await fetch("/v1/profile", {
+          const profileResponse = await fetch(apiUrl("v1/profile"), {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },

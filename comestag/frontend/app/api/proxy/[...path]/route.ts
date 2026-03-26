@@ -9,12 +9,18 @@ const API_BASE_URL =
   "";
 
 function missingBackendResponse() {
+  const vercelEnv = process.env.VERCEL_ENV ?? "";
   return NextResponse.json(
     {
       success: false,
       error: "BACKEND_URL_NOT_CONFIGURED",
       message:
-        "Set BACKEND_URL (preferred) or NEXT_PUBLIC_API_BASE_URL in Vercel to your Spring API origin (https://…).",
+        "Set BACKEND_URL (preferred) or NEXT_PUBLIC_API_BASE_URL in Vercel to your Spring API origin (https://…, no path).",
+      hint:
+        vercelEnv === "preview"
+          ? "This is a Preview deployment: add the same variables for the Preview environment (or link env to Production), then redeploy."
+          : "Redeploy after saving env vars. Confirm your Railway (or other) API is running.",
+      vercelEnv: vercelEnv || undefined,
     },
     { status: 503 }
   );

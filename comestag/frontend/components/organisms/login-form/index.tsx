@@ -6,6 +6,7 @@ import Button from "@/components/atoms/button";
 import FormInput from "@/components/atoms/form_input";
 import Link from "next/link";
 import { login, verifyLoginCode } from "@/lib/api/auth";
+import { apiUrl } from "@/lib/api/api-client";
 import {
   setAccessToken,
   setRefreshToken,
@@ -261,7 +262,7 @@ export default function LoginForm() {
 
       // Fetch profile to get user type and display name
       try {
-        const profileResponse = await fetch("/v1/profile", {
+        const profileResponse = await fetch(apiUrl("v1/profile"), {
           headers: {
             Authorization: `Bearer ${result.data.accessToken}`,
           },

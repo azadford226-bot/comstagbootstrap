@@ -27,17 +27,17 @@ export default function DevAutoLoginHelper() {
     setMounted(true);
   }, []);
   
-  // Debug logging
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("[DevAutoLoginHelper] Debug:", {
-        isDevMode: isDevMode(),
-        isAuthenticated,
-        isDismissed,
-        showHelper: !isDismissed && isDevMode() && !isAuthenticated,
-        NEXT_PUBLIC_DEV_MODE: process.env.NEXT_PUBLIC_DEV_MODE,
-      });
+    if (process.env.NODE_ENV !== "development" || typeof window === "undefined") {
+      return;
     }
+    console.log("[DevAutoLoginHelper] Debug:", {
+      isDevMode: isDevMode(),
+      isAuthenticated,
+      isDismissed,
+      showHelper: !isDismissed && isDevMode() && !isAuthenticated,
+      NEXT_PUBLIC_DEV_MODE: process.env.NEXT_PUBLIC_DEV_MODE,
+    });
   }, [isAuthenticated, isDismissed]);
   
   const showHelper =
