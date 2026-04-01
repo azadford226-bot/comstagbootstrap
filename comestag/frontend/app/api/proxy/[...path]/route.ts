@@ -76,9 +76,19 @@ export async function GET(
       });
     }
 
-    // For JSON responses
+    // For JSON: read as text first — empty or invalid JSON would throw on response.json() and surface as misleading 500
     if (contentType && contentType.includes("application/json")) {
-      const data = await response.json();
+      const text = await response.text();
+      let data: unknown = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        logger.warn("Proxy GET: upstream claimed JSON but body was not valid JSON", {
+          status: response.status,
+          preview: text.slice(0, 120),
+        });
+        data = text ? { message: text, raw: true } : {};
+      }
       return NextResponse.json(data, { status: response.status });
     }
 
@@ -89,8 +99,12 @@ export async function GET(
   } catch (error) {
     logger.error("Proxy GET error", error, { url });
     return NextResponse.json(
-      { error: "Proxy request failed" },
-      { status: 500 }
+      {
+        error: "PROXY_UPSTREAM_FAILED",
+        message:
+          "Could not reach the API from the server. Check BACKEND_URL on Vercel and that the Railway app is up.",
+      },
+      { status: 502 }
     );
   }
 }
@@ -204,8 +218,12 @@ export async function POST(
   } catch (error) {
     logger.error("Proxy POST error", error, { url });
     return NextResponse.json(
-      { error: "Proxy request failed" },
-      { status: 500 }
+      {
+        error: "PROXY_UPSTREAM_FAILED",
+        message:
+          "Could not reach the API from the server. Check BACKEND_URL on Vercel and that the Railway app is up.",
+      },
+      { status: 502 }
     );
   }
 }
@@ -282,8 +300,12 @@ export async function PUT(
   } catch (error) {
     logger.error("Proxy PUT error", error, { url });
     return NextResponse.json(
-      { error: "Proxy request failed" },
-      { status: 500 }
+      {
+        error: "PROXY_UPSTREAM_FAILED",
+        message:
+          "Could not reach the API from the server. Check BACKEND_URL on Vercel and that the Railway app is up.",
+      },
+      { status: 502 }
     );
   }
 }
@@ -344,8 +366,90 @@ export async function DELETE(
   } catch (error) {
     logger.error("Proxy DELETE error", error, { url });
     return NextResponse.json(
-      { error: "Proxy request failed" },
-      { status: 500 }
+      {
+        error: "PROXY_UPSTREAM_FAILED",
+        message:
+          "Could not reach the API from the server. Check BACKEND_URL on Vercel and that the Railway app is up.",
+      },
+      { status: 502 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  if (!API_BASE_URL?.trim()) {
+    return missingBackendResponse();
+  }
+  const { path } = await params;
+  const pathString = path.join("/");
+  const searchParams = request.nextUrl.searchParams.toString();
+  const url = `${API_BASE_URL}/${pathString}${
+    searchParams ? `?${searchParams}` : ""
+  }`;
+
+  try {
+    let body = {};
+    let hasBody = false;
+    try {
+      const text = await request.text();
+      if (text) {
+        body = JSON.parse(text);
+        hasBody = true;
+      }
+    } catch {
+      logger.debug("No request body in PATCH");
+    }
+
+    logger.api("PATCH", url, { hasBody });
+
+    const headers: HeadersInit = {};
+
+    if (hasBody) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const authHeader = request.headers.get("authorization");
+    if (authHeader) {
+      headers["Authorization"] = authHeader;
+    }
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers,
+      body: hasBody ? JSON.stringify(body) : undefined,
+    });
+
+    logger.debug("Proxy PATCH response received", { status: response.status });
+
+    let data;
+    const contentType = response.headers.get("content-type");
+
+    try {
+      if (contentType && contentType.includes("application/json")) {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : {};
+      } else {
+        const text = await response.text();
+        data = text ? { message: text } : {};
+      }
+    } catch {
+      logger.debug("Response body is empty or invalid JSON");
+      data = {};
+    }
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    logger.error("Proxy PATCH error", error, { url });
+    return NextResponse.json(
+      {
+        error: "PROXY_UPSTREAM_FAILED",
+        message:
+          "Could not reach the API from the server. Check BACKEND_URL on Vercel and that the Railway app is up.",
+      },
+      { status: 502 }
     );
   }
 }

@@ -157,16 +157,14 @@ public class SecurityConfig {
                     .toList();
         }
         if (allowedOrigins == null || allowedOrigins.isEmpty()) {
-            // In production, log a warning but don't fail - allow all origins as fallback
-            // This prevents startup failures when CORS_ALLOWED_ORIGINS is not set
-            String activeProfile = System.getProperty("spring.profiles.active", 
+            String activeProfile = System.getProperty("spring.profiles.active",
                 System.getenv("SPRING_PROFILES_ACTIVE"));
             if ("prod".equals(activeProfile)) {
-                // Log warning but allow all origins as fallback for Railway deployment
-                // User should set CORS_ALLOWED_ORIGINS for security, but don't block startup
-                System.err.println("WARNING: CORS_ALLOWED_ORIGINS not set in production. " +
-                    "Allowing all origins. Set CORS_ALLOWED_ORIGINS environment variable for security.");
-                allowedOrigins = Arrays.asList("*"); // Allow all origins as fallback
+                // In production, require explicit CORS origins. Fail loudly.
+                throw new IllegalStateException(
+                    "CORS_ALLOWED_ORIGINS environment variable is not set. " +
+                    "This is required for production. Set it to your frontend domain(s), e.g.: " +
+                    "CORS_ALLOWED_ORIGINS=https://your-app.vercel.app");
             } else {
                 // Default to localhost only for development
                 allowedOrigins = Arrays.asList("http://localhost:3000", "http://localhost:8080");

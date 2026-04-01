@@ -7,17 +7,26 @@ import {
   removeRefreshToken,
 } from "../secure-storage";
 
+function shouldUseSameOriginProxy(): boolean {
+  if (process.env.NEXT_PUBLIC_USE_PROXY === "true") return true;
+  // Vercel: align SSR and browser — some runtimes omit VERCEL=1 during SSR; VERCEL_URL is set for every deployment (incl. custom domains).
+  if (process.env.VERCEL === "1") return true;
+  if (process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview") return true;
+  if (process.env.VERCEL_URL) return true;
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) return true;
+  if (typeof window !== "undefined") {
+    const h = window.location?.hostname ?? "";
+    if (h.includes("vercel.app")) return true;
+  }
+  return false;
+}
+
 /**
  * API origin for browser and server. Must match between SSR and client to avoid hydration bugs.
  * On Vercel, always use the same-origin `/api/proxy` (set BACKEND_URL server-side for the route).
  */
 export function getApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_USE_PROXY === "true") return "/api/proxy";
-  // Server + edge on Vercel: align with client (window.hostname check below)
-  if (process.env.VERCEL === "1") return "/api/proxy";
-  if (typeof window !== "undefined" && window.location?.hostname?.includes("vercel.app")) {
-    return "/api/proxy";
-  }
+  if (shouldUseSameOriginProxy()) return "/api/proxy";
   return process.env.NEXT_PUBLIC_API_BASE_URL || "";
 }
 

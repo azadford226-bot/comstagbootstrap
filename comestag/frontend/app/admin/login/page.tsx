@@ -13,23 +13,26 @@ import {
   setUserName,
   setUserType,
 } from "@/lib/secure-storage";
+import { isDevMode } from "@/lib/dev-auth";
 
-const QUICK_LOGINS = {
-  admin: {
-    email: "admin@comstag.com",
-    password: "Admin@123!",
-    displayName: "System Administrator",
-    userType: "ADMIN" as const,
-    redirect: "/admin/dashboard",
-  },
-  company: {
-    email: "tester@comstag.com",
-    password: "Test@123!",
-    displayName: "Test Company",
-    userType: "ORGANIZATION" as const,
-    redirect: "/dashboard",
-  },
-};
+const QUICK_LOGINS = isDevMode()
+  ? {
+      admin: {
+        email: "admin@comstag.com",
+        password: "Admin@123!",
+        displayName: "System Administrator",
+        userType: "ADMIN" as const,
+        redirect: "/admin/dashboard",
+      },
+      company: {
+        email: "tester@comstag.com",
+        password: "Test@123!",
+        displayName: "Test Company",
+        userType: "ORGANIZATION" as const,
+        redirect: "/dashboard",
+      },
+    }
+  : null;
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -52,8 +55,10 @@ export default function AdminLoginPage() {
     }));
   };
 
-  const handleQuickLogin = async (accountKey: keyof typeof QUICK_LOGINS) => {
-    const creds = QUICK_LOGINS[accountKey];
+  const handleQuickLogin = async (accountKey: string) => {
+    if (!QUICK_LOGINS) return;
+    const creds = QUICK_LOGINS[accountKey as keyof typeof QUICK_LOGINS];
+    if (!creds) return;
     setIsLoading(true);
     setLoadingAccount(accountKey);
     setError(null);
@@ -136,7 +141,7 @@ export default function AdminLoginPage() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Unable to connect to the server. Please ensure the backend is running on http://localhost:3000");
+      setError("Unable to connect to the server. Please ensure the backend is running.");
     } finally {
       setIsLoading(false);
     }
@@ -217,8 +222,8 @@ export default function AdminLoginPage() {
           </div>
         )}
 
-        {/* Quick Login Buttons */}
-        {!isCodeSent && (
+        {/* Quick Login Buttons - only in dev mode */}
+        {!isCodeSent && QUICK_LOGINS && (
           <div className="space-y-3 mb-6">
             <button
               type="button"

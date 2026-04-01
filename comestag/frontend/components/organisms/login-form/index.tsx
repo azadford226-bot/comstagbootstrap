@@ -14,12 +14,7 @@ import {
   setUserName,
   setUserType,
 } from "@/lib/secure-storage";
-
-const TEST_COMPANY_CREDENTIALS = {
-  email: "tester@comstag.com",
-  password: "Test@123!",
-  displayName: "Test Company",
-};
+import { isDevMode } from "@/lib/dev-auth";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -36,6 +31,12 @@ export default function LoginForm() {
   const [resendTimer, setResendTimer] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [loadingQuick, setLoadingQuick] = useState(false);
+  const devMode = isDevMode();
+
+  // Test credentials only available in dev mode
+  const TEST_COMPANY_CREDENTIALS = devMode
+    ? { email: "tester@comstag.com", password: "Test@123!", displayName: "Test Company" }
+    : null;
 
   // Timer countdown for resend button
   useEffect(() => {
@@ -131,6 +132,7 @@ export default function LoginForm() {
   };
 
   const handleQuickTestLogin = async () => {
+    if (!TEST_COMPANY_CREDENTIALS) return;
     setIsLoading(true);
     setLoadingQuick(true);
     setError(null);
@@ -486,8 +488,8 @@ export default function LoginForm() {
           </Button>
         </div>
 
-        {/* Quick Test Login Button */}
-        {!isCodeSent && (
+        {/* Quick Test Login Button - only in dev mode */}
+        {!isCodeSent && TEST_COMPANY_CREDENTIALS && (
           <div className="mt-4">
             <button
               type="button"

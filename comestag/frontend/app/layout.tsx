@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/molecules/navbar";
 import ConditionalFooter from "@/components/molecules/conditional-footer";
-import DevModeInitializer from "@/components/dev-mode-initializer";
-import EnvDebugger from "@/components/env-debugger";
 import VercelAnalytics from "@/components/vercel-analytics";
-import DevAutoLoginHelper from "@/components/dev-auto-login-helper";
 import { ToastProvider } from "@/components/ui/toast";
 
 // Using system fonts instead of Google Fonts to avoid network issues during build
@@ -40,9 +37,6 @@ export default function RootLayout({
           >
             Skip to main content
           </a>
-          <EnvDebugger />
-          <DevModeInitializer />
-          <DevAutoLoginHelper />
           <Navbar />
           <main id="main-content">{children}</main>
           <ConditionalFooter />

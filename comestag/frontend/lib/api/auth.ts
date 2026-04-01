@@ -727,7 +727,7 @@ export async function refreshAccessToken(): Promise<
 export async function logout(): Promise<ApiResponse> {
   try {
     const refreshToken = getRefreshToken();
-    logger.warn("Logging out user", { refreshToken });
+    logger.warn("Logging out user");
 
     if (!refreshToken) {
       logger.warn("Logout called with no refresh token");
