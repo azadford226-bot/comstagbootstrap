@@ -5,6 +5,7 @@ import com.hivecontrolsolutions.comestag.base.stereotype.UseCase;
 import com.hivecontrolsolutions.comestag.core.application.entity.input.CreatePostCommentInput;
 import com.hivecontrolsolutions.comestag.core.domain.port.PostCommentPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.PostPort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +15,16 @@ public class CreatePostCommentUseCase implements UsecaseWithoutOutput<CreatePost
 
     private final PostPort postPort;
     private final PostCommentPort commentPort;
+    private final NotificationOutboxPublisher notificationPublisher;
 
     @Transactional
     @Override
     public void execute(CreatePostCommentInput input) {
-        postPort.getById(input.postId());
+        var post = postPort.getById(input.postId());
         commentPort.create(input.postId(), input.accountId(), input.body(), input.parentCommentId());
+        // Notify post author (skip self-notification)
+        if (post.getOrgId() != null && !post.getOrgId().equals(input.accountId())) {
+            notificationPublisher.publishPostCommented(post.getOrgId(), input.accountId(), input.postId(), null);
+        }
     }
 }

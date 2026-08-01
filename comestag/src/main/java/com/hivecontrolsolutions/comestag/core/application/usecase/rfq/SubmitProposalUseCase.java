@@ -8,6 +8,7 @@ import com.hivecontrolsolutions.comestag.core.domain.model.RfqDm;
 import com.hivecontrolsolutions.comestag.core.domain.port.ConversationPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqProposalPort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class SubmitProposalUseCase implements UsecaseWithoutOutput<SubmitProposa
     private final RfqPort rfqPort;
     private final RfqProposalPort proposalPort;
     private final ConversationPort conversationPort;
+    private final NotificationOutboxPublisher notificationPublisher;
     
     @Transactional
     @Override
@@ -65,6 +67,9 @@ public class SubmitProposalUseCase implements UsecaseWithoutOutput<SubmitProposa
                             input.organizationId(),
                             "RFQ",
                             contextId));
+
+            // Notify RFQ owner about new proposal
+            notificationPublisher.publishRfqBid(rfq.getOrganizationId(), input.organizationId(), input.rfqId());
         }
     }
 }

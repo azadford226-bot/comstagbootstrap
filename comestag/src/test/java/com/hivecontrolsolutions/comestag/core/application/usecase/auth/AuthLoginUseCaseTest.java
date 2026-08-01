@@ -68,6 +68,7 @@ class AuthLoginUseCaseTest {
         accountDm = AccountDm.builder()
                 .id(accountId)
                 .email("test@company.com")
+                .displayName("Test Company")
                 .passwordHash("$2a$10$encodedPassword")
                 .type(AccountType.ORG)
                 .status(AccountStatus.ACTIVE)
@@ -81,6 +82,7 @@ class AuthLoginUseCaseTest {
         // Arrange
         when(accountPort.getByEmail("test@company.com")).thenReturn(Optional.of(accountDm));
         when(passwordEncoder.matches("password123", accountDm.getPasswordHash())).thenReturn(true);
+        when(otpService.generateCode()).thenReturn("123456");
         when(otpService.getCodeHash(anyString(), anyString())).thenReturn("hashedCode");
         doNothing().when(emailNotification).sendVerificationCode(anyString(), anyString(), anyString());
         

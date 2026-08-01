@@ -172,6 +172,32 @@ public class NotificationJdbcRepository {
         return jdbc.queryForObject(sql, Map.of("accountId", accountId), Long.class);
     }
 
+    public List<NotificationViewDm> listUnreadSince(UUID accountId, Instant since) {
+        String sql = """
+            SELECT
+              n.id                AS notification_id,
+              n.type              AS type,
+              n.created_at        AS created_at,
+              n.actor_account_id  AS actor_account_id,
+              n.target_kind       AS target_kind,
+              n.target_id         AS target_id,
+              n.payload::text     AS payload_json,
+              r.read_at           AS read_at
+            FROM notification_recipients r
+            JOIN notifications n ON n.id = r.notification_id
+            WHERE r.recipient_account_id = :accountId
+              AND r.read_at IS NULL
+              AND (r.archived = false OR r.archived IS NULL)
+              AND n.created_at >= :since
+            ORDER BY n.created_at DESC
+            LIMIT 50
+            """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("accountId", accountId)
+                .addValue("since", Timestamp.from(since));
+        return jdbc.query(sql, params, (rs, i) -> mapRow(rs));
+    }
+
     public void markRead(UUID accountId, UUID notificationId, Instant readAt) {
         String sql = """
             UPDATE notification_recipients

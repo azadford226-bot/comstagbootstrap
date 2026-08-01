@@ -47,6 +47,9 @@ public class OrgEmailGuard {
 
 
     public void hasMxRecords(String email) {
+        if (!props.isMxCheckEnabled()) {
+            return;
+        }
         try {
             var domain = EmailUtils.extractDomain(email);
             var env = new java.util.Hashtable<String, String>();
