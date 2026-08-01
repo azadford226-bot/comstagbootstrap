@@ -254,7 +254,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column - Company Profile Card */}
             <div className="lg:col-span-3 space-y-6">
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-6">
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 {/* Cover / Banner */}
                 <div className="h-20 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 relative">
                   {profile?.coverImage && (
@@ -682,7 +682,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-primary-dark flex items-center gap-2">
                     <Briefcase className="w-5 h-5" />
