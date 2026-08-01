@@ -18,8 +18,10 @@ import {
   createConversationWithContext,
   pinMessage,
   unpinMessage,
+  searchCompanies,
   type Conversation,
   type Message,
+  type CompanySummary,
 } from "@/lib/api/messages";
 import { getProfile, isOrganizationProfile } from "@/lib/api/profile";
 import { getRfq } from "@/lib/api/rfq";
@@ -73,6 +75,10 @@ function MessagesPage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [messageSearch, setMessageSearch] = useState("");
   const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [companyQuery, setCompanyQuery] = useState("");
+  const [companyResults, setCompanyResults] = useState<CompanySummary[]>([]);
+  const [searchingCompanies, setSearchingCompanies] = useState(false);
   const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
   const [myAccountId, setMyAccountId] = useState<string | null>(null);
   const [myOrgDisplayName, setMyOrgDisplayName] = useState<string | null>(null);
@@ -195,6 +201,36 @@ function MessagesPage() {
       });
     });
   }, [directRecipient, myAccountId]);
+
+  // Company directory search for the new-message picker (debounced)
+  useEffect(() => {
+    if (!showNewMessage || isDevMode()) return;
+    const handle = setTimeout(() => {
+      setSearchingCompanies(true);
+      searchCompanies(companyQuery.trim(), 0)
+        .then((rows) => setCompanyResults(rows.filter((r) => r.id !== myAccountId)))
+        .finally(() => setSearchingCompanies(false));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [companyQuery, showNewMessage, myAccountId]);
+
+  const handleSelectCompany = (company: CompanySummary) => {
+    const existing = conversations.find((c) => c.otherUserId === company.id);
+    setSelectedConversation(
+      existing ||
+        ({
+          id: "",
+          otherUserId: company.id,
+          otherUserName: company.displayName,
+          unreadCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as Conversation)
+    );
+    setShowNewMessage(false);
+    setCompanyQuery("");
+    setCompanyResults([]);
+  };
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -502,6 +538,17 @@ function MessagesPage() {
         <div className="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col">
           {/* Search */}
           <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-gray-800">Messages</h2>
+              <button
+                type="button"
+                onClick={() => setShowNewMessage(true)}
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark"
+              >
+                <Plus className="w-4 h-4" />
+                New
+              </button>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -961,6 +1008,75 @@ function MessagesPage() {
           </div>
         )}
       </div>
+
+      {/* New Message Modal (company directory picker) */}
+      {showNewMessage && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-24"
+          onClick={() => setShowNewMessage(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="font-semibold text-gray-800">New message</h3>
+              <button
+                type="button"
+                onClick={() => setShowNewMessage(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Search companies..."
+                  value={companyQuery}
+                  onChange={(e) => setCompanyQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="max-h-72 overflow-y-auto">
+                {searchingCompanies ? (
+                  <div className="py-6 text-center text-sm text-gray-500">Searching…</div>
+                ) : companyResults.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-gray-500">
+                    {companyQuery ? "No companies found" : "Type to search companies"}
+                  </div>
+                ) : (
+                  companyResults.map((company) => (
+                    <button
+                      key={company.id}
+                      type="button"
+                      onClick={() => handleSelectCompany(company)}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-left"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                        {company.displayName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {company.displayName}
+                        </p>
+                        {(company.city || company.country) && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {[company.city, company.country].filter(Boolean).join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Meeting Scheduler Modal */}
       {showScheduler && (

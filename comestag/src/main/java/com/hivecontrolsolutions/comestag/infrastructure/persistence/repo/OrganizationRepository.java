@@ -51,4 +51,15 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
     @Query("UPDATE OrganizationEntity o SET o.verified = false, o.verifiedAt = null WHERE o.id = :id")
     void unverify(@Param("id") UUID id);
 
+    @Query("""
+            SELECT o FROM OrganizationEntity o
+            WHERE o.approved = true AND o.id <> :excludeId
+              AND (:q = '' OR LOWER(o.displayName) LIKE LOWER(CONCAT('%', :q, '%')))
+            ORDER BY o.displayName ASC
+            """)
+    org.springframework.data.domain.Page<OrganizationEntity> searchApproved(
+            @Param("excludeId") UUID excludeId,
+            @Param("q") String q,
+            org.springframework.data.domain.Pageable pageable);
+
 }
