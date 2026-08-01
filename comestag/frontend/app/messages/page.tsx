@@ -59,6 +59,7 @@ function MessagesPage() {
   const opportunitySubject = searchParams.get("subject");
   const ctxParam = searchParams.get("ctx");
   const openSchedulerParam = searchParams.get("openScheduler");
+  const directRecipient = searchParams.get("to");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -78,6 +79,7 @@ function MessagesPage() {
   const [meetingSchedulerUrl, setMeetingSchedulerUrl] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const directRecipientHandledRef = useRef(false);
   const messageStreamAbortController = useRef<AbortController | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -169,16 +171,46 @@ function MessagesPage() {
     return () => clearInterval(id);
   }, [selectedConversation?.id]);
 
+  // Open (or start) a direct conversation with a company via ?to=<accountId>
+  useEffect(() => {
+    if (!directRecipient || isDevMode()) return;
+    if (!myAccountId || directRecipient === myAccountId) return;
+    if (directRecipientHandledRef.current) return;
+    directRecipientHandledRef.current = true;
+    loadConversations().then(() => {
+      setConversations((prev) => {
+        const existing = prev.find((c) => c.otherUserId === directRecipient);
+        setSelectedConversation(
+          existing ||
+            ({
+              id: "",
+              otherUserId: directRecipient,
+              otherUserName: "New message",
+              unreadCount: 0,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            } as Conversation)
+        );
+        return prev;
+      });
+    });
+  }, [directRecipient, myAccountId]);
+
   // Load messages when conversation is selected
   useEffect(() => {
     if (selectedConversation) {
-      loadMessages(selectedConversation.id);
-      // Mark conversation as read when selected (skip in dev mode or if backend unavailable)
-      if (!isDevMode()) {
-        markConversationAsRead(selectedConversation.id).catch((error) => {
-          // Silently fail - this is not critical for functionality
-          logger.debug("Failed to mark conversation as read", error);
-        });
+      if (selectedConversation.id) {
+        loadMessages(selectedConversation.id);
+        // Mark conversation as read when selected (skip in dev mode or if backend unavailable)
+        if (!isDevMode()) {
+          markConversationAsRead(selectedConversation.id).catch((error) => {
+            // Silently fail - this is not critical for functionality
+            logger.debug("Failed to mark conversation as read", error);
+          });
+        }
+      } else {
+        // Pending new conversation — no messages yet
+        setMessages([]);
       }
     }
   }, [selectedConversation]);
@@ -346,7 +378,7 @@ function MessagesPage() {
       const result = await mockApiResponse(
         () =>
           sendMessage({
-            conversationId: selectedConversation.id,
+            conversationId: selectedConversation.id || undefined,
             recipientId: selectedConversation.otherUserId,
             content: messageContent,
           }),
@@ -377,6 +409,15 @@ function MessagesPage() {
               : conv
           )
         );
+
+        // If this was a brand-new direct conversation, adopt the created id and refresh the list.
+        if (!selectedConversation.id && result.data.conversationId) {
+          const newConvId = result.data.conversationId;
+          setSelectedConversation((prev) =>
+            prev ? ({ ...prev, id: newConvId } as Conversation) : prev
+          );
+          loadConversations();
+        }
       } else {
         // Remove temp message on error
         setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));

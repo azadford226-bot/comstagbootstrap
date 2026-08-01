@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Star, MapPin, Globe, Calendar } from "lucide-react";
+import { Star, MapPin, Globe, Calendar, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import {
   getPublicProfile,
@@ -40,6 +40,7 @@ import {
 
 export default function PublicProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.userId as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -283,6 +284,17 @@ export default function PublicProfilePage() {
                     <span>Visit Website</span>
                   </a>
                 )}
+
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/messages?to=${userId}`)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Message
+                  </button>
+                </div>
               </div>
             </div>
           </div>
