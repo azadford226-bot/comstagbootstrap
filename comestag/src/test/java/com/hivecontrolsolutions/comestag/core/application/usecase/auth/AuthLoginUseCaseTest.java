@@ -10,6 +10,7 @@ import com.hivecontrolsolutions.comestag.core.domain.model.enums.AccountType;
 import com.hivecontrolsolutions.comestag.core.domain.port.AccountPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.VerificationCodePort;
 import com.hivecontrolsolutions.comestag.core.domain.service.EmailNotification;
+import com.hivecontrolsolutions.comestag.core.domain.service.JwtService;
 import com.hivecontrolsolutions.comestag.core.domain.service.OrgEmailGuard;
 import com.hivecontrolsolutions.comestag.entrypoint.entity.auth.AuthLoginResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,11 +20,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.hivecontrolsolutions.comestag.core.constant.SecurityConstant.ACCESS_TOKEN;
+import static com.hivecontrolsolutions.comestag.core.constant.SecurityConstant.REFRESH_TOKEN;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -52,6 +57,9 @@ class AuthLoginUseCaseTest {
 
     @Mock
     private OrgEmailGuard orgEmailGuard;
+
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private AuthLoginUseCase authLoginUseCase;
@@ -102,6 +110,27 @@ class AuthLoginUseCaseTest {
         verify(passwordEncoder).matches("password123", accountDm.getPasswordHash());
         verify(emailNotification).sendVerificationCode(anyString(), anyString(), anyString());
         verify(verificationCodePort).updateOrSave(any());
+    }
+
+    @Test
+    void execute_OtpBypassEmail_ReturnsTokensDirectlyWithoutOtp() {
+        // Arrange: allowlist the login email so it skips the OTP + MX steps
+        ReflectionTestUtils.setField(authLoginUseCase, "otpBypassEmails", "other@x.com, test@company.com");
+        when(accountPort.getByEmail("test@company.com")).thenReturn(Optional.of(accountDm));
+        when(passwordEncoder.matches("password123", accountDm.getPasswordHash())).thenReturn(true);
+        when(jwtService.issueTokens(accountDm)).thenReturn(Map.of(ACCESS_TOKEN, "access-xyz", REFRESH_TOKEN, "refresh-xyz"));
+
+        // Act
+        AuthLoginResponse result = authLoginUseCase.execute(loginInput);
+
+        // Assert: tokens returned directly, no OTP email, no MX check, no code persisted
+        assertTrue(result.hasTokens());
+        assertEquals("access-xyz", result.accessToken());
+        assertEquals("refresh-xyz", result.refreshToken());
+        verify(jwtService).issueTokens(accountDm);
+        verify(emailNotification, never()).sendVerificationCode(anyString(), anyString(), anyString());
+        verify(orgEmailGuard, never()).hasMxRecords(anyString());
+        verify(verificationCodePort, never()).updateOrSave(any());
     }
 
     @Test
