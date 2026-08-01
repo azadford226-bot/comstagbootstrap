@@ -1,6 +1,5 @@
 package com.hivecontrolsolutions.comestag.infrastructure.security.filter;
 
-import com.hivecontrolsolutions.comestag.base.core.error.exception.BusinessException;
 import com.hivecontrolsolutions.comestag.base.stereotype.Filter;
 import com.hivecontrolsolutions.comestag.infrastructure.security.TokenOperation;
 import com.hivecontrolsolutions.comestag.infrastructure.security.entity.UserClaimsDto;
@@ -17,8 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.HashSet;
 
-import static com.hivecontrolsolutions.comestag.base.core.error.entity.enums.InternalStatusError.TOKEN_INVALID;
-
 @Filter
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -31,15 +28,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (auth != null && auth.startsWith("Bearer ")) {
             try {
                 UserClaimsDto userClaimsDto = tokenOperation.extractUserFromClaims(auth.substring(7));
-                if (userClaimsDto == null)
-                    throw new BusinessException(TOKEN_INVALID);
-                var authorities = new HashSet<SimpleGrantedAuthority>();
-                authorities.add(new SimpleGrantedAuthority("ROLE_".concat(userClaimsDto.getType().name())));
-                authorities.add(new SimpleGrantedAuthority("Profile_".concat(userClaimsDto.getStatus().name())));
-                var authentication = new UsernamePasswordAuthenticationToken(userClaimsDto, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (Exception ignored) {
-                throw ignored;
+                if (userClaimsDto != null && userClaimsDto.getType() != null && userClaimsDto.getStatus() != null) {
+                    var authorities = new HashSet<SimpleGrantedAuthority>();
+                    authorities.add(new SimpleGrantedAuthority("ROLE_".concat(userClaimsDto.getType().name())));
+                    authorities.add(new SimpleGrantedAuthority("Profile_".concat(userClaimsDto.getStatus().name())));
+                    var authentication = new UsernamePasswordAuthenticationToken(userClaimsDto, null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+                // If claims are missing/invalid, leave the request unauthenticated (handled as 401 downstream).
+            } catch (Exception ex) {
+                // Expired or otherwise invalid token: do NOT fail the whole request with a 500.
+                // Leave the security context empty so protected endpoints return 401, letting the
+                // client refresh the token or re-authenticate.
+                SecurityContextHolder.clearContext();
             }
         }
         chain.doFilter(req, res);
