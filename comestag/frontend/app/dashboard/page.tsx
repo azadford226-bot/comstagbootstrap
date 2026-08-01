@@ -253,7 +253,7 @@ export default function DashboardPage() {
             <DomainVerificationBanner />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column - Company Profile Card */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-6 lg:self-start">
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 {/* Cover / Banner */}
                 <div className="h-20 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 relative">
@@ -642,7 +642,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Right Column - Opportunities */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-6 lg:self-start">
               {/* Role-aware CTA */}
               {profile?.companyType && (
                 <div className={`rounded-lg p-4 border ${
