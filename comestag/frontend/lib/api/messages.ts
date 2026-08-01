@@ -133,6 +133,37 @@ export async function getConversations(params?: {
 }
 
 /**
+ * Lightweight company summary for the directory / new-message picker.
+ */
+export interface CompanySummary {
+  id: string;
+  displayName: string;
+  city?: string;
+  country?: string;
+  profileImageId?: string;
+  industry?: { id: number; name: string };
+}
+
+/**
+ * Search approved organizations (company directory) for the new-message picker.
+ */
+export async function searchCompanies(query: string, page = 0): Promise<CompanySummary[]> {
+  try {
+    const queryParams = new URLSearchParams();
+    if (query) queryParams.append("q", query);
+    queryParams.append("page", String(page));
+    const result = await authenticatedGet<PageResult<CompanySummary>>(
+      `/v1/organizations?${queryParams.toString()}`
+    );
+    if (result.success && result.data) return result.data.items || [];
+    return [];
+  } catch (error) {
+    logger.error("Error searching companies", error);
+    return [];
+  }
+}
+
+/**
  * Get a specific conversation by ID
  */
 export async function getConversation(

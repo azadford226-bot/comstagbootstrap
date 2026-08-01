@@ -19,6 +19,8 @@ public interface OrganizationPort {
     void increaseViewCount(UUID orgId);
     
     Page<OrganizationDm> findAll(int page, int size);
+
+    Page<OrganizationDm> search(UUID excludeAccountId, String query, int page, int size);
     
     Page<OrganizationDm> findPending(int page, int size);
     

@@ -81,6 +81,13 @@ public class OrganizationAdapter implements OrganizationPort {
         return repo.findAll(org.springframework.data.domain.PageRequest.of(page, size))
                 .map(OrganizationEntity::toDm);
     }
+
+    @Override
+    public org.springframework.data.domain.Page<OrganizationDm> search(UUID excludeAccountId, String query, int page, int size) {
+        return repo.searchApproved(excludeAccountId, query == null ? "" : query.trim(),
+                        org.springframework.data.domain.PageRequest.of(page, size))
+                .map(OrganizationEntity::toDm);
+    }
     
     @Override
     public org.springframework.data.domain.Page<OrganizationDm> findPending(int page, int size) {
