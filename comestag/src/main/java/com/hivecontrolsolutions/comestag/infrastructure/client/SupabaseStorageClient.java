@@ -4,6 +4,7 @@ import com.hivecontrolsolutions.comestag.base.stereotype.Client;
 import com.hivecontrolsolutions.comestag.core.domain.port.FileStoragePort;
 import com.hivecontrolsolutions.comestag.infrastructure.config.SupabaseProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Client
 @RequiredArgsConstructor
 @Profile({"stag", "prod"})
+@ConditionalOnProperty(prefix = "storage", name = "provider", havingValue = "supabase", matchIfMissing = true)
 public class SupabaseStorageClient implements FileStoragePort {
 
     private final SupabaseProperties supabaseProperties;
