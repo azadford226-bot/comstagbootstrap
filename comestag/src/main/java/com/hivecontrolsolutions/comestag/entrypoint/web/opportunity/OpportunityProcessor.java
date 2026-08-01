@@ -1,5 +1,6 @@
 package com.hivecontrolsolutions.comestag.entrypoint.web.opportunity;
 
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import com.hivecontrolsolutions.comestag.infrastructure.persistence.entity.OpportunityEntity;
 import com.hivecontrolsolutions.comestag.infrastructure.persistence.entity.OpportunityInterestEntity;
 import com.hivecontrolsolutions.comestag.infrastructure.persistence.repo.OpportunityInterestRepository;
@@ -25,6 +26,7 @@ public class OpportunityProcessor {
     private final OpportunityRepository opportunityRepo;
     private final OpportunityInterestRepository interestRepo;
     private final TokenOperation tokenOperation;
+    private final NotificationOutboxPublisher notificationPublisher;
 
     public record CreateOpportunityRequest(
             String title,
@@ -158,6 +160,12 @@ public class OpportunityProcessor {
                     .opportunityId(id)
                     .accountId(userId)
                     .build());
+            // Notify opportunity creator
+            opportunityRepo.findById(id).ifPresent(opp -> {
+                if (!opp.getOrganizationId().equals(userId)) {
+                    notificationPublisher.publishOpportunityInterest(opp.getOrganizationId(), userId, id);
+                }
+            });
         }
         return ResponseEntity.ok(Map.of("success", true));
     }

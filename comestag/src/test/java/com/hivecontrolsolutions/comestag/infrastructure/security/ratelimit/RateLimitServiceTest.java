@@ -44,10 +44,10 @@ class RateLimitServiceTest {
         apiConfig.setRefillTokens(10);
         apiConfig.setRefillDurationMinutes(1);
 
-        when(config.isEnabled()).thenReturn(true);
-        when(config.getLogin()).thenReturn(loginConfig);
-        when(config.getRegister()).thenReturn(registerConfig);
-        when(config.getApi()).thenReturn(apiConfig);
+        lenient().when(config.isEnabled()).thenReturn(true);
+        lenient().when(config.getLogin()).thenReturn(loginConfig);
+        lenient().when(config.getRegister()).thenReturn(registerConfig);
+        lenient().when(config.getApi()).thenReturn(apiConfig);
     }
 
     @Test

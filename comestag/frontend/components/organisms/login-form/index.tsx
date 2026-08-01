@@ -16,6 +16,23 @@ import {
 } from "@/lib/secure-storage";
 import { isDevMode } from "@/lib/dev-auth";
 
+/**
+ * Decode the account type embedded in a Comestag access token (JWT claim `user.type`).
+ * Used to route token-based logins (ADMIN or OTP-bypass accounts) to the correct area.
+ */
+function decodeUserTypeFromToken(token: string): string | null {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    let b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    const payload = JSON.parse(atob(b64));
+    return payload?.user?.type ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -75,14 +92,15 @@ export default function LoginForm() {
       return;
     }
 
-    // Check if this is an ADMIN login with tokens
+    // Tokens returned directly (ADMIN, or an OTP-bypass allowlisted account).
+    // Route by the account type embedded in the JWT rather than assuming ADMIN.
     if (result.data?.accessToken && result.data?.refreshToken) {
-      // ADMIN login - tokens received directly, no verification needed
       setAccessToken(result.data.accessToken);
       setRefreshToken(result.data.refreshToken);
       setUserEmail(formData.email);
       setUserName(formData.email.split("@")[0]);
-      setUserType("ADMIN");
+
+      const accountType = decodeUserTypeFromToken(result.data.accessToken);
 
       // Fetch profile to get display name
       try {
@@ -105,9 +123,18 @@ export default function LoginForm() {
 
       // Trigger storage event so navbar detects auth change
       window.dispatchEvent(new Event("storage"));
-      
-      // Redirect to admin dashboard
-      router.push("/admin/dashboard");
+
+      // Route by the real account type (ORG/CONSUMER -> app dashboard, ADMIN -> admin).
+      if (accountType === "ORG") {
+        setUserType("ORGANIZATION");
+        router.push("/dashboard");
+      } else if (accountType === "CONSUMER") {
+        setUserType("CONSUMER");
+        router.push("/dashboard");
+      } else {
+        setUserType("ADMIN");
+        router.push("/admin/dashboard");
+      }
       return;
     }
 

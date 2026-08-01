@@ -8,6 +8,7 @@ import com.hivecontrolsolutions.comestag.core.domain.model.RfqDm;
 import com.hivecontrolsolutions.comestag.core.domain.model.RfqProposalDm;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqProposalPort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class AwardRfqUseCase implements UsecaseWithoutOutput<AwardRfqInput> {
     
     private final RfqPort rfqPort;
     private final RfqProposalPort proposalPort;
+    private final NotificationOutboxPublisher notificationPublisher;
     
     @Transactional
     @Override
@@ -53,7 +55,10 @@ public class AwardRfqUseCase implements UsecaseWithoutOutput<AwardRfqInput> {
         
         // Update RFQ status to AWARDED
         rfqPort.updateStatus(input.rfqId(), RfqDm.RfqStatus.AWARDED);
-        
+
+        // Notify the winning bidder
+        notificationPublisher.publishRfqAwarded(input.awardedToOrganizationId(), input.ownerOrganizationId(), input.rfqId());
+
         // TODO: Create project automatically when project feature is implemented
         // This requires a Project domain model and ProjectPort to be created first
         // Project should link the awarded RFQ, owner organization, and awarded organization

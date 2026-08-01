@@ -7,6 +7,7 @@ import com.hivecontrolsolutions.comestag.core.domain.model.enums.MediaStatus;
 import com.hivecontrolsolutions.comestag.core.domain.port.MediaPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqMediaPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqPort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,9 @@ class CreateRfqUseCaseTest {
     @Mock
     private RfqMediaPort rfqMediaPort;
 
+    @Mock
+    private NotificationOutboxPublisher notificationPublisher;
+
     @InjectMocks
     private CreateRfqUseCase createRfqUseCase;
 
@@ -52,7 +56,7 @@ class CreateRfqUseCaseTest {
         organizationId = UUID.randomUUID();
         rfqId = UUID.randomUUID();
 
-        when(rfqPort.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(rfqPort.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(RfqDm.builder().id(rfqId).organizationId(organizationId).build());
     }
 

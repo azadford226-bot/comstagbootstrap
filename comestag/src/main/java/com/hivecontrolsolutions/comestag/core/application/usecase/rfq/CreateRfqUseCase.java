@@ -8,6 +8,7 @@ import com.hivecontrolsolutions.comestag.core.domain.model.enums.MediaStatus;
 import com.hivecontrolsolutions.comestag.core.domain.port.MediaPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqMediaPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.RfqPort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class CreateRfqUseCase implements Usecase<CreateRfqInput, UUID> {
     private final RfqPort rfqPort;
     private final MediaPort mediaPort;
     private final RfqMediaPort rfqMediaPort;
+    private final NotificationOutboxPublisher notificationPublisher;
     
     @Transactional
     @Override
@@ -54,11 +56,21 @@ public class CreateRfqUseCase implements Usecase<CreateRfqInput, UUID> {
                     .filter(m -> m.getStatus() == MediaStatus.UNLINKED)
                     .map(MediaDm::getId)
                     .collect(Collectors.toSet());
-            
+
             if (!existedMediaIds.isEmpty()) {
                 rfqMediaPort.create(rfq.getId(), existedMediaIds);
             }
         }
+
+        // Notify invited organizations
+        if (input.invitedOrganizationIds() != null) {
+            for (UUID invitedOrgId : input.invitedOrganizationIds()) {
+                if (!invitedOrgId.equals(input.organizationId())) {
+                    notificationPublisher.publishRfqNew(invitedOrgId, input.organizationId(), rfq.getId(), input.title());
+                }
+            }
+        }
+
         return rfq.getId();
     }
 }

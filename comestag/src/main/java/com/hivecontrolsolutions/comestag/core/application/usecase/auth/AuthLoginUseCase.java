@@ -15,10 +15,12 @@ import com.hivecontrolsolutions.comestag.core.domain.service.OrgEmailGuard;
 import com.hivecontrolsolutions.comestag.entrypoint.entity.auth.AuthLoginResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,6 +41,14 @@ public class AuthLoginUseCase implements Usecase<AuthLoginInput, AuthLoginRespon
     private final OrgEmailGuard orgEmailGuard;
     private final JwtService jwtService;
 
+    /**
+     * Comma-separated allowlist of account emails that skip the email OTP step and receive
+     * tokens directly (like ADMIN). Empty by default, so production behaviour is unchanged
+     * unless explicitly configured via AUTH_OTP_BYPASS_EMAILS. Intended for test/QA accounts.
+     */
+    @Value("${auth.otp-bypass-emails:}")
+    private String otpBypassEmails;
+
     @Transactional
     @Override
     public AuthLoginResponse execute(AuthLoginInput in) {
@@ -47,24 +57,49 @@ public class AuthLoginUseCase implements Usecase<AuthLoginInput, AuthLoginRespon
             throw new BusinessException(INVALID_CREDENTIALS);
 
         var accDm = acc.get();
-        
-        // Skip email validation and verification code for ADMIN accounts
-        if (accDm.getType() != com.hivecontrolsolutions.comestag.core.domain.model.enums.AccountType.ADMIN) {
-            validateOrgEmail(in.email());
-            verifyAccountStatus(accDm);
-            String code = generateVerificationCode(accDm.getId());
-            emailNotification.sendVerificationCode(accDm.getDisplayName(), in.email(),  code);
-            // Return userId for regular users (they need to verify code)
-            return AuthLoginResponse.forRegularUser(accDm.getId());
-        } else {
-            // For ADMIN accounts, only verify status (no email verification needed)
+
+        boolean isAdmin = accDm.getType() == com.hivecontrolsolutions.comestag.core.domain.model.enums.AccountType.ADMIN;
+
+        // ADMIN accounts skip email verification entirely (existing behaviour).
+        if (isAdmin) {
             if (accDm.isLocked()) {
                 throw new BusinessException(ACCOUNT_LOCKED);
             }
-            // Generate and return tokens directly for ADMIN accounts
-            Map<String, String> tokens = jwtService.issueTokens(accDm);
-            return AuthLoginResponse.forAdmin(tokens.get(ACCESS_TOKEN), tokens.get(REFRESH_TOKEN));
+            return issueTokensResponse(accDm);
         }
+
+        // Allowlisted test/QA accounts skip the email OTP but still must be verified and unlocked.
+        if (isOtpBypassEmail(in.email())) {
+            verifyAccountStatus(accDm);
+            return issueTokensResponse(accDm);
+        }
+
+        // Regular users: validate the email and send a one-time verification code (2FA).
+        validateOrgEmail(in.email());
+        verifyAccountStatus(accDm);
+        String code = generateVerificationCode(accDm.getId());
+        emailNotification.sendVerificationCode(accDm.getDisplayName(), in.email(), code);
+        // Return userId for regular users (they need to verify the code)
+        return AuthLoginResponse.forRegularUser(accDm.getId());
+    }
+
+    private AuthLoginResponse issueTokensResponse(AccountDm accDm) {
+        Map<String, String> tokens = jwtService.issueTokens(accDm);
+        return AuthLoginResponse.forAdmin(tokens.get(ACCESS_TOKEN), tokens.get(REFRESH_TOKEN));
+    }
+
+    private boolean isOtpBypassEmail(String email) {
+        if (otpBypassEmails == null || otpBypassEmails.isBlank() || email == null) {
+            return false;
+        }
+        String normalized = email.trim().toLowerCase(Locale.ROOT);
+        for (String allowed : otpBypassEmails.split(",")) {
+            String candidate = allowed.trim().toLowerCase(Locale.ROOT);
+            if (!candidate.isEmpty() && candidate.equals(normalized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String generateVerificationCode(UUID userId) {

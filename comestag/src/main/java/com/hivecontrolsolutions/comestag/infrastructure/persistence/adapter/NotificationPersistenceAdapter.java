@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,6 +31,11 @@ public class NotificationPersistenceAdapter implements NotificationQueryPort, No
     @Override
     public long countUnread(UUID accountId) {
         return jdbcRepo.countUnread(accountId);
+    }
+
+    @Override
+    public List<NotificationViewDm> listUnreadSince(UUID accountId, Instant since) {
+        return jdbcRepo.listUnreadSince(accountId, since);
     }
 
     // ---------------- CommandPort ----------------

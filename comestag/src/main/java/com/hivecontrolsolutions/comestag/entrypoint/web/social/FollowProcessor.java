@@ -3,6 +3,7 @@ package com.hivecontrolsolutions.comestag.entrypoint.web.social;
 import com.hivecontrolsolutions.comestag.base.stereotype.CurrentUserId;
 import com.hivecontrolsolutions.comestag.base.stereotype.Processor;
 import com.hivecontrolsolutions.comestag.core.domain.port.FollowPort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class FollowProcessor {
 
     private final FollowPort followPort;
+    private final NotificationOutboxPublisher notificationPublisher;
 
     @PreAuthorize("hasAnyRole('CONSUMER','ORG') and hasAuthority('Profile_ACTIVE')")
     @GetMapping("/following/ids")
@@ -33,6 +35,9 @@ public class FollowProcessor {
     public ResponseEntity<?> follow(@CurrentUserId UUID currentUserId,
                                     @PathVariable UUID targetId) {
         followPort.follow(currentUserId, targetId);
+        if (!targetId.equals(currentUserId)) {
+            notificationPublisher.publishFollow(targetId, currentUserId);
+        }
         return ResponseEntity.ok().build();
     }
 

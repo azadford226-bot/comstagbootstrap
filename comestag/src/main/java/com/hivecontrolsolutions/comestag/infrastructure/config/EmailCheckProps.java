@@ -15,5 +15,7 @@ import java.util.List;
 public class EmailCheckProps {
     private List<String> blockedDomains;
     private List<String> blockedSuffixes;
+    /** When true, registration verifies the email domain has DNS MX records. Disable in tests/offline environments. */
+    private boolean mxCheckEnabled = true;
 }
 

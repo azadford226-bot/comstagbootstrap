@@ -8,8 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.hivecontrolsolutions.comestag.core.domain.model.enums.NotificationType.POST_COMMENTED;
-import static com.hivecontrolsolutions.comestag.core.domain.model.enums.NotificationType.POST_REACTED;
+import static com.hivecontrolsolutions.comestag.core.domain.model.enums.NotificationType.*;
 
 @Component
 @RequiredArgsConstructor
@@ -46,6 +45,48 @@ public class NotificationOutboxPublisher {
         );
 
         outboxPort.enqueue(POST_REACTED.name(), payload);
+    }
+
+    public void publishRfqNew(UUID recipientAccountId, UUID actorAccountId, UUID rfqId, String rfqTitle) {
+        Map<String, Object> payload = basePayload(recipientAccountId, actorAccountId, "RFQ", rfqId);
+        payload.put("payload", Map.of("rfqId", rfqId.toString(), "rfqTitle", rfqTitle == null ? "" : rfqTitle));
+        payload.put("dedupeKey", "RFQ_NEW:" + rfqId + ":" + recipientAccountId);
+        outboxPort.enqueue(RFQ_NEW.name(), payload);
+    }
+
+    public void publishRfqBid(UUID recipientAccountId, UUID actorAccountId, UUID rfqId) {
+        Map<String, Object> payload = basePayload(recipientAccountId, actorAccountId, "RFQ", rfqId);
+        payload.put("payload", Map.of("rfqId", rfqId.toString()));
+        payload.put("dedupeKey", "RFQ_BID:" + rfqId + ":" + actorAccountId);
+        outboxPort.enqueue(RFQ_BID.name(), payload);
+    }
+
+    public void publishRfqAwarded(UUID recipientAccountId, UUID actorAccountId, UUID rfqId) {
+        Map<String, Object> payload = basePayload(recipientAccountId, actorAccountId, "RFQ", rfqId);
+        payload.put("payload", Map.of("rfqId", rfqId.toString()));
+        payload.put("dedupeKey", "RFQ_AWARDED:" + rfqId + ":" + recipientAccountId);
+        outboxPort.enqueue(RFQ_AWARDED.name(), payload);
+    }
+
+    public void publishMessageNew(UUID recipientAccountId, UUID actorAccountId, UUID conversationId, UUID messageId) {
+        Map<String, Object> payload = basePayload(recipientAccountId, actorAccountId, "CONVERSATION", conversationId);
+        payload.put("payload", Map.of("conversationId", conversationId.toString(), "messageId", messageId.toString()));
+        payload.put("dedupeKey", "MESSAGE_NEW:" + conversationId + ":" + messageId);
+        outboxPort.enqueue(MESSAGE_NEW.name(), payload);
+    }
+
+    public void publishFollow(UUID recipientAccountId, UUID actorAccountId) {
+        Map<String, Object> payload = basePayload(recipientAccountId, actorAccountId, "ACCOUNT", recipientAccountId);
+        payload.put("payload", Map.of());
+        payload.put("dedupeKey", "FOLLOW:" + actorAccountId + ":" + recipientAccountId);
+        outboxPort.enqueue(FOLLOW.name(), payload);
+    }
+
+    public void publishOpportunityInterest(UUID recipientAccountId, UUID actorAccountId, UUID opportunityId) {
+        Map<String, Object> payload = basePayload(recipientAccountId, actorAccountId, "OPPORTUNITY", opportunityId);
+        payload.put("payload", Map.of("opportunityId", opportunityId.toString()));
+        payload.put("dedupeKey", "OPPORTUNITY_INTEREST:" + opportunityId + ":" + actorAccountId);
+        outboxPort.enqueue(OPPORTUNITY_INTEREST.name(), payload);
     }
 
     private static Map<String, Object> basePayload(UUID recipientAccountId, UUID actorAccountId, String targetKind, UUID targetId) {

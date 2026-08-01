@@ -20,6 +20,8 @@ public class EmailNotification {
     private String restoreEmailUrl;
     @Value("${url.org.my-profile}")
     private String myOrgProfileIdUrl;
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
     private final EmailSenderPort emailSenderPort;
 
     @Async
@@ -66,6 +68,58 @@ public class EmailNotification {
                 true,
                 null)
         );
+    }
+
+    // ========== Business event email notifications ==========
+
+    @Async
+    public void sendRfqNewEmail(String recipientName, String to, String actorName, String rfqTitle) {
+        String link = frontendUrl + "/rfq";
+        String body = NotificationTemplate.buildRfqNewEmailBody(recipientName, actorName, rfqTitle, link);
+        emailSenderPort.send(new EmailNotificationData(to, "New RFQ Invitation: " + rfqTitle, body, true, null));
+    }
+
+    @Async
+    public void sendRfqBidEmail(String recipientName, String to, String bidderName, String rfqTitle) {
+        String link = frontendUrl + "/rfq";
+        String body = NotificationTemplate.buildRfqBidEmailBody(recipientName, bidderName, rfqTitle, link);
+        emailSenderPort.send(new EmailNotificationData(to, "New Proposal for: " + rfqTitle, body, true, null));
+    }
+
+    @Async
+    public void sendRfqAwardedEmail(String recipientName, String to, String awardorName, String rfqTitle) {
+        String link = frontendUrl + "/rfq";
+        String body = NotificationTemplate.buildRfqAwardedEmailBody(recipientName, awardorName, rfqTitle, link);
+        emailSenderPort.send(new EmailNotificationData(to, "Proposal Accepted: " + rfqTitle, body, true, null));
+    }
+
+    @Async
+    public void sendMessageNewEmail(String recipientName, String to, String senderName) {
+        String link = frontendUrl + "/messages";
+        String body = NotificationTemplate.buildMessageNewEmailBody(recipientName, senderName, link);
+        emailSenderPort.send(new EmailNotificationData(to, "New message from " + senderName, body, true, null));
+    }
+
+    @Async
+    public void sendFollowEmail(String recipientName, String to, String followerName) {
+        String link = frontendUrl + "/profile";
+        String body = NotificationTemplate.buildFollowEmailBody(recipientName, followerName, link);
+        emailSenderPort.send(new EmailNotificationData(to, followerName + " started following you", body, true, null));
+    }
+
+    @Async
+    public void sendOpportunityInterestEmail(String recipientName, String to, String interestedName, String opportunityTitle) {
+        String link = frontendUrl + "/opportunities";
+        String body = NotificationTemplate.buildOpportunityInterestEmailBody(recipientName, interestedName, opportunityTitle, link);
+        emailSenderPort.send(new EmailNotificationData(to, "Interest in: " + opportunityTitle, body, true, null));
+    }
+
+    @Async
+    public void sendDigestEmail(String to, String recipientName, String htmlBody, String frequency) {
+        String subject = "daily".equals(frequency)
+                ? "Your daily Comestag digest"
+                : "Your weekly Comestag digest";
+        emailSenderPort.send(new EmailNotificationData(to, subject, htmlBody, true, null));
     }
 
 }

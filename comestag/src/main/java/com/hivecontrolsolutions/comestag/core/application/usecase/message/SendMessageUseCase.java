@@ -7,9 +7,12 @@ import com.hivecontrolsolutions.comestag.core.domain.model.ConversationDm;
 import com.hivecontrolsolutions.comestag.core.domain.model.MessageDm;
 import com.hivecontrolsolutions.comestag.core.domain.port.ConversationPort;
 import com.hivecontrolsolutions.comestag.core.domain.port.MessagePort;
+import com.hivecontrolsolutions.comestag.entrypoint.stream.notification.NotificationOutboxPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import java.util.UUID;
 
 @UseCase
 @RequiredArgsConstructor
@@ -17,6 +20,7 @@ public class SendMessageUseCase implements Usecase<SendMessageInput, MessageDm> 
 
     private final ConversationPort conversationPort;
     private final MessagePort messagePort;
+    private final NotificationOutboxPublisher notificationPublisher;
 
     @Override
     @Transactional
@@ -38,7 +42,15 @@ public class SendMessageUseCase implements Usecase<SendMessageInput, MessageDm> 
         
         // Update conversation's last message (handled by trigger, but we can update here too)
         conversationPort.updateLastMessage(conversation.getId(), message.getId());
-        
+
+        // Notify the other participant
+        UUID recipientId = conversation.getParticipant1Id().equals(input.senderId())
+                ? conversation.getParticipant2Id()
+                : conversation.getParticipant1Id();
+        if (!recipientId.equals(input.senderId())) {
+            notificationPublisher.publishMessageNew(recipientId, input.senderId(), conversation.getId(), message.getId());
+        }
+
         return message;
     }
 }
