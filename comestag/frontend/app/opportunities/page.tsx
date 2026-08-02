@@ -232,8 +232,12 @@ export default function OpportunitiesPage() {
         setShowCreate(false);
         setFormData({ title: "", description: "", type: "jv", company: "", location: "", equity: "", funding: "", stage: "", tags: [], cohortDetails: "", milestones: "", duration: "" });
         fetchData();
+      } else {
+        toast(res.message || "Could not create opportunity. Please try again.", "error");
       }
-    } catch { /* ignore */ }
+    } catch {
+      toast("Could not create opportunity. Please try again.", "error");
+    }
     setCreating(false);
   };
 
