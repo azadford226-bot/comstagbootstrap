@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @EnableAsync(proxyTargetClass = true)
-@EnableConfigurationProperties(SupabaseProperties.class)
+@EnableConfigurationProperties({SupabaseProperties.class, S3StorageProperties.class})
 @Configuration
 public class ComstagConfig {
 }
