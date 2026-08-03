@@ -18,10 +18,10 @@ function Footer() {
                 Company
               </h4>
               <div className="flex flex-col gap-4 md:gap-6 text-pale-blue text-sm md:text-[16px] font-normal leading-4">
-                <a href="/under-construction" className="underline">
+                <a href="/about" className="underline">
                   About us
                 </a>
-                <a href="/under-construction" className="underline">
+                <a href="/services" className="underline">
                   Our Services
                 </a>
                 <a href="/privacy" className="underline">
@@ -38,13 +38,13 @@ function Footer() {
                 Help
               </h4>
               <div className="flex flex-col gap-4 md:gap-6 text-pale-blue text-sm md:text-[16px] font-normal leading-4">
-                <a href="/under-construction" className="underline">
+                <a href="/help" className="underline">
                   Help me
                 </a>
-                <a href="/under-construction" className="underline">
+                <a href="/feedback" className="underline">
                   Feedback
                 </a>
-                <a href="/under-construction" className="underline">
+                <a href="/report-issue" className="underline">
                   Report an Issue / Bug
                 </a>
                 {/* <a href="/under-construction" className="underline">

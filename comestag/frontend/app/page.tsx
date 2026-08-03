@@ -13,7 +13,7 @@ export default function Home() {
       {/* View All Partners Button */}
       <section className="pb-12 md:pb-24 px-4">
         <div className="text-center">
-          <Button type="partners" href="/under-construction">
+          <Button type="partners" href="/dashboard">
             View All Partners →
           </Button>
         </div>
