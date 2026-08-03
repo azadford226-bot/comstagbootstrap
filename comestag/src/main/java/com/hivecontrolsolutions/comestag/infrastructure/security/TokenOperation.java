@@ -129,7 +129,9 @@ public class TokenOperation {
     }
 
     public UserClaimsDto extractUserClaims(String token) {
-        return (UserClaimsDto) extractClaims(token).get(USER_KEY);
+        // The "user" claim is deserialized by JJWT as a Map, not a UserClaimsDto,
+        // so it must be mapped (not cast). Delegating avoids a ClassCastException.
+        return extractUserFromClaims(token);
     }
 
     public UserClaimsDto extractUserClaims(Claims claims) {

@@ -45,10 +45,12 @@ public class ListPostsProcessor {
                     List posts of specific org and used when you view organization profile.
                     """
     )
-    public ResponseEntity<?> listOrgPosts(@RequestParam UUID orgId,
+    public ResponseEntity<?> listOrgPosts(@RequestParam(required = false) UUID orgId,
                                           @Min(0) @Max(100) @RequestParam(defaultValue = "0") int page,
                                           @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size) {
-        var body = postPort.pageByOrganization(orgId, page, size);
+        var body = orgId != null
+                ? postPort.pageByOrganization(orgId, page, size)
+                : postPort.pageLatest(page, size);
         return ResponseEntity.ok(PageResult.of(body));
     }
 
