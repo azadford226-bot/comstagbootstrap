@@ -26,7 +26,7 @@ RUN if [ -f pnpm-lock.yaml ]; then \
     fi
 
 # Stage 2: Build Backend (Java/Spring Boot)
-FROM maven:3.9-eclipse-temurin-21 AS backend-builder
+FROM maven:3.9-eclipse-temurin-25 AS backend-builder
 
 WORKDIR /app
 
@@ -50,7 +50,7 @@ RUN mkdir -p ./src/main/resources/static
 RUN mvn -q -Dmaven.test.skip=true clean package
 
 # ========== Runtime stage ==========
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
