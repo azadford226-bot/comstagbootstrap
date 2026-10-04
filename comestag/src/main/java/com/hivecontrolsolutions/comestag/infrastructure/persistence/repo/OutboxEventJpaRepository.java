@@ -13,8 +13,10 @@ public interface OutboxEventJpaRepository extends JpaRepository<OutboxEventEntit
     @Query(value = """
       SELECT *
       FROM outbox_events
-      WHERE status = 'PENDING'
-        AND (next_retry_at IS NULL OR next_retry_at <= now())
+      WHERE (status = 'PENDING'
+             AND (next_retry_at IS NULL OR next_retry_at <= now()))
+         OR (status = 'PROCESSING'
+             AND updated_at < now() - interval '5 minutes')
       ORDER BY created_at ASC
       LIMIT ?1
       FOR UPDATE SKIP LOCKED

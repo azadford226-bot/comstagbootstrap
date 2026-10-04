@@ -40,6 +40,10 @@ interface RestCountryResponse {
 
 // Fetch countries from REST Countries API
 export async function fetchCountries(): Promise<Country[]> {
+  if (isDevMode()) {
+    return getDefaultCountries();
+  }
+
   try {
     const response = await fetch(
       "https://restcountries.com/v3.1/all?fields=name,cca2"
@@ -119,6 +123,10 @@ function getDefaultCountries(): Country[] {
 export async function fetchStatesByCountry(
   countryName: string
 ): Promise<string[]> {
+  if (isDevMode()) {
+    return [];
+  }
+
   try {
     const response = await fetch(
       "https://countriesnow.space/api/v0.1/countries/states",
@@ -182,6 +190,10 @@ export async function fetchCitiesByState(
 export async function fetchCitiesByCountry(
   countryName: string
 ): Promise<string[]> {
+  if (isDevMode()) {
+    return getDefaultCitiesByName(countryName);
+  }
+
   // If country name has special characters, use fallback immediately
   if (!countryName || countryName.includes('Å') || countryName.includes('Æ') || countryName.includes('Ø')) {
     return getDefaultCitiesByName(countryName);

@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 // Check if we're building for static export
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
 
+if (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_DEV_MODE === "true") {
+  throw new Error("NEXT_PUBLIC_DEV_MODE=true is not allowed in a production build.");
+}
+
 const nextConfig: NextConfig = {
   /* config options here */
   // Use standalone mode - we'll serve the HTML files manually

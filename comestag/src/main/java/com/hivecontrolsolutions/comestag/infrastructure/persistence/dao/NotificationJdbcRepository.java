@@ -52,56 +52,40 @@ public class NotificationJdbcRepository {
                 .addValue("targetId", env.targetId())
                 .addValue("payloadJson", payloadJson);
 
-        // If dedupeKey is present -> do dedup insert
+                String sqlInsertN = """
+                        INSERT INTO notifications(id, type, actor_account_id, target_kind, target_id, payload)
+                        VALUES (:notificationId, :type, :actor, :targetKind, :targetId, CAST(:payloadJson AS jsonb))
+                        RETURNING
+                            id               AS notification_id,
+                            type             AS type,
+                            created_at       AS created_at,
+                            actor_account_id AS actor_account_id,
+                            target_kind      AS target_kind,
+                            target_id        AS target_id,
+                            payload::text    AS payload_json,
+                            NULL::timestamptz AS read_at
+                        """;
+
+                // If dedupeKey is present, create the master row first so the recipient foreign key is valid.
         if (params.getValue("dedupeKey") != null) {
+                        NotificationViewDm created = jdbc.queryForObject(sqlInsertN, params, (rs, i) -> mapRow(rs));
 
-            // 1) Try insert into notification_recipients with dedupe uniqueness
-            //    If ON CONFLICT happens, it returns 0 rows -> we stop and return empty.
-            // 2) If inserted, insert notifications using the same notificationId, return created notification view.
-            String sql = """
-                WITH ins_r AS (
-                  INSERT INTO notification_recipients(notification_id, recipient_account_id, dedupe_key)
-                  VALUES (:notificationId, :recipient, :dedupeKey)
-                  ON CONFLICT (recipient_account_id, dedupe_key) DO NOTHING
-                  RETURNING notification_id, recipient_account_id, created_at
-                ),
-                ins_n AS (
-                  INSERT INTO notifications(id, type, actor_account_id, target_kind, target_id, payload)
-                  SELECT :notificationId, :type, :actor, :targetKind, :targetId, CAST(:payloadJson AS jsonb)
-                  FROM ins_r
-                  RETURNING id, type, actor_account_id, target_kind, target_id, payload, created_at
-                )
-                SELECT
-                  n.id                AS notification_id,
-                  n.type              AS type,
-                  n.created_at        AS created_at,
-                  n.actor_account_id  AS actor_account_id,
-                  n.target_kind       AS target_kind,
-                  n.target_id         AS target_id,
-                  n.payload::text     AS payload_json,
-                  NULL::timestamptz   AS read_at
-                FROM ins_n n
-                """;
+                        int recipientInserted = jdbc.update("""
+                                        INSERT INTO notification_recipients(notification_id, recipient_account_id, dedupe_key)
+                                        VALUES (:notificationId, :recipient, :dedupeKey)
+                                        ON CONFLICT (recipient_account_id, dedupe_key)
+                                        WHERE dedupe_key IS NOT NULL DO NOTHING
+                                        """, params);
 
-            List<NotificationViewDm> created = jdbc.query(sql, params, (rs, i) -> mapRow(rs));
-            return created.stream().findFirst();
+                        if (recipientInserted == 0) {
+                                jdbc.update("DELETE FROM notifications WHERE id = :notificationId", params);
+                                return Optional.empty();
+                        }
+
+                        return Optional.of(created);
         }
 
         // No dedupeKey -> normal insert notification then recipient
-        String sqlInsertN = """
-            INSERT INTO notifications(id, type, actor_account_id, target_kind, target_id, payload)
-            VALUES (:notificationId, :type, :actor, :targetKind, :targetId, CAST(:payloadJson AS jsonb))
-            RETURNING
-              id               AS notification_id,
-              type             AS type,
-              created_at       AS created_at,
-              actor_account_id AS actor_account_id,
-              target_kind      AS target_kind,
-              target_id        AS target_id,
-              payload::text    AS payload_json,
-              NULL::timestamptz AS read_at
-            """;
-
         NotificationViewDm created;
         try {
             created = jdbc.queryForObject(sqlInsertN, params, (rs, i) -> mapRow(rs));

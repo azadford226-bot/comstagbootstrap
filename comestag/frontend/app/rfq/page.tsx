@@ -21,6 +21,7 @@ import { Upload, Paperclip, SlidersHorizontal } from 'lucide-react'
 import { uploadPostMedia } from '@/lib/api/media'
 import { getProfile, isOrganizationProfile, OrganizationProfile } from '@/lib/api/profile'
 import { RfqStatusBadge } from '@/components/rfq/rfq-status-badge'
+import { DEV_MOCK_PROFILE, isDevMode } from '@/lib/dev-auth'
 
 const CATEGORIES = [
   'Software Development',
@@ -121,6 +122,12 @@ export default function RFQPage() {
 
   const fetchRFQs = useCallback(async () => {
     setIsLoading(true)
+    if (isDevMode()) {
+      setRfqs([])
+      setIsLoading(false)
+      return
+    }
+
     try {
       const result = await listRfqs({
         filter: filter,
@@ -142,6 +149,12 @@ export default function RFQPage() {
 
   useEffect(() => {
     fetchRFQs()
+    if (isDevMode()) {
+      setUserProfile(DEV_MOCK_PROFILE)
+      setRfqSubscriptions([])
+      return
+    }
+
     getProfile().then((res) => {
       if (res.success && res.data && isOrganizationProfile(res.data)) {
         setUserProfile(res.data);
@@ -334,16 +347,16 @@ export default function RFQPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4">
             {/* Tab Filters */}
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               {(['all', 'available', 'mine'] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filter === f
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-primary text-white hover:bg-primary-dark'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -352,8 +365,9 @@ export default function RFQPage() {
               ))}
             </div>
 
+            <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
             {/* Search */}
-            <div className="relative flex-1">
+            <div className="relative min-w-0 flex-1 md:min-w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -398,6 +412,7 @@ export default function RFQPage() {
                 <span className="w-2 h-2 bg-primary rounded-full" />
               )}
             </button>
+            </div>
           </div>
 
           {/* Saved filter presets (aligned to list filters + schema fields) */}

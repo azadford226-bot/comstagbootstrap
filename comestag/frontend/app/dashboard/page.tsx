@@ -13,6 +13,7 @@ import { PostsFeed } from "@/components/ui/posts-feed";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { getMediaUrl } from "@/lib/api/media";
 import { getFollowingIds, getBookmarks } from "@/lib/api/social";
+import { DEV_MOCK_PROFILE, isDevMode } from "@/lib/dev-auth";
 
 const SPONSORED_DISMISS_KEY = "comestag_feed_sponsored_dismissed";
 const DISMISSED_PARTNERS_KEY = "comestag_dismissed_recommended_partners";
@@ -59,6 +60,16 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
+
+      if (isDevMode()) {
+        setProfile(DEV_MOCK_PROFILE);
+        setPosts([]);
+        setRfqs([]);
+        setRecommendedPartners([]);
+        setFollowingOrgIds(new Set());
+        setBookmarkedPostIds(new Set());
+        return;
+      }
 
       const [profileRes, postsRes, rfqsRes] = await Promise.all([
         getProfile(),
