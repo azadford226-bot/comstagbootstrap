@@ -129,7 +129,7 @@ public class SecurityConfig {
                         // Allow actuator health endpoint (needed for Railway health checks)
                         .requestMatchers("/actuator/health").permitAll()
                         // Allow API endpoints that don't require auth
-                        .requestMatchers("/v1/auth/**", "/home/dynamic", "/v1/contact").permitAll()
+                        .requestMatchers("/v1/auth/**", "/home/dynamic", "/v1/contact", "/v1/billing/webhook").permitAll()
                         // Allow frontend routes (SPA) - frontend handles its own auth
                         .requestMatchers("/", "/login", "/signup/**", "/forgot-password", "/reset-password", "/verify-email", "/privacy", "/terms", "/under-construction").permitAll()
                         // All API requests (except auth) require authentication
