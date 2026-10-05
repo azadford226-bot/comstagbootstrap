@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import StepsForm, { StepConfig } from "@/components/organisms/steps_form";
 import {
@@ -30,10 +30,7 @@ function parseCompanyTypeParam(raw: string | null): CompanyType | null {
 export default function SignupFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const companyTypeFromUrl = useMemo(
-    () => parseCompanyTypeParam(searchParams.get("companyType")),
-    [searchParams]
-  );
+  const [companyTypeFromUrl, setCompanyTypeFromUrl] = useState<CompanyType | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -86,7 +83,11 @@ export default function SignupFormContent() {
   });
 
   useEffect(() => {
-    if (companyTypeFromUrl) {
+    setCompanyTypeFromUrl(parseCompanyTypeParam(searchParams.get("companyType")));
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (companyTypeFromUrl !== null) {
       setFormData((prev) =>
         prev.companyType === companyTypeFromUrl
           ? prev
@@ -114,6 +115,7 @@ export default function SignupFormContent() {
       { field: "organizationName", label: "Organization Name" },
       { field: "companyType", label: "Company Type" },
       { field: "companySize", label: "Company Size" },
+      { field: "establishmentDate", label: "Establishment Date" },
     ];
 
     if (!formData.industryId || formData.industryId === 0) {

@@ -192,11 +192,13 @@ export default function EventRegistrationsPage() {
     showUnregister?: boolean;
   }) => (
     <div className="bg-white rounded-lg shadow border hover:shadow-md transition-shadow">
-      <Link href={`/event/${event.id}`} className="block">
-        <div className="p-4">
-          <h3 className="font-semibold text-lg text-gray-800 mb-2 line-clamp-2">
+      <div className="p-4">
+          <Link
+            href={`/event/${event.id}`}
+            className="block font-semibold text-lg text-gray-800 mb-2 line-clamp-2 hover:text-primary"
+          >
             {event.title}
-          </h3>
+          </Link>
 
           <div className="space-y-1 text-sm text-gray-600 mb-3">
             <div className="flex items-center gap-1">
@@ -265,7 +267,6 @@ export default function EventRegistrationsPage() {
                 <Link
                   href={`/profile/${event.organizationId}`}
                   className="hover:text-primary hover:underline"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   {event.organizationName}
                 </Link>
@@ -280,8 +281,7 @@ export default function EventRegistrationsPage() {
               {event.body}
             </p>
           )}
-        </div>
-      </Link>
+      </div>
 
       <div className="px-4 pb-4">
         {showUnregister ? (

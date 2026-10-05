@@ -190,6 +190,15 @@ export default function Navbar() {
                     >
                       Analytics
                     </Link>
+                    {userType === "ORGANIZATION" && (
+                      <Link
+                        href="/billing"
+                        className="block px-4 py-2 text-text-dark hover:bg-off-white transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        Billing
+                      </Link>
+                    )}
                     <Link
                       href="/settings"
                       className="block px-4 py-2 text-text-dark hover:bg-off-white transition-colors"
@@ -312,6 +321,15 @@ export default function Navbar() {
                 >
                   Analytics
                 </Link>
+                {userType === "ORGANIZATION" && (
+                  <Link
+                    href="/billing"
+                    className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Billing
+                  </Link>
+                )}
                 <Link
                   href="/settings"
                   className="py-2 px-4 text-text-dark hover:bg-off-white rounded-lg transition-colors"

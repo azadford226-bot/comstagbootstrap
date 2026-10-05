@@ -1,4 +1,4 @@
-import { authenticatedGet, authenticatedPost } from "./api-client";
+import { authenticatedDelete, authenticatedGet, authenticatedPost } from "./api-client";
 
 export interface Rfq {
   id: string;
@@ -33,6 +33,15 @@ export interface RfqProposal {
   deliveryTime: string | null;
   status: string;
   submittedAt: string;
+  updatedAt: string;
+}
+
+export interface RfqComment {
+  id: string;
+  rfqId: string;
+  accountId: string;
+  body: string;
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -75,6 +84,14 @@ export interface AwardRfqRequest {
 
 export interface RfqListResponse {
   content: Rfq[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export interface RfqCommentListResponse {
+  content: RfqComment[];
   totalElements: number;
   totalPages: number;
   size: number;
@@ -161,6 +178,30 @@ export async function listProposals(
   return authenticatedGet<ProposalListResponse>(
     `/v1/rfq/${rfqId}/proposals?page=${page}&size=${size}`
   );
+}
+
+export async function listRfqComments(
+  rfqId: string,
+  page = 0,
+  size = 20
+): Promise<{ success: boolean; data?: RfqCommentListResponse; message?: string }> {
+  return authenticatedGet<RfqCommentListResponse>(
+    `/v1/rfq/${rfqId}/comments?page=${page}&size=${size}`
+  );
+}
+
+export async function createRfqComment(
+  rfqId: string,
+  body: string
+): Promise<{ success: boolean; id?: string; message?: string }> {
+  const response = await authenticatedPost<{ id: string }>(`/v1/rfq/${rfqId}/comments`, { body });
+  return { success: response.success, id: response.data?.id, message: response.message };
+}
+
+export async function deleteRfqComment(
+  commentId: string
+): Promise<{ success: boolean; message?: string }> {
+  return authenticatedDelete(`/v1/rfq/comments/${commentId}`);
 }
 
 

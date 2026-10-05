@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import FormInput from "@/components/atoms/form_input";
 import type { CompanyType } from "@/lib/api/auth";
@@ -32,6 +32,12 @@ export function Step1({
   /** Set when user chose a role on /signup/organization-type */
   companyTypePreset?: CompanyType | null;
 }) {
+  const [latestEstablishmentDate, setLatestEstablishmentDate] = useState("");
+
+  useEffect(() => {
+    setLatestEstablishmentDate(new Date().toISOString().split("T")[0]);
+  }, []);
+
   return (
     <div className="max-w-[646px] mx-auto">
       <h3 className="text-[24px] font-semibold text-text-dark mb-2">
@@ -114,7 +120,8 @@ export function Step1({
           name="establishmentDate"
           value={formData.establishmentDate as string}
           onChange={onChange}
-          max={new Date().toISOString().split('T')[0]}
+          required
+          max={latestEstablishmentDate || undefined}
         />
 
         <FormInput

@@ -1,15 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { startTransition, useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft, DollarSign, Clock, Users, Send, Eye,
-  CheckCircle, Building2, Calendar, Tag,
-  AlertCircle, Lock, FileText, Shield, MessageCircle
+  ArrowLeft, DollarSign, Users, Send, Eye,
+  CheckCircle, Calendar, Tag,
+  AlertCircle, Lock, FileText, Shield, MessageCircle, Trash2
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getRfq, type Rfq } from '@/lib/api/rfq'
+import {
+  createRfqComment,
+  deleteRfqComment,
+  getRfq,
+  listRfqComments,
+  type Rfq,
+  type RfqComment,
+} from '@/lib/api/rfq'
 import { getProfile, isOrganizationProfile } from '@/lib/api/profile'
 import { RFQ_STATUS_CONFIG } from '@/components/rfq/rfq-status-badge'
 
@@ -59,6 +66,11 @@ export default function RfqDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [myOrgId, setMyOrgId] = useState<string | null>(null)
+  const [comments, setComments] = useState<RfqComment[]>([])
+  const [commentBody, setCommentBody] = useState('')
+  const [commentError, setCommentError] = useState<string | null>(null)
+  const [commentsLoading, setCommentsLoading] = useState(true)
+  const [commentSubmitting, setCommentSubmitting] = useState(false)
 
   useEffect(() => {
     getProfile()
@@ -74,7 +86,7 @@ export default function RfqDetailPage() {
 
   useEffect(() => {
     if (!rfqId) return
-    setLoading(true)
+    startTransition(() => setLoading(true))
     getRfq(rfqId)
       .then((result) => {
         if (result.success && result.data) {
@@ -86,6 +98,53 @@ export default function RfqDetailPage() {
       .catch(() => setError('Failed to load RFQ'))
       .finally(() => setLoading(false))
   }, [rfqId])
+
+  useEffect(() => {
+    if (!rfqId) return
+    startTransition(() => setCommentsLoading(true))
+    listRfqComments(rfqId)
+      .then((result) => {
+        if (result.success && result.data) {
+          setComments(result.data.content)
+        } else {
+          setCommentError(result.message || 'Failed to load comments')
+        }
+      })
+      .catch(() => setCommentError('Failed to load comments'))
+      .finally(() => setCommentsLoading(false))
+  }, [rfqId])
+
+  async function handleCommentSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const body = commentBody.trim()
+    if (!body) return
+
+    setCommentSubmitting(true)
+    setCommentError(null)
+    const result = await createRfqComment(rfqId, body)
+    if (!result.success) {
+      setCommentError(result.message || 'Failed to post comment')
+      setCommentSubmitting(false)
+      return
+    }
+
+    setCommentBody('')
+    const commentsResult = await listRfqComments(rfqId)
+    if (commentsResult.success && commentsResult.data) {
+      setComments(commentsResult.data.content)
+    }
+    setCommentSubmitting(false)
+  }
+
+  async function handleCommentDelete(commentId: string) {
+    setCommentError(null)
+    const result = await deleteRfqComment(commentId)
+    if (!result.success) {
+      setCommentError(result.message || 'Failed to delete comment')
+      return
+    }
+    setComments((current) => current.filter((comment) => comment.id !== commentId))
+  }
 
   if (loading) {
     return (
@@ -330,6 +389,69 @@ export default function RfqDetailPage() {
                 <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{rfq.requirements}</div>
               </div>
             )}
+
+            <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6" aria-labelledby="rfq-comments-heading">
+              <h2 id="rfq-comments-heading" className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 text-gray-400" />
+                Discussion
+              </h2>
+
+              <form onSubmit={handleCommentSubmit} className="space-y-3 border-b border-gray-100 pb-5 mb-5">
+                <label htmlFor="rfq-comment" className="sr-only">Add a comment</label>
+                <textarea
+                  id="rfq-comment"
+                  value={commentBody}
+                  onChange={(event) => setCommentBody(event.target.value)}
+                  maxLength={2000}
+                  rows={3}
+                  placeholder="Add a comment"
+                  className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-gray-400">{commentBody.length}/2000</span>
+                  <button
+                    type="submit"
+                    disabled={!commentBody.trim() || commentSubmitting}
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+                  >
+                    <Send className="h-4 w-4" />
+                    {commentSubmitting ? 'Posting...' : 'Post comment'}
+                  </button>
+                </div>
+              </form>
+
+              {commentError && <p className="mb-4 text-sm text-red-600">{commentError}</p>}
+              {commentsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ) : comments.length === 0 ? (
+                <p className="text-sm text-gray-500">No comments yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {comments.map((comment) => (
+                    <article key={comment.id} className="flex gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="whitespace-pre-wrap text-sm text-gray-700">{comment.body}</p>
+                        <p className="mt-1 text-xs text-gray-400">{formatDate(comment.createdAt)}</p>
+                      </div>
+                      {comment.accountId === myOrgId && (
+                        <button
+                          type="button"
+                          onClick={() => handleCommentDelete(comment.id)}
+                          className="h-8 w-8 shrink-0 rounded-md text-gray-400 hover:bg-red-50 hover:text-red-600"
+                          aria-label="Delete comment"
+                          title="Delete comment"
+                        >
+                          <Trash2 className="mx-auto h-4 w-4" />
+                        </button>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
 
           {/* Sidebar */}

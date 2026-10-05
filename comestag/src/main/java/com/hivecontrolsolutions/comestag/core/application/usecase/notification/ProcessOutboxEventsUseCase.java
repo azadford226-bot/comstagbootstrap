@@ -62,6 +62,7 @@ public class ProcessOutboxEventsUseCase implements Usecase<Integer, Integer> {
             } catch (Exception ex) {
                 int nextAttempt = row.attemptCount() + 1;
                 Instant nextRetry = Instant.now().plusSeconds(backoffSeconds(nextAttempt));
+                log.warn("Notification outbox event {} failed on attempt {}", row.id(), nextAttempt, ex);
                 outboxPort.markFailed(row.id(), nextAttempt, nextRetry, safeMsg(ex));
             }
         }
